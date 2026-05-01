@@ -1,0 +1,27 @@
+# Credits: https://github.com/reactos/reactos/blob/master/overrides-gcc.cmake
+
+set(CMAKE_C_FLAGS_DEBUG "-O0 -ggdb3")
+set(CMAKE_C_FLAGS_MINSIZEREL -Os)
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O3 -ggdb3")
+set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "")
+
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        if (LEGACY_SUPPORT)
+                set(CMAKE_C_COMPILER_TARGET i386-pc-none)
+                add_compile_options($<$<COMPILE_LANGUAGE:C>:-march=i386>)
+        else()
+                set(CMAKE_C_COMPILER_TARGET i686-pc-none)
+                add_compile_options($<$<COMPILE_LANGUAGE:C>:-march=i686>)
+        endif()
+        add_compile_options ($<$<COMPILE_LANGUAGE:C>:-fcolor-diagnostics>)
+elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        add_compile_options ($<$<COMPILE_LANGUAGE:C>:-fdiagnostics-color=always>)
+endif()
+
+if (ARCH STREQUAL IA32)
+        add_compile_definitions(PAGE_SIZE=0x1000)
+        add_compile_definitions(PROCESSOR_BITS=32)
+endif()
+add_compile_options($<$<COMPILE_LANGUAGE:C>:-mtune=generic>)

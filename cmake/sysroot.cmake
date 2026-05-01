@@ -1,0 +1,5 @@
+set(SYSROOT_PATH ${CMAKE_BINARY_DIR}/sysroot)
+set(SYSTEM_PATH ${SYSROOT_PATH}/DragonWare)
+set(BOOTFILES_PATH ${SYSROOT_PATH}/boot)
+set(PROGRAMS_PATH ${SYSROOT_PATH}/Programs)
+set(BOOTCD ${CMAKE_BINARY_DIR}/bootcd.iso CACHE STRING "Where to place the boot CD image")

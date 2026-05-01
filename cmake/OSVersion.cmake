@@ -1,0 +1,4 @@
+add_compile_definitions(-DDRAGONWARE_VERSION_MAJOR=0)
+add_compile_definitions(-DDRAGONWARE_VERSION_MINOR=0)
+add_compile_definitions(-DDRAGONWARE_VERSION_PATCH=1)
+add_compile_definitions(-DDRAGONWARE_VERSION_SUFFIX="dev")

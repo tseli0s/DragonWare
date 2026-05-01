@@ -1,0 +1,44 @@
+name: Static Analysis using clang-tidy
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install clang-tidy
+        run: sudo apt-get install -y clang-tidy
+
+      - name: Cache toolchain
+        uses: actions/cache@v3
+        with:
+          path: /usr/local/i686-elf-tools
+          key: i686-elf-toolchain-15.2.0
+
+      - name: Install i686-elf toolchain
+        run: |
+          if [ ! -d /usr/local/i686-elf-tools ]; then
+            wget -nv https://github.com/lordmilko/i686-elf-tools/releases/download/15.2.0/i686-elf-tools-linux.zip
+            unzip -qq i686-elf-tools-linux.zip -d i686tools
+            sudo mkdir -p /usr/local/i686-elf-tools
+            sudo cp -r i686tools/* /usr/local/i686-elf-tools/
+          fi
+
+      - name: Add toolchain to PATH
+        run: echo "/usr/local/i686-elf-tools/bin" >> $GITHUB_PATH
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build nasm
+      - name: Run clang-tidy
+        run: |
+                mkdir -p build
+                cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_CLANG_COMPILER=OFF -DLEGACY_SUPPORT=ON -DCMAKE_BUILD_TYPE=Debug
+                run-clang-tidy -p build -quiet 2>&1 | grep -E "warning:" || true

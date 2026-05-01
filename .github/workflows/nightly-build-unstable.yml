@@ -1,0 +1,93 @@
+name: bootcd.iso (Nightly)
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "50 23 * * *"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set build date
+        run: echo "BUILD_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+      - name: Set build tag
+        run: |
+          echo "BUILD_TAG=$(date +%Y-%m-%d-%H%M%S)-nightly-${GITHUB_RUN_ID}" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Cache toolchain
+        uses: actions/cache@v3
+        with:
+          path: /usr/local/i686-elf-tools
+          key: i686-elf-toolchain-15.2.0
+
+      - name: Install i686-elf toolchain
+        run: |
+          if [ ! -d /usr/local/i686-elf-tools ]; then
+            wget -nv https://github.com/lordmilko/i686-elf-tools/releases/download/15.2.0/i686-elf-tools-linux.zip
+            unzip -qq i686-elf-tools-linux.zip -d i686tools
+            sudo mkdir -p /usr/local/i686-elf-tools
+            sudo cp -r i686tools/* /usr/local/i686-elf-tools/
+          fi
+
+      - name: Add toolchain to PATH
+        run: echo "/usr/local/i686-elf-tools/bin" >> $GITHUB_PATH
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build nasm xorriso qemu-system qemu-utils
+
+      - name: Build DragonWare Boot CD
+        run: |
+          echo "1" > sys/BUILDID
+
+          cmake -S . -B build \
+            -DUSE_CLANG_COMPILER=OFF \
+            -DLEGACY_SUPPORT=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -GNinja \
+
+          cmake --build build --target everything -j$(nproc)
+
+          echo "ISO_PATH=$(pwd)/bootcd.iso" >> $GITHUB_ENV
+
+      - name: QEMU Boot Test
+        run: |
+          timeout 10 qemu-system-i386 \
+            -cdrom "$ISO_PATH" \
+            -boot d -m 128 -nographic -no-reboot \
+            -serial mon:stdio -snapshot || true
+
+      - name: Create GitHub release (draft)
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.BUILD_TAG }}
+          release_name: Nightly ${{ env.BUILD_TAG }}
+          body: |
+            Automated nightly build.
+            ⚠️ This release is fully automated and untested.
+          draft: true
+          prerelease: true
+
+      - name: Upload bootcd.iso
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.ISO_PATH }}
+          asset_name: bootcd.iso
+          asset_content_type: application/octet-stream
+
