@@ -53,6 +53,13 @@ typedef enum _PortObjectOp : unsigned long {
         PORT_ACK_IRQ,  /** << Acknowledge an IRQ that was previously fired */
 } PortObjectOp;
 
+/** @brief An operation to be performed on a section object */
+typedef enum _SectionObjectOp : unsigned long {
+        SECTION_REQUEST, /** << Request the creation of a new section */
+        SECTION_MAP,     /** << Map the section in the address space */
+        SECTION_SHARE,   /** << Share the section's memory with another process */
+} SectionObjectOp;
+
 /**
  * @brief A kernel-allocated object used by processes to interact with the kernel API.
  * @details An object represents a generic @b kernel resource (e.g., device, port, memory section)

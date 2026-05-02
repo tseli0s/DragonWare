@@ -63,6 +63,7 @@ list(APPEND C_SOURCES
      ${CMAKE_CURRENT_SOURCE_DIR}/video/output.c
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/devmgr.c
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/port.c
+     ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/section.c
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/object.c
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/node.c
      ${CMAKE_CURRENT_SOURCE_DIR}/task/task.c
