@@ -11,6 +11,8 @@
 
 #include <mmutils.h>
 
+#include "ddk/ia32/cpu.h"
+#include "ddk/ia32/kcpuid.h"
 #include "ddk/ia32/paging.h"
 #include "ddk/ia32/vmm.h"
 #include "ktypes.h"
@@ -212,7 +214,10 @@ void *AllocateVirtualPage(void) {
         uintptr_t heap_next = pagealign((uintptr_t)&_end + heap_allocated);
         heap_allocated += PAGE_SIZE;
 
-        CheckStatus(MapSinglePage(frameaddr, heap_next, PAGE_PRESENT | PAGE_RW), {
+        static u32 flags = PAGE_PRESENT | PAGE_RW;
+        if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
+
+        CheckStatus(MapSinglePage(frameaddr, heap_next, flags), {
                 LogMessage(LOG_ERROR,
                            "MapSinglePage() did not return STATUS_OK, AllocateVirtualPage() has "
                            "nothing to return.");
