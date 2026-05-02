@@ -28,10 +28,11 @@ int main(void) {
         /* Device object, to claim the VGA text mode driver from the kernel */
         Handle consoledev = CreateObject(NullPointer, OBJ_DEVICE, 0);
         Handle kbdport    = CreateObject(NullPointer, OBJ_PORT, 0);
+        Handle replyport  = CreateObject("CONSOLE", OBJ_PORT, 0);
 
         DeviceMapDescriptor dev;
 
-        if (consoledev < 0 || kbdport < 0) goto cleanup;
+        if (consoledev < 0 || kbdport < 0 || replyport < 0) goto cleanup;
         if (InvokeObject(consoledev, DEVICE_GET, "/Devices/VGA Console") != STATUS_OK) goto cleanup;
         if (InvokeObject(consoledev, DEVICE_CLAIM, &dev) != STATUS_OK) goto cleanup;
         if (InvokeObject(consoledev, DEVICE_MAP, VGA_CONSOLE_VIRTUAL_ADDR) != STATUS_OK)
@@ -50,7 +51,6 @@ int main(void) {
         /* Clear the screen now that the server owns it. */
         VGAClearAllText(VGAGetColorAttribute(VGATEXT_COLOR_LIGHT_GREY, VGATEXT_COLOR_BLACK));
 
-        Handle replyport = CreateObject("CONSOLE", OBJ_PORT, 0);
         if (InvokeObject(replyport, PORT_CREATE, NullPointer) != STATUS_OK) goto cleanup;
         LogStatus("CONSOLE port online.");
 
@@ -135,9 +135,10 @@ int main(void) {
         }
 
         return 0;
-/* The kernel internally ignores negative handle IDs to make this pattern work */
+
 cleanup:
-        DeleteObject(consoledev);
-        DeleteObject(kbdport);
+        if (consoledev > 0) DeleteObject(consoledev);
+        if (kbdport > 0) DeleteObject(kbdport);
+        if (replyport > 0) DeleteObject(replyport);
         return -1;
 }
