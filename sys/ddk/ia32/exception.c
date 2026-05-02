@@ -32,9 +32,10 @@ static void _DWUserException(InterruptStackFrame *stack_frame) {
                         curr->state  = THREAD_TERMINATED;
                         LogMessage(
                                 LOG_ERROR,
-                                "Process %d exception 0x%x, EFLAGS 0x%x, EIP %p, ESP %p CR2 0x%x",
+                                "Process %u exception 0x%x, EFLAGS 0x%x, ERRCODE 0x%x EIP %p, ESP "
+                                "%p CR2 0x%x",
                                 curr->owner->pid, stack_frame->int_no, stack_frame->eflags,
-                                (u64)stack_frame->eip, (u64)stack_frame->useresp, cr2);
+                                stack_frame->err_code, stack_frame->eip, stack_frame->useresp, cr2);
 
                         /* TODO: If it's a server, it must be restarted, otherwise the system may be
                          * unable to *serve* applications that depended on it */
