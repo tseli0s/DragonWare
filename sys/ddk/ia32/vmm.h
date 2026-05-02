@@ -12,7 +12,6 @@
 #include <ktypes.h>
 #include <macros.h>
 
-#include "paging.h"
 /**
  * @brief Base address of the kernel in virtual memory.
  * @details The kernel is mapped at a fixed virtual address to provide a consistent

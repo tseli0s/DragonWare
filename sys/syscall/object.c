@@ -16,6 +16,7 @@
 #include <macros.h>
 
 #include "ddk/ia32/irq.h"
+#include "ddk/ia32/paging.h"
 #include "ddk/ia32/vmm.h"
 #include "iomgr/devmgr.h"
 #include "iomgr/node.h"
