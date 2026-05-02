@@ -14,7 +14,6 @@
 #include <log.h>
 #include <panic.h>
 
-#include "ddk/ia32/paging.h"
 #include "ddk/ia32/vmm.h"
 #include "iomgr/class.h"
 #include "iomgr/node.h"
