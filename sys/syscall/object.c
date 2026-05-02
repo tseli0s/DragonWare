@@ -22,6 +22,7 @@
 #include "iomgr/node.h"
 #include "iomgr/object.h"
 #include "iomgr/port.h"
+#include "iomgr/section.h"
 #include "sched/schedule.h"
 #include "syscall/usercopy.h"
 #include "task/process.h"
@@ -170,6 +171,43 @@ static Status HandlePortObjectRequest(int handle, Object *obj, PortObjectOp op, 
         return STATUS_OK;
 }
 
+static Status HandleSectionObjectRequest(int handle, Object *obj, SectionObjectOp op, void *arg) {
+        UnusedParameter(handle);
+        Process *current = GetCurrentExecutionThread()->owner;
+        switch (op) {
+                case SECTION_REQUEST: {
+                        if (obj->data) {
+                                /* Already allocated section, that's gonna cause a memory leak if we
+                                 * don't return */
+                                return STATUS_BAD;
+                        }
+
+                        UserSectionDescriptor descr;
+                        if (CopyFromUser(&descr, arg, sizeof(UserSectionDescriptor)) != STATUS_OK)
+                                return STATUS_BAD_ARGUMENT;
+
+                        Section *section = AllocateSection(descr.needed_pages, descr.perms);
+                        if (!section) return STATUS_OUT_OF_MEMORY;
+
+                        section->address_space = current->pid;
+                        obj->data              = section;
+                        return STATUS_OK;
+                }
+                case SECTION_MAP:
+                        if (!ADDRESS_IS_MAPPED(arg)) return STATUS_BAD_ARGUMENT;
+
+                        uintptr_t base = MapSection(obj->data, false);
+                        if (!base) return STATUS_BAD;
+                        *(uintptr_t *)arg = base;
+                        return STATUS_OK;
+                case SECTION_SHARE:
+                        return STATUS_UNSUPPORTED; /* TODO */
+                default:
+                        return STATUS_BAD_ARGUMENT;
+        }
+        return STATUS_OK;
+}
+
 int _DWCreateObject(const char *name, ObjectType type, u32 permissions) {
         UnusedParameter(permissions);
 
@@ -215,8 +253,7 @@ Status _DWInvokeObject(int handle, unsigned long op, void *argptr) {
                 case OBJ_PORT:
                         return HandlePortObjectRequest(handle, target, op, argptr);
                 case OBJ_SECTION:
-                        /* TODO */
-                        break;
+                        return HandleSectionObjectRequest(handle, target, op, argptr);
                 default:
                         return STATUS_BAD_ARGUMENT;
         }
