@@ -142,9 +142,10 @@ static void KeyboardIRQHandler(IRQRegisters *r) {
                                 break;
                         }
                 }
+                UpdateIndex(curr_row);
                 DrawUserInterface(); /* Redraw needed to update the selected entry's
                                         background/foreground */
-                UpdateIndex(curr_row);
+
                 return;
         }
         char c = ScancodeToCharacter(sc);
