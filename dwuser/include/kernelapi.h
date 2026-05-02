@@ -71,6 +71,22 @@ typedef struct [[gnu::packed]] {
         u32 reserved; /** << Reserved for future expansion */
 } IRQBindingDescriptor;
 
+/** @brief Flags describing the permissions of a single section. */
+typedef enum _SectionPermissions : unsigned long {
+        SECTION_NONE      = 0x00, /** << Nothing allowed on */
+        SECTION_WRITEABLE = 0x01, /** << Section can have its memory written. */
+        SECTION_SHAREABLE = 0x02, /** << Section may be shared with another process */
+        SECTION_CACHEABLE = 0x04, /** << Page writes may be cached by hardware and may not take
+                                     effect immediately. */
+} SectionPermissions;
+
+/** @brief A descriptor for a section request passed from user programs to the kernel. */
+typedef struct [[gnu::packed]] _UserSectionDescriptor {
+        Size needed_pages; /** << Amount of needed pages. Must be above zero and less than @ref
+                              MAX_SECTION_FRAMES */
+        SectionPermissions perms; /** << Permissions bitfield. See @ref SectionPermissions */
+} UserSectionDescriptor;
+
 /**
  * @brief The type of an object that its contents may be accessed under in the kernel when
  * operations are performed on an object.
@@ -101,6 +117,13 @@ typedef enum _PortObjectOp : unsigned long {
         PORT_BIND_IRQ, /** << Wait for hardware events (IRQs) at this port */
         PORT_ACK_IRQ,  /** << Acknowledge an IRQ that was previously fired */
 } PortObjectOp;
+
+/** @brief An operation to be performed on a section object */
+typedef enum _SectionObjectOp : unsigned long {
+        SECTION_REQUEST, /** << Request the creation of a new section */
+        SECTION_MAP,     /** << Map the section in the address space */
+        SECTION_SHARE,   /** << Share the section's memory with another process */
+} SectionObjectOp;
 
 /**
  * @brief _DWSystemIdentify system call (#0) wrapper
