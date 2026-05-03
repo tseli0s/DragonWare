@@ -15,7 +15,7 @@ if (${ARCH} STREQUAL "IA32")
 endif()
 
 add_library(dlibc STATIC ${GENERIC_SOURCES} ${SYSCALL_SOURCES} ${COMPAT_SOURCES} ${ASM_SRC})
-target_include_directories(dlibc PRIVATE ${INCLUDEDIRS})
+target_include_directories(dlibc PRIVATE ${INCLUDEDIRS} ${CMAKE_SOURCE_DIR}/dwuser/include)
 target_compile_options(
         dlibc
         PRIVATE

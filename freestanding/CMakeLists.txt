@@ -20,3 +20,8 @@ target_compile_options(freestanding86.sys PRIVATE -felf32)
 add_library(dwfsl STATIC ${FREESTANDING_SOURCES_C} $<TARGET_OBJECTS:freestanding86.sys>)
 target_compile_options(dwfsl PRIVATE ${DWFSL_COMPILE_OPTS})
 target_compile_definitions(dwfsl PRIVATE _FREE_STANDING_DWFSL=1)
+target_include_directories(dwfsl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/arch
+                                         ${CMAKE_CURRENT_SOURCE_DIR}/common
+                                         ${CMAKE_CURRENT_SOURCE_DIR}/compat
+                                         ${CMAKE_CURRENT_SOURCE_DIR}/mm
+                                         ${CMAKE_CURRENT_SOURCE_DIR}/string)

@@ -26,6 +26,13 @@ target_compile_options(core.img PRIVATE
                         )
 
 target_include_directories(core.img PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core/ ${CMAKE_CURRENT_SOURCE_DIR}/core/common)
+target_include_directories(core.img PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib
+                                            ${CMAKE_SOURCE_DIR}/freestanding/common
+                                            ${CMAKE_SOURCE_DIR}/freestanding/mm
+                                            ${CMAKE_SOURCE_DIR}/freestanding/string
+                                            ${CMAKE_SOURCE_DIR}/freestanding/compat
+                                            ${CMAKE_SOURCE_DIR}/freestanding/arch)
+
 target_link_libraries(core.img PRIVATE dwfsl)
 add_custom_command(TARGET core.img POST_BUILD
                    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/align_to_sector.py $<TARGET_FILE:core.img>

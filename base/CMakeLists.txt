@@ -25,6 +25,7 @@ macro(add_user_program binname)
                 -fno-strict-aliasing -fno-pic -fno-pie -mno-sse -mno-mmx -mno-avx -mno-sse2
         )
         target_include_directories(${binname}.run PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+        target_include_directories(${binname}.run PRIVATE ${CMAKE_SOURCE_DIR}/dwuser/include)
         set_property(GLOBAL APPEND PROPERTY DRAGONWARE_USER_BINARIES $<TARGET_FILE:${binname}.run>)
         set_property(GLOBAL APPEND PROPERTY DRAGONWARE_USER_TARGETS ${binname}.run)
 endmacro()

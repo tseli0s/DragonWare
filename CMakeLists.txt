@@ -52,12 +52,6 @@ if (NXFPU_SUPPORT)
 endif()
 
 enable_language(ASM_NASM)
-include_directories(
-			${CMAKE_SOURCE_DIR}/freestanding/common ${CMAKE_SOURCE_DIR}/freestanding/mm
-			${CMAKE_SOURCE_DIR}/freestanding/string ${CMAKE_SOURCE_DIR}/freestanding/compat
-			${CMAKE_SOURCE_DIR}/freestanding/arch
-			${CMAKE_SOURCE_DIR}/dwuser/include
-)
 
 add_subdirectory(freestanding)
 add_subdirectory(sys)

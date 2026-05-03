@@ -7,7 +7,12 @@ set(C_SOURCES "")
 set(ASM_SOURCES "")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+include_directories(SYSTEM    ${CMAKE_CURRENT_SOURCE_DIR}/lib
+                              ${CMAKE_SOURCE_DIR}/freestanding/common
+                              ${CMAKE_SOURCE_DIR}/freestanding/mm
+                              ${CMAKE_SOURCE_DIR}/freestanding/string
+                              ${CMAKE_SOURCE_DIR}/freestanding/compat
+                              ${CMAKE_SOURCE_DIR}/freestanding/arch)
 
 if (${ARCH} STREQUAL "IA32")
      set(DDK_SYSDIR ${CMAKE_CURRENT_SOURCE_DIR}/ddk/ia32)
