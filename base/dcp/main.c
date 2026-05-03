@@ -12,10 +12,10 @@
 #include <kerneltypes.h>
 #include <message.h>
 #include <object.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "dcp/command.h"
-#include "ipc_console.h"
 #include "ps2kbd/protocol.h"
 #include "vgacons/protocol.h"
 
@@ -32,12 +32,8 @@ int main(void) {
 
         if (consport < 0 || commport < 0) return -1;
 
-        /* Wait for the console to come online */
-        while (InvokeObject(consport, PORT_OPEN, "CONSOLE") != STATUS_OK) {
-                _DWYield();
-                continue;
-        }
         if (InvokeObject(commport, PORT_CREATE, NullPointer) != STATUS_OK) goto cleanup;
+        if (InvokeObject(consport, PORT_OPEN, "CONSOLE") != STATUS_OK) goto cleanup;
 
         Message msg;
         memset(&msg, 0, sizeof(Message));
@@ -58,24 +54,17 @@ int main(void) {
                 accept_status = (Status)reply.payload.raw[0];
         }
 
-        /* FIXME: Use a printf() here for God's sake this is so hackish */
-        PrintMessageToConsole(consport, "* Welcome to DragonWare!\n\n");
-        PrintMessageToConsole(
-                consport,
-                "* DragonWare is a compact, free software, microkernel-based operating system for "
-                "PC "
-                "platforms. You can view the source code at https://github.com/tseli0s/DragonWare "
-                "(And thank you for trying it out!)\n\n");
-        PrintMessageToConsole(
-                consport,
-                "You are currently in the \"DragonWare Command Prompt\". The so-called shell in "
-                "most other operating systems. You are running a very early, preview version of "
-                "DragonWare, so you can't run other programs yet.\n\n");
-        PrintMessageToConsole(consport,
-                              "* Type 'help' below to view some of the available builtin commands, "
-                              "or exit to exit this process.\n\n");
+        puts("* Welcome to DragonWare!\n");
+        puts("* DragonWare is a compact, free software, microkernel-based operating system for PC"
+             "platforms. You can view the source code at https://github.com/tseli0s/DragonWare "
+             "(And thank you for trying it out!)\n");
+        puts("You are currently in the \"DragonWare Command Prompt\". The so-called shell in "
+             "most other operating systems. You are running a very early, preview version of "
+             "DragonWare, so you can't run other programs yet.\n");
+        puts("* Type 'help' below to view some of the available builtin commands, "
+             "or exit to exit this process.\n");
 
-        PrintMessageToConsole(consport, "DragonWare >> ");
+        printf("DragonWare >> ");
 
         while (true) {
                 Message m;
@@ -91,12 +80,17 @@ int main(void) {
                                 } else if (c == '\n') {
                                         /* not empty buffer, the command must be handled */
                                         if (cmdend != 0) {
-                                                HandleCommandBuffer(consport, command);
+                                                HandleCommandBuffer(command);
                                                 memset(command, 0, sizeof(command));
                                                 cmdend = 0;
                                         }
-                                        PrintMessageToConsole(consport, "DragonWare >> ");
+                                        printf("DragonWare >> ");
                                 } else if (c == '\b') {
+                                        if (cmdend > 0) {
+                                                command[cmdend] = '\0';
+                                                cmdend--;
+                                                putchar('\b');
+                                        }
                                 }
                                 break;
                         default:

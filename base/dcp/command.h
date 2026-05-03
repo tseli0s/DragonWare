@@ -13,4 +13,4 @@
 
 /* Handles a prompt submitted by the user. For now, only the builtin commands are supported -
  * Running arbitrary files has not been implemented yet (TODO) */
-void HandleCommandBuffer(Handle consport, const char *cmd);
+void HandleCommandBuffer(const char *cmd);
