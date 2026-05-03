@@ -177,6 +177,8 @@ const char *StatusCodeToString(const Status code) {
                         return "Resource not available at this time";
                 case STATUS_NO_ENDPOINT:
                         return "No endpoint for message";
+                case STATUS_BAD_SYSCALL:
+                        return "Bad system call number given to kernel";
                 default:
                         return "Bad Code";
         }

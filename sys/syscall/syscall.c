@@ -120,7 +120,7 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                         _DWDeleteObject((int)regs->ebx);
                         break;
                 default:
-                        regs->eax = (u32)-E_NOSYS;
+                        regs->eax = (u32)STATUS_BAD_SYSCALL;
                         break;
         }
         return regs;
@@ -130,6 +130,6 @@ InterruptStackFrame *POSIXSyscall(InterruptStackFrame *regs) {
         LogMessage(LOG_WARNING,
                    "POSIX syscall invoked. POSIX compatibility has not been implemented "
                    "yet.");
-        regs->eax = E_NOSYS;
+        regs->eax = (u32)STATUS_BAD_SYSCALL;
         return regs;
 }

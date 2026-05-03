@@ -119,6 +119,7 @@ typedef enum _Status {
         STATUS_OUT_OF_BOUNDS = -7,
         STATUS_TIMEOUT       = -8,
         STATUS_NO_ENDPOINT   = -9,
+        STATUS_BAD_SYSCALL   = -10,
 } Status;
 
 /**
