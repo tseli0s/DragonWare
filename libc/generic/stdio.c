@@ -9,14 +9,26 @@
 
 #include "stdio.h"
 
+#include "ipc86.h"
+#include "kernelapi.h"
+#include "kerneltypes.h"
 #include "limits.h"
 #include "stdarg.h"
 #include "stddef.h"
 #include "stdint.h"
+#include "string.h"
+#include "syscalls/syscall86.h"
+#include "vgacons/protocol.h"
+
+/* Temporary limitation. We can only print what can be contained in one message, and further
+ * characters must be printed using more messages. Plus obviously the NULL terminator. */
+#define MAX_PRINTF_SIZE (MESSAGE_BUFFER_SIZE - 1)
 
 FILE *stdin  = NULL;
 FILE *stdout = NULL;
 FILE *stderr = NULL;
+
+extern int __dlibc_console_handle;
 
 static inline void bputc(char *buf, size_t size, size_t *idx, char c) {
         if (size > 0 && *idx < size - 1) buf[*idx] = c;
@@ -47,7 +59,46 @@ static void bputud(char *buf, size_t size, size_t *idx, uint64_t v, unsigned int
         while (n--) bputc(buf, size, idx, tmp[n]);
 }
 
-int printf(const char *fmt, ...) { return -1; /* TODO */ }
+/* TODO: use errno values here */
+int printf(const char *fmt, ...) {
+        if (__dlibc_console_handle < 0) return -1;
+        if (strlen(fmt) > MAX_PRINTF_SIZE) return -1;
+        /* TODO: Handle larger than 254 character strings (Possibly by
+        dispatching multiple messages to the server)*/
+        char    str[MAX_PRINTF_SIZE];
+        va_list ap;
+        va_start(ap, fmt);
+        int result = vsnprintf(str, sizeof(str), fmt, ap);
+        va_end(ap);
+
+        if (result < 0) return -1;
+        if ((size_t)result >= sizeof(str)) {
+                /* Well, we need to truncate now, or we will overflow the message. */
+                result = sizeof(str) - 1;
+        }
+
+        Message writemsg;
+        writemsg.header.protocol       = VGACONS_PROTOCOL_V0;
+        writemsg.header.type           = VGACONS_REQUEST_STRING_DRAW;
+        writemsg.header.payload_length = (uint32_t)result + 1;
+        writemsg.header.reply_handle   = -1;
+
+        memcpy((char *)writemsg.payload.raw, str, (size_t)result + 1);
+
+        Status send = STATUS_BAD;
+        do {
+                send = (Status)__make_syscall_ia32_3param_reti32(
+                        SYSCALL_SEND, (uint32_t)__dlibc_console_handle, (uint32_t)&writemsg,
+                        sizeof(writemsg.header) + (size_t)result + 1);
+
+                /* waiting for the server to come online */
+                if (send == STATUS_RETRY || send == STATUS_NO_ENDPOINT)
+                        __make_syscall_ia32_0param(SYSCALL_YIELD);
+        } while (send != STATUS_OK);
+
+        return result;
+}
+
 int fprintf(FILE *restrict stream, const char *fmt, ...) { return -1; }
 
 int sprintf(char *restrict str, const char *restrict fmt, ...) {
@@ -161,5 +212,31 @@ int vsnprintf(char *restrict str, size_t maxsize, const char *restrict fmt, va_l
         return (int)idx;
 }
 
+int putchar(int c) {
+        unsigned char uc = (unsigned char)c;
+        Message       m;
+        m.header.protocol       = VGACONS_PROTOCOL_V0;
+        m.header.type           = VGACONS_REQUEST_CHAR_DRAW;
+        m.header.reply_handle   = -1;
+        m.header.payload_length = 1;
+
+        /* Per protocol, bytes 1-3 must be zero, and byte 0 will contain the character, but it's
+         * faster to actually zero first and then assign (because of alignment stuff) */
+        memset(m.payload.raw, 0, 4);
+        m.payload.raw[0] = uc;
+
+        Status send = STATUS_BAD;
+        do {
+                send = (Status)__make_syscall_ia32_3param_reti32(
+                        SYSCALL_SEND, (uint32_t)__dlibc_console_handle, (uint32_t)&m,
+                        sizeof(m.header) + 1);
+
+                if (send == STATUS_RETRY || send == STATUS_NO_ENDPOINT)
+                        __make_syscall_ia32_0param(SYSCALL_YIELD);
+        } while (send != STATUS_OK);
+
+        return uc;
+}
 int puts(const char *str) { return printf("%s\n", str); }
+
 int fputc(int c, FILE *stream) { return c; }
