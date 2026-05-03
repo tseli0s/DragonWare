@@ -21,6 +21,9 @@ extern FILE *stderr;
 
 /* TODO*/
 int printf(const char *fmt, ...);
+
+int putchar(int c);
+
 /* Note: DragonWare doesn't have file descriptors or a notion of stdout/stderr etc, fd will be
  * ignored. It's for compatibility reasons only. */
 int fprintf(FILE *restrict stream, const char *fmt, ...);
