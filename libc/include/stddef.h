@@ -9,10 +9,15 @@
 
 #pragma once
 
+#define __STDC_VERSION_STDDEF_H__ 202311L
+
 #include "dlibc_common.h"
 #include "stdint.h"
 
 DLC_BEGIN_DECLS
+
+#define NULL          ((void *)0)
+#define unreachable() ((void)__builtin_unreachable())
 
 #ifdef __GNUC__
 
@@ -26,9 +31,9 @@ typedef struct {
         long double __ld;
 } max_align_t;
 
-#define NULL                   ((void *)0)
 #define offsetof(type, member) ((size_t)&(((type *)0)->member))
 
 typedef uint32_t wchar_t;
+typedef typeof_unqual(nullptr) nullptr_t;
 
 DLC_END_DECLS
