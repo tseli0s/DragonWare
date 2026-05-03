@@ -66,8 +66,7 @@ int main(void) {
         Handle console_controller = -1;
         LogStatus("Waiting for child connections, please wait...");
 
-        VGAPrintString("---------------------------------------------------------------------\n\n",
-                       VGAGetColorAttribute(VGATEXT_COLOR_WHITE, VGATEXT_COLOR_BLACK));
+        Byte default_color = VGAGetColorAttribute(VGATEXT_COLOR_LIGHT_GREY, VGATEXT_COLOR_BLACK);
         while (true) {
                 Message m;
                 /* If not STATUS_OK, the message was malformed, so we can't trust it */
@@ -112,6 +111,7 @@ int main(void) {
                                                 SendMessage(m.header.reply_handle, &replymsg,
                                                             sizeof(replymsg.header) + sizeof(Byte));
 
+                                                LogStatus("Client connected.");
                                                 break;
                                         }
                                         case VGACONS_REQUEST_STRING_DRAW: {
@@ -119,10 +119,12 @@ int main(void) {
                                                 strncpy(string, (const char*)m.payload.raw,
                                                         m.header.payload_length);
                                                 string[m.header.payload_length] = '\0';
-                                                VGAPrintString(string,
-                                                               VGAGetColorAttribute(
-                                                                       VGATEXT_COLOR_LIGHT_GREY,
-                                                                       VGATEXT_COLOR_BLACK));
+                                                VGAPrintString(string, default_color);
+                                                break;
+                                        }
+                                        case VGACONS_REQUEST_CHAR_DRAW: {
+                                                char c = (char)m.payload.raw[0];
+                                                VGAPrintCharacter(c, default_color);
                                                 break;
                                         }
                                         default:
