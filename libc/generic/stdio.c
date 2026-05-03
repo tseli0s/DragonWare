@@ -9,6 +9,7 @@
 
 #include "stdio.h"
 
+#include "errno.h"
 #include "ipc86.h"
 #include "kernelapi.h"
 #include "kerneltypes.h"
@@ -28,7 +29,8 @@ FILE *stdin  = NULL;
 FILE *stdout = NULL;
 FILE *stderr = NULL;
 
-extern int __dlibc_console_handle;
+extern int          __dlibc_console_handle;
+extern volatile int errno;
 
 static inline void bputc(char *buf, size_t size, size_t *idx, char c) {
         if (size > 0 && *idx < size - 1) buf[*idx] = c;
@@ -61,8 +63,10 @@ static void bputud(char *buf, size_t size, size_t *idx, uint64_t v, unsigned int
 
 /* TODO: use errno values here */
 int printf(const char *fmt, ...) {
-        if (__dlibc_console_handle < 0) return -1;
-        if (strlen(fmt) > MAX_PRINTF_SIZE) return -1;
+        if (__dlibc_console_handle < 0) {
+                errno = EIO;
+                return EOF;
+        }
         /* TODO: Handle larger than 254 character strings (Possibly by
         dispatching multiple messages to the server)*/
         char    str[MAX_PRINTF_SIZE];
@@ -71,7 +75,10 @@ int printf(const char *fmt, ...) {
         int result = vsnprintf(str, sizeof(str), fmt, ap);
         va_end(ap);
 
-        if (result < 0) return -1;
+        if (result < 0) {
+                errno = EINVAL;
+                return EOF;
+        }
         if ((size_t)result >= sizeof(str)) {
                 /* Well, we need to truncate now, or we will overflow the message. */
                 result = sizeof(str) - 1;
@@ -230,12 +237,17 @@ int putchar(int c) {
                 send = (Status)__make_syscall_ia32_3param_reti32(
                         SYSCALL_SEND, (uint32_t)__dlibc_console_handle, (uint32_t)&m,
                         sizeof(m.header) + 1);
+                __make_syscall_ia32_0param(SYSCALL_YIELD);
+        } while (send == STATUS_RETRY);
 
-                if (send == STATUS_RETRY || send == STATUS_NO_ENDPOINT)
-                        __make_syscall_ia32_0param(SYSCALL_YIELD);
-        } while (send != STATUS_OK);
+        if (send != STATUS_OK) {
+                errno = ECOMM;
 
-        return uc;
+                /* we should return EOF if the character wasn't printed */
+                return EOF;
+        }
+
+        return c;
 }
 int puts(const char *str) { return printf("%s\n", str); }
 
