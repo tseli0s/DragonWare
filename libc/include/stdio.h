@@ -9,17 +9,19 @@
 
 #pragma once
 
+#define __STDC_VERSION_STDIO_H__ 202311L
+#define EOF                      (-1)
+#define FOPEN_MAX                (28)
+
 #include "stdarg.h"
 #include "stddef.h"
 
 typedef struct __file_impl FILE;
 
-/* Those will always be NULL, but hide away the actual definition for now.*/
 extern FILE *stdin;
 extern FILE *stdout;
 extern FILE *stderr;
 
-/* TODO*/
 int printf(const char *fmt, ...);
 
 int putchar(int c);
