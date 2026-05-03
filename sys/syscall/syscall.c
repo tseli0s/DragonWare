@@ -10,7 +10,6 @@
 #include "syscall.h"
 
 #include <atomic.h>
-#include <errno.h>
 #include <kmalloc.h>
 #include <kstring.h>
 #include <ktypes.h>
