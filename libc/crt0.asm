@@ -10,6 +10,8 @@ bits    32
 
 section .entry
 extern  main
+extern  __libc_init_internal
+extern  __libc_cleanup
 global  _start
 
 SYSCALL_EXIT    equ     0x1
@@ -20,13 +22,20 @@ _start:
         push    ebp
         mov     ebp,    esp
 
+        ; Initialize internal libc state before we jump into main()
+        ; This is mostly about opening the console, initializing the heap and other
+        ; crucial stuff.
+        call    __libc_init_internal
+
         ; Before we call this, we should probably initialize libc's internal stuff
         ; like the allocator and other things. But since we don't have any of that yet,
         ; this comment is simply a placeholder for the future.
-        push    ecx     ; argv (Passed in ecx. Actually nothing passed at all for now the kernel doesn't support it)
-        push    eax     ; argc (arguments go right to left because this is a stack, LIFO structure)
+        push    ecx             ; argv (Passed in ecx. Actually nothing passed at all for now the kernel doesn't support it)
+        push    eax             ; argc (arguments go right to left because this is a stack, LIFO structure)
         
         call    main
+        add     esp,    8       ; Discard the two arguments we pushed above
+        call    __libc_cleanup  ; Now call on the libc cleanup routine to clean up whatever we need to
         jmp     __exit_syscall86_internal
 
 ; Avoid an extra call inside libc, by defining and performing the system call manually.
