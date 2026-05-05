@@ -61,6 +61,30 @@ static void bputud(char *buf, size_t size, size_t *idx, uint64_t v, unsigned int
         while (n--) bputc(buf, size, idx, tmp[n]);
 }
 
+static int __send_console_write_string_request(const char *consolebuf) {
+	size_t buflen = strlen(consolebuf);
+	if (buflen > MAX_PRINTF_SIZE) return -1;
+
+	Message m;
+	m.header.payload_length = buflen + 1;
+	m.header.protocol = VGACONS_PROTOCOL_V0;
+	m.header.type = VGACONS_REQUEST_STRING_DRAW;
+	m.header.reply_handle = -1;
+	
+	memcpy(m.payload.raw, consolebuf, buflen + 1);
+	Status send = STATUS_BAD;
+        do {
+                send = (Status)__make_syscall_ia32_3param_reti32(
+                        SYSCALL_SEND, (uint32_t)__dlibc_console_handle, (uint32_t)&m,
+                        sizeof(m.header) + (size_t)m.header.payload_length);
+
+                /* waiting for the server to come online */
+                if (send == STATUS_RETRY || send == STATUS_NO_ENDPOINT)
+                        __make_syscall_ia32_0param(SYSCALL_YIELD);
+        } while (send != STATUS_OK);
+	return 0;
+}
+
 /* TODO: use errno values here */
 int printf(const char *fmt, ...) {
         if (__dlibc_console_handle < 0) {
@@ -79,34 +103,26 @@ int printf(const char *fmt, ...) {
                 errno = EINVAL;
                 return EOF;
         }
-        if ((size_t)result >= sizeof(str)) {
-                /* Well, we need to truncate now, or we will overflow the message. */
-                result = sizeof(str) - 1;
-        }
 
-        Message writemsg;
-        writemsg.header.protocol       = VGACONS_PROTOCOL_V0;
-        writemsg.header.type           = VGACONS_REQUEST_STRING_DRAW;
-        writemsg.header.payload_length = (uint32_t)result + 1;
-        writemsg.header.reply_handle   = -1;
-
-        memcpy((char *)writemsg.payload.raw, str, (size_t)result + 1);
-
-        Status send = STATUS_BAD;
-        do {
-                send = (Status)__make_syscall_ia32_3param_reti32(
-                        SYSCALL_SEND, (uint32_t)__dlibc_console_handle, (uint32_t)&writemsg,
-                        sizeof(writemsg.header) + (size_t)result + 1);
-
-                /* waiting for the server to come online */
-                if (send == STATUS_RETRY || send == STATUS_NO_ENDPOINT)
-                        __make_syscall_ia32_0param(SYSCALL_YIELD);
-        } while (send != STATUS_OK);
-
+	if (__send_console_write_string_request(str) < 0) {
+		errno = ENOTCONN; 
+		return EOF;
+	}
         return result;
 }
 
-int fprintf(FILE *restrict stream, const char *fmt, ...) { return -1; }
+int vprintf(const char *restrict format, va_list arg) {
+	char buf[MAX_PRINTF_SIZE];
+	int result = vsnprintf(buf, MAX_PRINTF_SIZE, format, arg);
+
+	if (__send_console_write_string_request(buf) < 0) return EOF;
+	return result;
+}
+
+int fprintf(FILE *restrict stream, const char *fmt, ...) {
+	errno = ENOENT; /* Couldn't come up with something better this'll do */
+	return -1;
+}
 
 int sprintf(char *restrict str, const char *restrict fmt, ...) {
         va_list args;
@@ -194,9 +210,9 @@ int vsnprintf(char *restrict str, size_t maxsize, const char *restrict fmt, va_l
                         }
 
                         case 'p': {
-                                uint32_t v = va_arg(args, uint32_t);
+                                void* v = va_arg(args, void*);
                                 bputs(str, maxsize, &idx, "0x");
-                                bputud(str, maxsize, &idx, v, 16, false);
+                                bputud(str, maxsize, &idx, (uintptr_t)v, 16, false);
                                 break;
                         }
                         case 'f':
@@ -240,7 +256,7 @@ int putchar(int c) {
                         SYSCALL_SEND, (uint32_t)__dlibc_console_handle, (uint32_t)&m,
                         sizeof(m.header) + 1);
                 __make_syscall_ia32_0param(SYSCALL_YIELD);
-        } while (send == STATUS_RETRY);
+        } while (send == STATUS_RETRY || send == STATUS_NO_ENDPOINT);
 
         if (send != STATUS_OK) {
                 errno = ECOMM;
@@ -253,4 +269,7 @@ int putchar(int c) {
 }
 int puts(const char *str) { return printf("%s\n", str); }
 
-int fputc(int c, FILE *stream) { return c; }
+int fputc(int c, FILE *stream) {
+	errno = ENOENT; /* see comment in fprintf */
+	return EOF;
+}
