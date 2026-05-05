@@ -31,6 +31,7 @@ int putchar(int c);
 int fprintf(FILE *restrict stream, const char *fmt, ...);
 
 int sprintf(char *restrict str, const char *restrict fmt, ...);
+int vprintf(const char *restrict fmt, va_list args);
 int snprintf(char *restrict str, size_t maxsize, const char *restrict fmt, ...);
 int vsprintf(char *restrict str, const char *restrict fmt, va_list args);
 int vsnprintf(char *restrict str, size_t maxsize, const char *restrict fmt, va_list args);
