@@ -21,9 +21,18 @@
 #define VGA_CONSOLE_WIDTH  (80)
 #define VGA_CONSOLE_HEIGHT (25)
 
+static inline void VGAEnableCursor(u8 cursor_start, u8 cursor_end) {
+        outb(0x3D4, 0x0A);
+        outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+
+        outb(0x3D4, 0x0B);
+        outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+}
+
 int main(void) {
         /* Need IOPL permissions to control the VGA cursor */
         if (_DWRaiseIOPL() != STATUS_OK) return -1;
+        VGAEnableCursor(0, 15);
 
         /* Device object, to claim the VGA text mode driver from the kernel */
         Handle consoledev = CreateObject(NullPointer, OBJ_DEVICE, 0);
