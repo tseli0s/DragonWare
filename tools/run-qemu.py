@@ -53,6 +53,7 @@ def _start():
                 '-display', 'gtk,show-tabs=on',
                 '-machine', 'acpi=on',
                 '-boot', 'c',
+                '-full-screen',
                 '-m', '16M',
                 '-cpu', 'pentium2',
                 '-vga', 'vmware',
