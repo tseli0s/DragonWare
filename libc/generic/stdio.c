@@ -133,8 +133,6 @@ int sprintf(char *restrict str, const char *restrict fmt, ...) {
 }
 
 int snprintf(char *restrict str, size_t maxsize, const char *restrict fmt, ...) {
-	if (!maxsize) return 0;
-
         va_list args;
         va_start(args, fmt);
         int result = vsnprintf(str, maxsize, fmt, args);
