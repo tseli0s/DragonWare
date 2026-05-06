@@ -7,9 +7,17 @@
  * LICENSE: GPL-3.0-or-later (https://spdx.org/licenses/GPL-3.0-or-later.html)
  ***********************************************************************/
 
-#define PS2_PORT_DATA       (0x60)
-#define PS2_PORT_STATUS     (0x64)
-#define PS2_ENABLE_SCANNING (0xF4)
+#define PS2_PORT_DATA         (0x60)
+#define PS2_PORT_STATUS       (0x64)
+#define PS2_ENABLE_SCANNING   (0xF4)
+#define PS2_DISABLE_PORT1     (0xAD)
+#define PS2_DISABLE_PORT2     (0xA7)
+#define PS2_ENABLE_PORT1      (0xAE)
+#define PS2_ENABLE_PORT2      (0xA8)
+#define PS2_READ_CONFIG_BYTE  (0x20)
+#define PS2_WRITE_CONFIG_BYTE (0x60)
+#define PS2_SELF_TEST         (0xAA)
+#define PS2_RESET_EVERYTHING  (0xFF)
 
 /*
  * Major TODOs and features for this keyboard server:
@@ -71,13 +79,146 @@ static const char ascii_table[128] = {
 static u32    listener        = 0;
 static Handle listener_handle = -1;
 
+/**
+ * @brief Waits until the output buffer is full.
+ * @details This function is used whenever data is to be read from the controller. Reading too early
+ * may read garbage into memory, so this continuously checks if the output buffer is reported to be
+ * full from the controller.
+ */
+static inline void WaitForOutputBuffer(void) { while (!(inb(PS2_PORT_STATUS) & 0x01)); }
+
+/**
+ * @brief Waits until the input buffer is empty. This function should be used before writing any
+ * values to the controller.
+ * @sa WaitForOutputBuffer
+ */
+static inline void WaitForInputBuffer(void) { while (inb(PS2_PORT_STATUS) & 0x02); }
+
+/** @brief Flushes the contents of the controller port down the drain */
+static inline void FlushControllerData(void) {
+        while (inb(PS2_PORT_STATUS) & 0x01) inb(PS2_PORT_DATA);
+}
+
+/** @brief Disables the 8042 controller from sending any events while any
+ * critical operations are taking place.
+ */
+static inline void DisableDevicePorts(void) {
+        outb(PS2_PORT_STATUS, PS2_DISABLE_PORT1);
+        outb(PS2_PORT_STATUS,
+             PS2_DISABLE_PORT2); /* If the controller is single-channel, this'll be ignored */
+}
+
+/** @brief Disables the 8042 controller from sending any events while any
+ * critical operations are taking place.
+ */
+static inline void EnableDevicePorts(void) {
+        outb(PS2_PORT_STATUS, PS2_ENABLE_PORT1);
+        outb(PS2_PORT_STATUS,
+             PS2_ENABLE_PORT2); /* If the controller is single-channel, this'll be ignored */
+}
+
+/**
+ * @brief Requests a self test from the 8042 controller and returns whether the self-test
+ * passed or not.
+ */
+static Status Perform8042SelfTest(void) {
+        WaitForInputBuffer();
+        outb(PS2_PORT_STATUS, PS2_SELF_TEST);
+        WaitForOutputBuffer();
+
+        Byte result = inb(PS2_PORT_DATA);
+        /* Only 0x55 is considered a pass value, any other value is an error */
+        if (result != 0x55) {
+#ifdef DRAGONWARE_DEBUG_MODE
+                _DWklog(LOG_ERROR, "i8042 controller self test failed (result != 0x55)!");
+#endif /* DRAGONWARE_DEBUG_MODE */
+                return STATUS_BAD;
+        }
+        return STATUS_OK;
+}
+
+/**
+ * @brief Attempts to detect the presence of an i8042 controller in the system.
+ * @returns STATUS_OK if the controller is present, STATUS_BAD if it could not be detected or/and is
+ * faulty.
+ * @note This also logs messages in the kernel log buffer.
+ */
+static Status Probe8042Controller(void) {
+        /* DragonWare doesn't support ACPI, so we'll have to test the old fashioned way. */
+        DisableDevicePorts();
+        FlushControllerData();
+
+        /* controller configuration byte, before we modified it */
+        outb(PS2_PORT_STATUS, PS2_READ_CONFIG_BYTE);
+        WaitForOutputBuffer();
+        Byte old_ccb = inb(PS2_PORT_DATA);
+        Byte new_ccb = old_ccb;
+
+        /*
+         * Disable IRQ and translation, also make sure clock signal is enabled.
+         * See https://wiki.osdev.org/I8042_PS/2_Controller#Initialising_the_PS/2_Controller to
+         * understand the bit values here.
+         */
+        new_ccb &= ~((1 << 0) | (1 << 4) | (1 << 6));
+        outb(PS2_PORT_STATUS, PS2_WRITE_CONFIG_BYTE);
+        WaitForInputBuffer();
+        outb(PS2_PORT_DATA, new_ccb);
+
+        if (Perform8042SelfTest() != STATUS_OK) {
+                outb(PS2_PORT_STATUS, PS2_WRITE_CONFIG_BYTE);
+                WaitForInputBuffer();
+                outb(PS2_PORT_DATA, old_ccb);
+                return STATUS_BAD;
+        }
+
+        /* Now reenable IRQs and translation */
+        new_ccb |= ((1 << 0) | (1 << 6));
+        WaitForInputBuffer();
+        outb(PS2_PORT_STATUS, PS2_WRITE_CONFIG_BYTE);
+        WaitForInputBuffer();
+        outb(PS2_PORT_DATA, new_ccb);
+
+        /*
+         * Devices must be reenabled for the code below
+         * https://wiki.osdev.org/I8042_PS/2_Controller#Initialising_the_PS/2_Controller
+         * (Step 9)
+         */
+        EnableDevicePorts();
+
+        /* Now reset devices, and check if there's any device out there responding to all the
+         * configuration we just did */
+        outb(PS2_PORT_DATA, PS2_RESET_EVERYTHING);
+        WaitForOutputBuffer();
+        Byte response = inb(PS2_PORT_DATA);
+        if (response != 0xFA) {
+                _DWklog(LOG_DEBUG, "Keyboard did not ACK reset request");
+                return STATUS_BAD;
+        }
+
+        WaitForOutputBuffer();
+        Byte pass = inb(PS2_PORT_DATA);
+        if (pass != 0xAA) {
+#ifdef DRAGONWARE_DEBUG_MODE
+                _DWklog(LOG_ERROR, "Keyboard failed reset self-test.");
+#endif
+                return STATUS_BAD;
+        }
+
+        return STATUS_OK;
+}
+
 int main(void) {
         /* We need IOPL support from the kernel to read the bytes from the controller. */
         if (_DWRaiseIOPL() != STATUS_OK) return -1;
+        if (Probe8042Controller() != STATUS_OK) {
+                _DWklog(LOG_ERROR, "Unable to probe i8042 controller. Keyboard will be disabled.");
+                return -0xDD;
+        }
+
         outb(PS2_PORT_DATA, PS2_ENABLE_SCANNING);
 
         /* Drain any previously collected events to avoid deadlocks in the PIC */
-        while (inb(PS2_PORT_STATUS) & 0x01) inb(PS2_PORT_DATA);
+        FlushControllerData();
 
         /* Only one keyboard is supported per session for now */
         Handle irqline = CreateObject("KEYBOARD", OBJ_PORT, 0);
@@ -87,6 +228,7 @@ int main(void) {
                 .irq_no   = 1,
                 .reserved = 0,
         };
+
         if (InvokeObject(irqline, PORT_CREATE, NullPointer) != STATUS_OK) return -1;
         if (InvokeObject(irqline, PORT_BIND_IRQ, &bind_descriptor)) return -1;
 
