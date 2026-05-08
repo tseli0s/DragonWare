@@ -261,8 +261,9 @@ void kfree(void *ptr) {
 void *AllocateVirtualPage(void) {
         uintptr_t frameaddr = AllocateFrame();
         void     *virtaddr  = GetHeapPageAddress();
+        uintptr_t addr      = (uintptr_t)virtaddr;
 
-        uintptr_t addr = (uintptr_t)virtaddr;
+        MarkHeapPageAsUsed(addr);
 
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
@@ -274,9 +275,7 @@ void *AllocateVirtualPage(void) {
                            "nothing to return.",
                            StatusCodeToString(mapstatus));
                 return NullPointer;
-                return virtaddr;
         }
-
         return virtaddr;
 }
 
