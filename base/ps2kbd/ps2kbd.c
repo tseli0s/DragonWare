@@ -7,8 +7,6 @@
  * LICENSE: GPL-3.0-or-later (https://spdx.org/licenses/GPL-3.0-or-later.html)
  ***********************************************************************/
 
-#define PS2_PORT_DATA         (0x60)
-#define PS2_PORT_STATUS       (0x64)
 #define PS2_ENABLE_SCANNING   (0xF4)
 #define PS2_DISABLE_PORT1     (0xAD)
 #define PS2_DISABLE_PORT2     (0xA7)
@@ -33,6 +31,7 @@
 #include <string.h>
 
 #include "io.h"
+#include "port.h"
 #include "protocol.h"
 #include "scantochar.h"
 
@@ -79,42 +78,20 @@ static const char ascii_table[128] = {
 static u32    listener        = 0;
 static Handle listener_handle = -1;
 
-/**
- * @brief Waits until the output buffer is full.
- * @details This function is used whenever data is to be read from the controller. Reading too early
- * may read garbage into memory, so this continuously checks if the output buffer is reported to be
- * full from the controller.
- */
-static inline void WaitForOutputBuffer(void) { while (!(inb(PS2_PORT_STATUS) & 0x01)); }
-
-/**
- * @brief Waits until the input buffer is empty. This function should be used before writing any
- * values to the controller.
- * @sa WaitForOutputBuffer
- */
-static inline void WaitForInputBuffer(void) { while (inb(PS2_PORT_STATUS) & 0x02); }
-
-/** @brief Flushes the contents of the controller port down the drain */
-static inline void FlushControllerData(void) {
-        while (inb(PS2_PORT_STATUS) & 0x01) inb(PS2_PORT_DATA);
-}
-
 /** @brief Disables the 8042 controller from sending any events while any
  * critical operations are taking place.
  */
 static inline void DisableDevicePorts(void) {
-        outb(PS2_PORT_STATUS, PS2_DISABLE_PORT1);
-        outb(PS2_PORT_STATUS,
-             PS2_DISABLE_PORT2); /* If the controller is single-channel, this'll be ignored */
+        i8042Write(PS2_DISABLE_PORT1);
+        i8042Write(PS2_DISABLE_PORT2); /* If the controller is single-channel, this'll be ignored */
 }
 
-/** @brief Disables the 8042 controller from sending any events while any
- * critical operations are taking place.
+/** @brief Enables the 8042 controller connected devices, and allows them to dispatch interrupts and
+ * receive user input.
  */
 static inline void EnableDevicePorts(void) {
-        outb(PS2_PORT_STATUS, PS2_ENABLE_PORT1);
-        outb(PS2_PORT_STATUS,
-             PS2_ENABLE_PORT2); /* If the controller is single-channel, this'll be ignored */
+        i8042Write(PS2_ENABLE_PORT1);
+        i8042Write(PS2_ENABLE_PORT2); /* If the controller is single-channel, this'll be ignored */
 }
 
 /**
@@ -122,11 +99,9 @@ static inline void EnableDevicePorts(void) {
  * passed or not.
  */
 static Status Perform8042SelfTest(void) {
-        WaitForInputBuffer();
-        outb(PS2_PORT_STATUS, PS2_SELF_TEST);
-        WaitForOutputBuffer();
+        i8042Write(PS2_SELF_TEST);
+        Byte result = i8042Read();
 
-        Byte result = inb(PS2_PORT_DATA);
         /* Only 0x55 is considered a pass value, any other value is an error */
         if (result != 0x55) {
 #ifdef DRAGONWARE_DEBUG_MODE
@@ -149,9 +124,8 @@ static Status Probe8042Controller(void) {
         FlushControllerData();
 
         /* controller configuration byte, before we modified it */
-        outb(PS2_PORT_STATUS, PS2_READ_CONFIG_BYTE);
-        WaitForOutputBuffer();
-        Byte old_ccb = inb(PS2_PORT_DATA);
+        i8042Write(PS2_READ_CONFIG_BYTE);
+        Byte old_ccb = i8042Read();
         Byte new_ccb = old_ccb;
 
         /*
@@ -160,23 +134,20 @@ static Status Probe8042Controller(void) {
          * understand the bit values here.
          */
         new_ccb &= ~((1 << 0) | (1 << 4) | (1 << 6));
-        outb(PS2_PORT_STATUS, PS2_WRITE_CONFIG_BYTE);
-        WaitForInputBuffer();
-        outb(PS2_PORT_DATA, new_ccb);
+        i8042Write(PS2_WRITE_CONFIG_BYTE);
+        i8042WriteData(new_ccb);
 
         if (Perform8042SelfTest() != STATUS_OK) {
-                outb(PS2_PORT_STATUS, PS2_WRITE_CONFIG_BYTE);
-                WaitForInputBuffer();
-                outb(PS2_PORT_DATA, old_ccb);
+                i8042Write(PS2_WRITE_CONFIG_BYTE);
+                i8042WriteData(old_ccb); /* Try to restore the original state we started with,
+                                          * in case of faulty hardware.*/
                 return STATUS_BAD;
         }
 
         /* Now reenable IRQs and translation */
         new_ccb |= ((1 << 0) | (1 << 6));
-        WaitForInputBuffer();
-        outb(PS2_PORT_STATUS, PS2_WRITE_CONFIG_BYTE);
-        WaitForInputBuffer();
-        outb(PS2_PORT_DATA, new_ccb);
+        i8042Write(PS2_WRITE_CONFIG_BYTE);
+        i8042WriteData(new_ccb);
 
         /*
          * Devices must be reenabled for the code below
@@ -187,16 +158,14 @@ static Status Probe8042Controller(void) {
 
         /* Now reset devices, and check if there's any device out there responding to all the
          * configuration we just did */
-        outb(PS2_PORT_DATA, PS2_RESET_EVERYTHING);
-        WaitForOutputBuffer();
-        Byte response = inb(PS2_PORT_DATA);
+        i8042WriteData(PS2_RESET_EVERYTHING);
+        Byte response = i8042Read();
         if (response != 0xFA) {
                 _DWklog(LOG_DEBUG, "Keyboard did not ACK reset request");
                 return STATUS_BAD;
         }
 
-        WaitForOutputBuffer();
-        Byte pass = inb(PS2_PORT_DATA);
+        Byte pass = i8042Read();
         if (pass != 0xAA) {
 #ifdef DRAGONWARE_DEBUG_MODE
                 _DWklog(LOG_ERROR, "Keyboard failed reset self-test.");
@@ -215,7 +184,7 @@ int main(void) {
                 return -0xDD;
         }
 
-        outb(PS2_PORT_DATA, PS2_ENABLE_SCANNING);
+        i8042WriteData(PS2_ENABLE_SCANNING);
 
         /* Drain any previously collected events to avoid deadlocks in the PIC */
         FlushControllerData();
