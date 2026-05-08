@@ -267,9 +267,12 @@ void *AllocateVirtualPage(void) {
 #endif /* DRAGONWARE_DEBUG_MODE */
                 return NullPointer;
         }
+        extern char _end;
 
         void     *virtaddr = GetHeapPageAddress();
         uintptr_t addr     = (uintptr_t)virtaddr;
+
+        MarkHeapPageAsUsed(addr);
 
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
