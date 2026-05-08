@@ -21,13 +21,14 @@ static inline Byte ReadFromCMOSRegister(Byte reg) {
 }
 
 static inline Byte BCDToBinary(Byte v) {
-	/* 
-	 * Let me translate what you're seeing: 
-	 * - Take the lower four bits of v as a number (So a number between 0-9, 10-15 are invalid in BCD). That's the ones digit in BCD.
-	 * - Now take the upper four bits of v to get the tens digit in BCD.
-	 * - If you find the tens and add the ones, you get a regular number.
-	 * */
-	return (Byte)((v & 0x0F) + ((v >> 4) * 10));
+        /*
+         * Let me translate what you're seeing:
+         * - Take the lower four bits of v as a number (So a number between 0-9, 10-15 are invalid
+         * in BCD). That's the ones digit in BCD.
+         * - Now take the upper four bits of v to get the tens digit in BCD.
+         * - If you find the tens and add the ones, you get a regular number.
+         * */
+        return (Byte)((v & 0x0F) + ((v >> 4) * 10));
 }
 
 static void SystemTimeInit(void) {

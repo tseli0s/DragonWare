@@ -99,7 +99,8 @@ static void LogCPUInfo(void) {
                 u32         mask;
                 const char *name;
         } feature_table[] = {
-                /* the 1s must be marked with U otherwise the compiler may think we're using bytes here */
+                /* the 1s must be marked with U otherwise the compiler may think we're using bytes
+                   here */
                 {1U << X86_FPU, "fpu "},
                 {1U << X86_VME, "vme "},
                 {1U << X86_DE, "de "},
