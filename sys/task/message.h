@@ -27,6 +27,24 @@
  */
 #define KERNEL_SENDER       (0)
 
+typedef struct [[gnu::packed]] _MessageHeader {
+        u32 msgid;        /** << ID of the message. Used to match one request to one unique reply
+                                     from the receiver. */
+        int reply_handle; /** << Handle to the reply port. The kernel automatically
+                             translates that between processes. If -1, no reply is expected
+                             for the message */
+        u32 sender;       /** << ID of the sender process (The process that sent this message).
+                             This   is set by the kernel only. */
+        u16 type;         /** <<  Type of the message. This is to be determined by the two processes
+                             according to their protocols. */
+        u16 protocol;     /** << If a process supports different IPC protocols, one may be
+                             specified here. */
+        u32 payload_length; /** << Size of the @ref payload used. More bytes may not be read
+                               off of @ref payload. */
+        u32 reserved;       /** << Reserved. Should be 0.  */
+
+} MessageHeader;
+
 /**
  * @brief A single IPC message sent between two processes (Or the kernel and a process, in some
  * cases.)
@@ -37,22 +55,7 @@
  * of memory.
  */
 typedef struct [[gnu::packed]] _Message {
-        struct [[gnu::packed]] {
-                u32 msgid; /** << ID of the message. Used to match one request to one unique reply
-                              from the receiver. */
-                int reply_handle; /** << Handle to the reply port. The kernel automatically
-                                     translates that between processes. If -1, no reply is expected
-                                     for the message */
-                u32 sender; /** << ID of the sender process (The process that sent this message).
-                               This   is set by the kernel only. */
-                u16 type; /** <<  Type of the message. This is to be determined by the two processes
-                             according to their protocols. */
-                u16 protocol;       /** << If a process supports different IPC protocols, one may be
-                                       specified here. */
-                u32 payload_length; /** << Size of the @ref payload used. More bytes may not be read
-                                       off of @ref payload. */
-                u32 reserved;       /** << Reserved. Should be 0.  */
-        } header;
+        MessageHeader header;
         union {
                 Byte raw[MESSAGE_BUFFER_SIZE]; /** << Raw data left up for interpetation by the
                                                   processes. */
