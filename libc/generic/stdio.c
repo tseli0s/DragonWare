@@ -62,17 +62,17 @@ static void bputud(char *buf, size_t size, size_t *idx, uint64_t v, unsigned int
 }
 
 static int __send_console_write_string_request(const char *consolebuf) {
-	size_t buflen = strlen(consolebuf);
-	if (buflen > MAX_PRINTF_SIZE) return -1;
+        size_t buflen = strlen(consolebuf);
+        if (buflen > MAX_PRINTF_SIZE) return -1;
 
-	Message m;
-	m.header.payload_length = buflen + 1;
-	m.header.protocol = VGACONS_PROTOCOL_V0;
-	m.header.type = VGACONS_REQUEST_STRING_DRAW;
-	m.header.reply_handle = -1;
-	
-	memcpy(m.payload.raw, consolebuf, buflen + 1);
-	Status send = STATUS_BAD;
+        Message m;
+        m.header.payload_length = buflen + 1;
+        m.header.protocol       = VGACONS_PROTOCOL_V0;
+        m.header.type           = VGACONS_REQUEST_STRING_DRAW;
+        m.header.reply_handle   = -1;
+
+        memcpy(m.payload.raw, consolebuf, buflen + 1);
+        Status send = STATUS_BAD;
         do {
                 send = (Status)__make_syscall_ia32_3param_reti32(
                         SYSCALL_SEND, (uint32_t)__dlibc_console_handle, (uint32_t)&m,
@@ -82,7 +82,7 @@ static int __send_console_write_string_request(const char *consolebuf) {
                 if (send == STATUS_RETRY || send == STATUS_NO_ENDPOINT)
                         __make_syscall_ia32_0param(SYSCALL_YIELD);
         } while (send != STATUS_OK);
-	return 0;
+        return 0;
 }
 
 /* TODO: use errno values here */
@@ -104,24 +104,24 @@ int printf(const char *fmt, ...) {
                 return EOF;
         }
 
-	if (__send_console_write_string_request(str) < 0) {
-		errno = ENOTCONN; 
-		return EOF;
-	}
+        if (__send_console_write_string_request(str) < 0) {
+                errno = ENOTCONN;
+                return EOF;
+        }
         return result;
 }
 
 int vprintf(const char *restrict format, va_list arg) {
-	char buf[MAX_PRINTF_SIZE];
-	int result = vsnprintf(buf, MAX_PRINTF_SIZE, format, arg);
+        char buf[MAX_PRINTF_SIZE];
+        int  result = vsnprintf(buf, MAX_PRINTF_SIZE, format, arg);
 
-	if (__send_console_write_string_request(buf) < 0) return EOF;
-	return result;
+        if (__send_console_write_string_request(buf) < 0) return EOF;
+        return result;
 }
 
 int fprintf(FILE *restrict stream, const char *fmt, ...) {
-	errno = ENOENT; /* Couldn't come up with something better this'll do */
-	return -1;
+        errno = ENOENT; /* Couldn't come up with something better this'll do */
+        return -1;
 }
 
 int sprintf(char *restrict str, const char *restrict fmt, ...) {
@@ -208,7 +208,7 @@ int vsnprintf(char *restrict str, size_t maxsize, const char *restrict fmt, va_l
                         }
 
                         case 'p': {
-                                void* v = va_arg(args, void*);
+                                void *v = va_arg(args, void *);
                                 bputs(str, maxsize, &idx, "0x");
                                 bputud(str, maxsize, &idx, (uintptr_t)v, 16, false);
                                 break;
@@ -268,6 +268,6 @@ int putchar(int c) {
 int puts(const char *str) { return printf("%s\n", str); }
 
 int fputc(int c, FILE *stream) {
-	errno = ENOENT; /* see comment in fprintf */
-	return EOF;
+        errno = ENOENT; /* see comment in fprintf */
+        return EOF;
 }
