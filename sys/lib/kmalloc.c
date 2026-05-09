@@ -217,6 +217,7 @@ void *kzalloc(Size size) {
         SlabCache *cache = GetSlabCacheForSize(size);
         /* If this never runs, we've allocated a page or more. */
         if (cache) kzeromem(ptr, cache->objsize);
+	else kzeromem(ptr, PAGE_SIZE); 
 
         return ptr;
 }
@@ -262,8 +263,6 @@ void *AllocateVirtualPage(void) {
 
         void     *virtaddr = GetHeapPageAddress();
         uintptr_t addr     = (uintptr_t)virtaddr;
-
-        MarkHeapPageAsUsed(addr);
 
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
