@@ -136,14 +136,7 @@ static Status HandlePortObjectRequest(int handle, Object *obj, PortObjectOp op, 
                         break;
                 }
                 case PORT_WAIT_AT: {
-                        Port *p = (Port *)obj->data;
-                        if (p && p->queue != NullPointer) {
-                                return STATUS_OK; /* There's a message to be handled, you're not
-                                                     sleeping until you take care of your
-                                                     responsibilities */
-                        }
-                        current->waiting_on = handle;
-                        BlockThread(current);
+                        /* TODO */
                         break;
                 }
                 case PORT_BIND_IRQ: {

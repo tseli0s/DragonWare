@@ -20,27 +20,11 @@
 #include "process.h"
 #include "task.h"
 
-void EnqueueMessage(Port *port, MessageQueue *new_node) {
-        if (port->queue == NullPointer) {
-                new_node->next = new_node;
-                new_node->prev = new_node;
-                port->queue    = new_node;
-        } else {
-                MessageQueue *head = port->queue;
-                MessageQueue *tail = head->prev;
-
-                if (unlikely(!tail)) {
-                        /* Paranoia check */
-                        new_node->next = new_node;
-                        new_node->prev = new_node;
-                        port->queue    = new_node;
-                } else {
-                        new_node->next = head;
-                        new_node->prev = tail;
-                        tail->next     = new_node;
-                        head->prev     = new_node;
-                }
-        }
+void EnqueueMessage(Port *port, Message *new) {
+        Size index = port->tail;
+        memcpy(&port->msgbuf[index], new, sizeof(MessageHeader) + new->header.payload_length);
+        port->tail = (port->tail + 1) % MAX_MESSAGES_IN_PORT;
+        port->count++;
 }
 
 [[gnu::nonnull, gnu::hot]]
@@ -63,12 +47,9 @@ Status SendMessage(Process *process, int handle, Message *msg) {
 
         /* Standard queue insertion. TODO: This is almost identical to the code in
          * sys/syscall/ipc.c, create a helper function to do this for us. */
-        Port         *port     = target->data;
-        MessageQueue *new_node = kmalloc(sizeof(MessageQueue));
-        if (!new_node) return STATUS_OUT_OF_MEMORY;
+        Port *port = target->data;
 
-        memcpy(&new_node->m, msg, sizeof(msg->header) + msg->header.payload_length);
-        EnqueueMessage(port, new_node);
+        EnqueueMessage(port, msg);
         WakeThread(port->owner);
 
         return STATUS_OK;
