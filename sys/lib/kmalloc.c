@@ -216,8 +216,10 @@ void *kzalloc(Size size) {
          * (larger) allocations will leak data. */
         SlabCache *cache = GetSlabCacheForSize(size);
         /* If this never runs, we've allocated a page or more. */
-        if (cache) kzeromem(ptr, cache->objsize);
-	else kzeromem(ptr, PAGE_SIZE); 
+        if (cache)
+                kzeromem(ptr, cache->objsize);
+        else
+                kzeromem(ptr, PAGE_SIZE);
 
         return ptr;
 }
@@ -257,12 +259,10 @@ void kfree(void *ptr) {
 }
 
 void *AllocateVirtualPage(void) {
-        extern char _end;
-
         uintptr_t frameaddr = AllocateFrame();
+        void     *virtaddr  = GetHeapPageAddress();
 
-        void     *virtaddr = GetHeapPageAddress();
-        uintptr_t addr     = (uintptr_t)virtaddr;
+        uintptr_t addr = (uintptr_t)virtaddr;
 
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
