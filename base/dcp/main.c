@@ -99,7 +99,7 @@ int main(void) {
         }
         return 0;
 cleanup:
-        DeleteObject(consport);
-        DeleteObject(commport);
+        if (consport >= 0) DeleteObject(consport);
+        if (commport >= 0) DeleteObject(commport);
         return 0;
 }
