@@ -87,8 +87,8 @@ int main(void) {
                                         printf("DragonWare >> ");
                                 } else if (c == '\b') {
                                         if (cmdend > 0) {
-                                                command[cmdend] = '\0';
-                                                cmdend--;
+                                        	cmdend--;
+						command[cmdend] = '\0';
                                                 putchar('\b');
                                         }
                                 }
