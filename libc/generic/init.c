@@ -19,7 +19,6 @@
 [[gnu::visibility("hidden")]]
 int __dlibc_console_handle = -1;
 
-[[gnu::visibility("hidden")]]
 static void __libc_register_handles(void) {
         const char *console_port_name = "CONSOLE";
 
