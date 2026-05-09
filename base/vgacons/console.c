@@ -148,8 +148,8 @@ int main(void) {
         return 0;
 
 cleanup:
-        if (consoledev > 0) DeleteObject(consoledev);
-        if (kbdport > 0) DeleteObject(kbdport);
-        if (replyport > 0) DeleteObject(replyport);
+        if (consoledev >= 0) DeleteObject(consoledev);
+        if (kbdport >= 0) DeleteObject(kbdport);
+        if (replyport >= 0) DeleteObject(replyport);
         return -1;
 }
