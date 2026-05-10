@@ -43,55 +43,46 @@ EnableSysenter:
         pop     ebp
         ret
 
-; System calls expect this frame:
-; typedef struct _InterruptStackFrame {
-;         u32 gs, fs, es, ds;
-;         u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-;         u32 int_no;
-;         u32 err_code;
-;         u32 eip, cs, eflags;
-;         u32 useresp, ss;
-; } InterruptStackFrame;
-; Obviously most of the fields are unused in this frame, so...
-; TODO: Use a dedicated SystemCallRegisters for system calls to avoid pushing unnecessary
-; state here.
 ;
+; System calls expect this frame:
+; typedef struct [[gnu::packed]] _SystemCallFrame {
+;         u32 ebx, esi, edi, ebp; /* Arguments 0-3 of every system call */
+;         u32 eax;                /* System call number */
+;         u32 eflags;             /* Used for _DWRaiseIOPL only */
+; } SystemCallFrame;
+;
+; We construct it upon entry and then call the system call handler to handle the actual userland system call.
 ; NOTE: Userland doesn't make use of this code yet. It uses the traditional software interrupt method for now.
 ; Meaning this code here is just a stub for the future, and has not been tested yet.
-; In fact, the system call ABI used by DragonWare requires the third and fourth arguments to be passed in ecx/edx,
-; which are also used by sysenter/sysexit to find the return address and the user stack. Meaning if you just tried to
-; use it anyways, best case it may work for SOME programs, but everything else will be broken.
 _SysenterEntry:
-        cli
-
+        cli             ; Disable interrupts. The kernel doesn't support reentrancy yet.
         push    ecx     ; useresp
         push    edx     ; usereip (return address)
 
-        ; Now construct the interrupt frame
-        ; Bottom 7 fields are unused, just push junk to prepare the actual state
-        times 7 push dword 0
+        ; Now we must construct the SystemCallFrame and give it to the
+        ; system call handler.
+        pushfd
+        push    eax
+        push    ebp
+        push    edi
+        push    esi
+        push    ebx
 
-        ; GPRs
-        pushad
-
-        ; Segment registers
-        push    ds
-        push    es
-        push    fs
-        push    gs
-
-        push    esp                     ; Push the stack as the InterruptStackFrame
+        push    esp                     ; Push the stack as the SystemCallFrame
         call    DragonWareSyscall       ; Call the system call handler
         add     esp,    4               ; Now discard the argument we pushed
 
-        ; Now clean up the stack to only leave the registers we need to return
-        ; from the system call.
-        add     esp,    16      ; Segment registers, not used.
-        popad                   ; Restore the GPRs now with the system call state
-        add     esp,    28      ; Discard stuff that we don't actually use in sysenter/sysexit
+        ; Get whatever the kernel returned into those arguments and restore it
+        ; for the user process. Most importantly, eax holds the return code and
+        ; esi/edi may hold extra return values.
+        pop     ebx
+        pop     esi
+        pop     edi
+        pop     ebp
+        pop     eax
+        popfd
 
-        pop     edx             ; Return address to drop back to
-        pop     ecx             ; User stack to switch to upon return
-
-        sti                     ; Reenable interrupts...
-        sysexit                 ; ...and finally return to userspace!
+        pop     edx                     ; Return address to drop back to
+        pop     ecx                     ; User stack to switch to upon return
+        sti
+        sysexit
