@@ -17,7 +17,6 @@
 #include <macros.h>
 #include <mmutils.h>
 
-#include "ddk/ia32/interrupts.h"
 #include "identify.h"
 #include "ipc.h"
 #include "object.h"
@@ -66,7 +65,7 @@ static Status _DWRaiseIOPL(u32 *eflags) {
                 return STATUS_UNSUPPORTED;
 }
 
-InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
+void DragonWareSyscall(SystemCallFrame *regs) {
         switch (regs->eax) {
                 case SYSCALL_IDENTIFY:
                         SystemIdentifySyscall((SystemIdentify *)regs->ebx);
@@ -107,7 +106,7 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                          * */
                         u64 ticks = GetTicksSinceBoot();
                         regs->eax = (u32)(ticks & 0xffffffff);
-                        regs->edx = (u32)(((u64)ticks) >> 32);
+                        // regs->edx = (u32)(((u64)ticks) >> 32);
                         break;
                 }
                 case SYSCALL_CREATE_OBJECT:
@@ -125,13 +124,11 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                         regs->eax = (u32)STATUS_BAD_SYSCALL;
                         break;
         }
-        return regs;
 }
 
-InterruptStackFrame *POSIXSyscall(InterruptStackFrame *regs) {
+void POSIXSyscall(SystemCallFrame *regs) {
         LogMessage(LOG_WARNING,
                    "POSIX syscall invoked. POSIX compatibility has not been implemented "
                    "yet.");
         regs->eax = (u32)STATUS_BAD_SYSCALL;
-        return regs;
 }

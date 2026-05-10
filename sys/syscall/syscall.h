@@ -38,9 +38,7 @@
 typedef struct [[gnu::packed]] _SystemCallFrame {
         u32 ebx, esi, edi, ebp; /* Arguments 0-3 of every system call */
         u32 eax;                /* System call number */
-        u32 useresp; /* May be used in the future, to copy parameters from the user stack if
-                         necessary. */
-        u32 eflags;  /* Used for _DWRaiseIOPL only */
+        u32 eflags;             /* Used for _DWRaiseIOPL only */
 } SystemCallFrame;
 
 /**
@@ -48,26 +46,20 @@ typedef struct [[gnu::packed]] _SystemCallFrame {
  * whenever system calls are triggered by software interrupts (int 0x60).
  * @since v0.0.2
  */
+[[gnu::hot]]
 static inline void SyscallFrameFromInterrupt(InterruptStackFrame *iframe, SystemCallFrame *sframe) {
-        sframe->ebx     = iframe->ebx;
-        sframe->esi     = iframe->esi;
-        sframe->edi     = iframe->edi;
-        sframe->ebp     = iframe->ebp;
-        sframe->eax     = iframe->eax;
-        sframe->useresp = iframe->useresp;
-        sframe->eflags  = iframe->eflags;
+        sframe->ebx    = iframe->ebx;
+        sframe->esi    = iframe->esi;
+        sframe->edi    = iframe->edi;
+        sframe->ebp    = iframe->ebp;
+        sframe->eax    = iframe->eax;
+        sframe->eflags = iframe->eflags;
 }
 
-/**
- * @brief Returns a @ref SystemCallFrame from an @ref InterruptStackFrame.
- * @since v0.0.2
- */
-SystemCallFrame SystemCallFrameFromInterrupt(InterruptStackFrame *frame);
-
 /* Native DragonWare syscall, we implement our own APIs here */
-InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs);
+void DragonWareSyscall(SystemCallFrame *frame);
 
 /* POSIX syscall. We currently don't implement them, but may do so for compatibility in the future.
  * You know, porting stuff easier. */
-InterruptStackFrame *POSIXSyscall(InterruptStackFrame *regs);
+void POSIXSyscall(SystemCallFrame *frame);
 #endif /* __DRAGONWARE_SYS__ */
