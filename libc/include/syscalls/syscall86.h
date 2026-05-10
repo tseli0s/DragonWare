@@ -18,8 +18,6 @@ extern void __make_syscall_ia32_3param(int syscall, uint32_t __param1, uint32_t 
                                        uint32_t __param3);
 extern void __make_syscall_ia32_4param(int syscall, uint32_t __param1, uint32_t __param2,
                                        uint32_t __param3, uint32_t __param4);
-extern void __make_syscall_ia32_5param(int syscall, uint32_t __param1, uint32_t __param2,
-                                       uint32_t __param3, uint32_t __param4, uint32_t __param5);
 
 extern uint32_t __make_syscall_ia32_0param_reti32(int syscall);
 extern uint32_t __make_syscall_ia32_1param_reti32(int syscall, uint32_t __param);
@@ -29,6 +27,3 @@ extern uint32_t __make_syscall_ia32_3param_reti32(int syscall, uint32_t __param1
                                                   uint32_t __param3);
 extern uint32_t __make_syscall_ia32_4param_reti32(int syscall, uint32_t __param1, uint32_t __param2,
                                                   uint32_t __param3, uint32_t __param4);
-extern uint32_t __make_syscall_ia32_5param_reti32(int syscall, uint32_t __param1, uint32_t __param2,
-                                                  uint32_t __param3, uint32_t __param4,
-                                                  uint32_t __param5);
