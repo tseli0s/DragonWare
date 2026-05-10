@@ -84,7 +84,7 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                         YieldCurrentThread();
                         break;
                 case SYSCALL_KLOG:
-                        _DWklog((int)regs->ebx, (const char *)regs->ecx);
+                        _DWklog((int)regs->ebx, (const char *)regs->esi);
                         break;
                 case SYSCALL_RAISE_IOPL: {
                         regs->eax = (u32)_DWRaiseIOPL(&regs->eflags);
@@ -92,16 +92,19 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                 }
                 case SYSCALL_SEND:
                         regs->eax =
-                                (u32)_DWIPCSend((int)regs->ebx, (Message *)regs->ecx, regs->edx);
+                                (u32)_DWIPCSend((int)regs->ebx, (Message *)regs->esi, regs->edi);
                         break;
                 case SYSCALL_RECEIVE:
-                        regs->eax = (u32)_DWIPCReceive((int)regs->ebx, (Message *)regs->ecx);
+                        regs->eax = (u32)_DWIPCReceive((int)regs->ebx, (Message *)regs->esi);
                         break;
                 case SYSCALL_TICK_SINCE_BOOT: {
                         /* System V ABI says that, for a 64 bit return value, high 32 bits go in
                          * edx, and the low 32 bits go in eax. So we can simply mask out the high 32
                          * bits when assigning to eax and shift down edx by the amount of low
-                         * bits.*/
+                         * bits.
+                         * FIXME: This is broken on sysenter/sysexit instructions (edx must be
+                         * preserved, it holds the return address to userland).
+                         * */
                         u64 ticks = GetTicksSinceBoot();
                         regs->eax = (u32)(ticks & 0xffffffff);
                         regs->edx = (u32)(((u64)ticks) >> 32);
@@ -109,11 +112,11 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                 }
                 case SYSCALL_CREATE_OBJECT:
                         regs->eax = (u32)_DWCreateObject((const char *)regs->ebx,
-                                                         (ObjectType)regs->ecx, regs->edx);
+                                                         (ObjectType)regs->esi, regs->edi);
                         break;
                 case SYSCALL_INVOKE_OBJECT:
                         regs->eax =
-                                (u32)_DWInvokeObject((int)regs->ebx, regs->ecx, (void *)regs->edx);
+                                (u32)_DWInvokeObject((int)regs->ebx, regs->esi, (void *)regs->edi);
                         break;
                 case SYSCALL_DELETE_OBJECT:
                         _DWDeleteObject((int)regs->ebx);
