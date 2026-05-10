@@ -12,6 +12,10 @@
 
 #include "syscalls/syscall86.h"
 
+/* Defined in syscalls/syscall86.asm. Enables sysenter support for the userland if supported,
+ otherwise falls back to the int 0x60 way of doing system calls. */
+extern int __libc_try_enable_sysenter(void);
+
 /* XXX We can't use the dwuser library here - We would have a circular dependency. So we have to
  * perform the system calls manually. Luckily I don't plan on moving system calls around, so
  * this will work for some time, although fragile.*/
@@ -38,7 +42,10 @@ static void __libc_register_handles(void) {
         if (invoke_status != STATUS_OK) __dlibc_console_handle = -1;
 }
 
-void __libc_init_internal(void) { __libc_register_handles(); }
+void __libc_init_internal(void) {
+        __libc_try_enable_sysenter();
+        __libc_register_handles();
+}
 
 [[gnu::visibility("hidden")]]
 void __libc_cleanup(void) {
