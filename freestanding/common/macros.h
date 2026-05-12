@@ -109,32 +109,10 @@
  * warning.  */
 #define UnusedParameter(p)  ((void)p)
 
-#define ifnull(ptr, __LAMBDA__)            \
-        do {                               \
-                {                          \
-                        if (!ptr) {        \
-                                __LAMBDA__ \
-                        }                  \
-                }                          \
-        } while (0)
-
-/**
- * @brief Calls @p _func, checks the return code (@ref Status) and
- * if it is not @ref STATUS_OK, runs the provided code block (__LAMBDA__).
- * @note The second parameter (__LAMBDA__) should be enclosed in brackets, like a code block.
- */
-#define CheckStatus(_func, __LAMBDA__)     \
-        do {                               \
-                Status __stat = _func;     \
-                if (__stat != STATUS_OK) { \
-                        __LAMBDA__;        \
-                }                          \
-        } while (0)
-
 /**
  * @brief Preconfigured address of the global framebuffer, usually placed 8MBs before cutoff from
  * the address space.
  * @warning This approach is not scalable, and will be replaced in the future. Eg. A high resolution
  * (1080p) framebuffer will crash the kernel.
  */
-#define FRAMEBUFFER_ADDR ((uintptr_t)0xFF800000)
+#define FRAMEBUFFER_ADDR    ((uintptr_t)0xFF800000)
