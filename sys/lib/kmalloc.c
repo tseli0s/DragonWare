@@ -217,12 +217,14 @@ void *AllocateVirtualPage(void) {
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
 
-        CheckStatus(MapSinglePage(frameaddr, heap_next, flags), {
+        Status mapstatus = MapSinglePage(frameaddr, heap_next, flags);
+        if (mapstatus != STATUS_OK) {
                 LogMessage(LOG_ERROR,
-                           "MapSinglePage() did not return STATUS_OK, AllocateVirtualPage() has "
-                           "nothing to return.");
+                           "MapSinglePage(): %s. AllocateVirtualPage() has "
+                           "nothing to return.",
+                           StatusCodeToString(mapstatus));
                 return NullPointer;
-        });
+        }
         return (void *)heap_next;
 }
 
