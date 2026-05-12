@@ -9,22 +9,72 @@
 
 #include "kmalloc.h"
 
+#include <ktypes.h>
+#include <macros.h>
 #include <mmutils.h>
 
+#include "assert.h"
 #include "ddk/ia32/cpu.h"
 #include "ddk/ia32/kcpuid.h"
 #include "ddk/ia32/paging.h"
 #include "ddk/ia32/vmm.h"
-#include "ktypes.h"
 #include "log.h"
-#include "macros.h"
 #include "mem/frame.h"
 #include "panic.h"
 
-/** @brief Where the kernel heap ends. 0xC0000000 is the kernel virtual base. */
-#define HEAP_BREAK (0x20000000)
+/******************************************************************************************
+ * XXX this code is very similar to sys/task/process.c we can probably unify everything
+ * in sys/ddk/ia32/vmm.c but I am a little lazy today.
+ ***************************************************************************************/
 
-static Size heap_allocated = 0;
+/** @brief Where the heap starts in virtual memory. This assumes that the kernel is under a certain
+ * size. */
+#define HEAP_BASE        ((uintptr_t)KERNEL_VM_BASE + (0x100000))
+
+/** @brief Where the kernel heap ends. */
+#define HEAP_BREAK       ((uintptr_t)(HEAP_BASE + (0x20000000)))
+
+/** @brief Size of the heap in virtual memory */
+#define HEAP_SIZE        ((uintptr_t)(HEAP_BREAK - HEAP_BASE))
+
+/** @brief Amount of bit words needed to track the heap usage of the kernel in pages. A single word
+ * contains 32 bits in this case. */
+#define BIT_WORDS_NEEDED ((HEAP_SIZE / PAGE_SIZE + 31) / 32)
+
+/** @brief Calculates the bit that tracks a single virtual page in the heap bitmap and
+ * returns its index. */
+#define BIT_OF(addr)     ((u32)(((addr) - HEAP_BASE) / PAGE_SIZE))
+
+static u32 heap_bitmap[BIT_WORDS_NEEDED] = {0};
+
+static inline void MarkHeapPageAsUsed(uintptr_t addr) {
+        kassert(isaligned(addr, PAGE_SIZE));
+        if (!inrange(addr, HEAP_BASE, HEAP_BREAK)) return;
+
+        u32 idx = BIT_OF(addr);
+        heap_bitmap[idx / 32] |= (1 << idx % 32);
+}
+
+static inline void MarkHeapPageAsFree(uintptr_t addr) {
+        kassert(isaligned(addr, PAGE_SIZE));
+        if (!inrange(addr, HEAP_BASE, HEAP_BREAK)) return;
+
+        u32 idx = BIT_OF(addr);
+        heap_bitmap[idx / 32] &= ~(1 << (idx % 32));
+}
+
+static void *GetHeapPageAddress(void) {
+        for (u32 i = 0; i < BIT_WORDS_NEEDED; i++) {
+                if (heap_bitmap[i] == 0xFFFFFFFF) continue;
+
+                int bit = __builtin_ctz(~heap_bitmap[i]);
+                heap_bitmap[i] |= (1 << bit);
+
+                return (void *)(HEAP_BASE + ((i * 32 + (u32)bit) * 4096));
+        }
+        /* I really should implement an OOM helper or something */
+        FatalError("Kernel has ran out of heap memory");
+}
 
 /*
  * kmalloc/kfree implementation:
@@ -166,7 +216,10 @@ void *kzalloc(Size size) {
          * (larger) allocations will leak data. */
         SlabCache *cache = GetSlabCacheForSize(size);
         /* If this never runs, we've allocated a page or more. */
-        if (cache) kzeromem(ptr, cache->objsize);
+        if (cache)
+                kzeromem(ptr, cache->objsize);
+        else
+                kzeromem(ptr, PAGE_SIZE);
 
         return ptr;
 }
@@ -206,24 +259,21 @@ void kfree(void *ptr) {
 }
 
 void *AllocateVirtualPage(void) {
-        extern char _end;
-        if (unlikely(heap_allocated >= HEAP_BREAK))
-                FatalError("No virtual memory left for the kernel's heap!");
-
         uintptr_t frameaddr = AllocateFrame();
-        uintptr_t heap_next = pagealign((uintptr_t)&_end + heap_allocated);
-        heap_allocated += PAGE_SIZE;
+        void     *virtaddr  = GetHeapPageAddress();
+
+        uintptr_t addr = (uintptr_t)virtaddr;
 
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
 
-        CheckStatus(MapSinglePage(frameaddr, heap_next, flags), {
+        CheckStatus(MapSinglePage(frameaddr, addr, flags), {
                 LogMessage(LOG_ERROR,
                            "MapSinglePage() did not return STATUS_OK, AllocateVirtualPage() has "
                            "nothing to return.");
                 return NullPointer;
         });
-        return (void *)heap_next;
+        return virtaddr;
 }
 
 void FreeVirtualPage(void *addr) {
@@ -234,5 +284,6 @@ void FreeVirtualPage(void *addr) {
                                         certainty. For now it works though.*/
 
         UnmapSinglePage(vaddr);
+        MarkHeapPageAsFree(vaddr);
         FreeFrame(paddr);
 }

@@ -13,6 +13,8 @@
 #include <kstring.h>
 #include <ktypes.h>
 #include <log.h>
+#include <macros.h>
+#include <mmutils.h>
 
 typedef struct _PortNode {
         Port             *port;
@@ -39,13 +41,13 @@ Status CreatePort(const char *name, Thread *owner, Port **portsave) {
                 port->name[MAX_PORT_NAME - 1] = '\0';
         }
 
-        port->queue = NullPointer;
-        port->owner = owner;
+        ZeroMemory(port->msgbuf);
+        port->head = port->tail = port->count = 0;
+        port->owner                           = owner;
 
         if (is_global_port) {
                 PortNode *node = kmalloc(sizeof(PortNode));
                 if (!node) {
-                        kfree(port->queue);
                         kfree(port);
                         return STATUS_OUT_OF_MEMORY;
                 }
@@ -81,7 +83,6 @@ void DeletePort(Port *p) {
                                 port_list_head = iter->next;
 
                         kfree(iter);
-                        kfree(p->queue);
                         kfree(p);
                         return;
                 }

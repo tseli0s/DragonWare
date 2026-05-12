@@ -14,7 +14,8 @@
 
 #include "task/task.h"
 
-#define MAX_PORT_NAME (48)
+#define MAX_PORT_NAME        (48)
+#define MAX_MESSAGES_IN_PORT (12)
 
 /**
  * @brief A single IPC endpoint to send messages to.
@@ -23,10 +24,11 @@
  * fast data exchange between two processes.
  */
 typedef struct _Port {
-        char          name[MAX_PORT_NAME];
-        Spinlock      lock;  /* Placeholder for the future, not gonna be used now */
-        Thread       *owner; /* Owner of this port. Messages go here. */
-        MessageQueue *queue; /* Queue of messages waiting on this port. */
+        char     name[MAX_PORT_NAME];
+        Spinlock lock;  /* Placeholder for the future, not gonna be used now */
+        Thread  *owner; /* Owner of this port. Messages go here. */
+        Message  msgbuf[MAX_MESSAGES_IN_PORT]; /* Messages held in this port */
+        Size     head, tail, count; /* Indices of the messages currently in the message buffer */
 } Port;
 
 /**
