@@ -16,7 +16,7 @@
  * @brief Returns the offset of the member inside a struct in bytes.
  * @since v0.0.2
  */
-#define offsetof(_t, _m)         __builtin_offsetof(_t, _m)
+#define offsetof(_t, _m)         ((Size) & ((_t*)0x0000)->_m)
 
 /**
  * @brief Check if a value lies within a closed interval.
