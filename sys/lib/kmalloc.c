@@ -267,22 +267,25 @@ void *AllocateVirtualPage(void) {
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
 
-        CheckStatus(MapSinglePage(frameaddr, addr, flags), {
+        Status mapstatus = MapSinglePage(frameaddr, addr, flags);
+        if (mapstatus != STATUS_OK) {
                 LogMessage(LOG_ERROR,
                            "MapSinglePage(): %s. AllocateVirtualPage() has "
                            "nothing to return.",
                            StatusCodeToString(mapstatus));
                 return NullPointer;
-        });
+                return virtaddr;
+        }
+
         return virtaddr;
 }
 
 void FreeVirtualPage(void *addr) {
         uintptr_t vaddr = (uintptr_t)addr;
         uintptr_t paddr =
-                virt_to_phys(vaddr); /* FIXME !!!!!! This only works if the offset remains constant
-                                        across mappings, which we don't guarantee with absolute
-                                        certainty. For now it works though.*/
+                virt_to_phys(vaddr); /* FIXME !!!!!! This only works if the offset remains
+                                        constant across mappings, which we don't guarantee
+                                        with absolute certainty. For now it works though.*/
 
         UnmapSinglePage(vaddr);
         MarkHeapPageAsFree(vaddr);

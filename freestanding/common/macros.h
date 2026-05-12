@@ -98,7 +98,7 @@
 
 /** @brief Shorthand macro to mark a function parameter as intentionally unused without generating a
  * warning.  */
-#define UnusedParameter(p)       ((void)p)
+#define UnusedParameter(p)  ((void)p)
 
 /**
  * @brief Preconfigured address of the global framebuffer, usually placed 8MBs before cutoff from
@@ -106,4 +106,4 @@
  * @warning This approach is not scalable, and will be replaced in the future. Eg. A high resolution
  * (1080p) framebuffer will crash the kernel.
  */
-#define FRAMEBUFFER_ADDR         ((uintptr_t)0xFF800000)
+#define FRAMEBUFFER_ADDR    ((uintptr_t)0xFF800000)
