@@ -128,8 +128,8 @@ Status ReadELFToMemory(File *file, uintptr_t *entry) {
                         return STATUS_BAD;
                 }
 
-                DebugPrint("Segment %d: virtual address %p, physical address %p, size %d", i,
-                           (u64)current_seg.vaddr, (u64)current_seg.paddr, current_seg.size_mem);
+                DebugPrint("Segment %d: virtual address %p, physical address %p, size 0x%x bytes",
+                           i, current_seg.vaddr, current_seg.paddr, current_seg.size_mem);
 
                 /* Uh, I think this is the way to go about this. It does work for DragonWare, but no
                  * idea about anything else. Basically, read the segment into memory, and if it is
