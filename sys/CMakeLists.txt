@@ -11,11 +11,11 @@ include_directories(SYSTEM    ${CMAKE_CURRENT_SOURCE_DIR}/lib
                               ${CMAKE_SOURCE_DIR}/freestanding/common
                               ${CMAKE_SOURCE_DIR}/freestanding/mm
                               ${CMAKE_SOURCE_DIR}/freestanding/string
-                              ${CMAKE_SOURCE_DIR}/freestanding/compat
-                              ${CMAKE_SOURCE_DIR}/freestanding/arch)
+                              ${CMAKE_SOURCE_DIR}/freestanding/compat)
 
 if (${ARCH} STREQUAL "IA32")
      set(DDK_SYSDIR ${CMAKE_CURRENT_SOURCE_DIR}/ddk/ia32)
+     include_directories(SYSTEM ${CMAKE_SOURCE_DIR}/freestanding/arch/ia32) 
      list(APPEND C_SOURCES
           ${DDK_SYSDIR}/gdt.c
           ${DDK_SYSDIR}/idt.c
