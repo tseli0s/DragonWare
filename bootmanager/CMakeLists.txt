@@ -31,7 +31,7 @@ target_include_directories(core.img PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib
                                             ${CMAKE_SOURCE_DIR}/freestanding/mm
                                             ${CMAKE_SOURCE_DIR}/freestanding/string
                                             ${CMAKE_SOURCE_DIR}/freestanding/compat
-                                            ${CMAKE_SOURCE_DIR}/freestanding/arch)
+                                            ${CMAKE_SOURCE_DIR}/freestanding/arch/ia32)
 
 target_link_libraries(core.img PRIVATE dwfsl)
 add_custom_command(TARGET core.img POST_BUILD
