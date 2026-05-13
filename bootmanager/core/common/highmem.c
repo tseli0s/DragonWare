@@ -65,7 +65,7 @@ void AllocHighInit(void) {
         n_pages_high = aligndown((himem_break - himem_start), FRAME_SIZE) / FRAME_SIZE;
 
         DebugPrint("Initialized high memory allocator (Claimed region %p-%p), claiming %d pages",
-                   (u64)himem_start, (u64)himem_break, n_pages_high);
+                   himem_start, himem_break, n_pages_high);
 }
 
 void AllocHighBreakAt(uintptr_t start, uintptr_t end) {

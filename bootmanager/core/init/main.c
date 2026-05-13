@@ -137,7 +137,7 @@ static void BootDragonWareFromCD(void) {
         DebugPrint(
                 "Multiboot header: Entry point %p, preferred mode %d, preferred "
                 "dimensions %dx%d, at depth %d",
-                (u64)header->entry, header->mode, header->width, header->height, header->depth);
+                header->entry, header->mode, header->width, header->height, header->depth);
 
         uintptr_t entry = 0;
         ReadELFToMemory(&f, &entry);
@@ -188,7 +188,7 @@ static void BootDragonWareVGATextMode(void) {
         DebugPrint(
                 "Multiboot header: Entry point %p, preferred mode %d, preferred "
                 "dimensions %dx%d, at depth %d",
-                (u64)header->entry, header->mode, header->width, header->height, header->depth);
+                header->entry, header->mode, header->width, header->height, header->depth);
 
         uintptr_t entry = 0;
         ReadELFToMemory(&f, &entry);
