@@ -60,10 +60,10 @@ typedef signed int       i32;
 typedef signed long long i64;
 
 typedef u32 size_t;
+typedef i32 ssize_t;
 typedef u32 uintptr_t;
-typedef u64 HugePtr;
-
 typedef i32 intptr_t;
+
 #endif /* __i386__ */
 
 #endif /* __clang__  */
@@ -89,9 +89,6 @@ typedef u16 Word;
  * (But I won't use it, so who cares)
  */
 typedef u32 DoubleWord;
-
-/* Why not have this too? */
-typedef u64 Quad;
 
 /* I like PascalCase. */
 typedef bool   Bool;
@@ -131,6 +128,3 @@ typedef enum _Status {
  * inside the kernel binary. Copy it instead if necessary using @ref strdup
  */
 const char *StatusCodeToString(const Status code);
-
-#define SUCCESS(s) ((Status)(s) >= 0)
-#define FAILED(s)  ((Status)(s) < 0)
