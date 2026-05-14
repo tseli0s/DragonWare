@@ -13,6 +13,12 @@
  * manually. */
 
 /**
+ * @brief Returns the offset of the member inside a struct in bytes.
+ * @since v0.0.2
+ */
+#define offsetof(_t, _m)         __builtin_offsetof(_t, _m)
+
+/**
  * @brief Check if a value lies within a closed interval.
  * @param _num Value to test.
  * @param _low Lower bound (inclusive).
@@ -24,17 +30,18 @@
 /**
  * @brief Compute the maximum of two values.
  */
-#define max(_a, _b)              ((_a > _b) ? _a : _b)
+#define max(_a, _b)              (((_a) > (_b)) ? (_a) : (_b))
 
 /**
  * @brief Compute the minimum of two values.
  */
-#define min(_a, _b)              ((_a > _b) ? _b : _a)
+#define min(_a, _b)              (((_a) > (_b)) ? (_b) : (_a))
 
 /**
  * @brief Sets a given memory range to 0, automatically trying to guess the size of that range using
  * sizeof()
- * @note Doesn't work on pointers, use @ref kzeromem to control the size
+ * @note Doesn't work on pointers, use @ref kzeromem to control the size. This macro runs sizeof()
+ * on @p obj and the size of a pointer is only 4-8 bytes.
  */
 #define ZeroMemory(obj)          kzeromem(obj, sizeof(obj))
 
@@ -42,21 +49,8 @@
  * element  */
 #define arraysize(arr)           (sizeof(arr) / sizeof(arr[0]))
 
-/**
- * @brief Iterate over an array.
- * @param item Variable to receive each element.
- * @param array Array to iterate over.
- */
-#define foreach(_item, array, __LAMBDA__)                                                \
-        for (Size keep = 1, count = 0, size_ = arraysize(array); keep && count != size_; \
-             keep = !keep, count++) {                                                    \
-                for (_item = (array)[count]; keep; keep = !keep) {                       \
-                        __LAMBDA__;                                                      \
-                }                                                                        \
-        }
-
 /** @brief Determine if a year is a leap year. This uses the Gregorian calendar rules. */
-#define isleap(year)        ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)
+#define isleap(year)             ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)
 
 /**
  * @brief Align a value upwards to the nearest alignment boundary.
@@ -64,14 +58,14 @@
  * @param align Alignment boundary (must be non-zero).
  * @returns The smallest value >= x that is a multiple of align.
  */
-#define alignup(x, align)   (((Size)(x) + ((Size)(align) - 1)) / (Size)(align) * (Size)(align))
+#define alignup(x, align)        (((Size)(x) + ((Size)(align) - 1)) / (Size)(align) * (Size)(align))
 
 /**
  * @brief Align a value upwards to the PAGE_SIZE boundary (usually 4096).
  * @param _x Value to align.
  * @returns The smallest value >= x that is page aligned.
  */
-#define pagealign(_x)       (alignup(_x, PAGE_SIZE))
+#define pagealign(_x)            (alignup(_x, PAGE_SIZE))
 
 /**
  * @brief Align a value downwards to the nearest alignment boundary.
@@ -79,7 +73,7 @@
  * @param align Alignment boundary (must be non-zero).
  * @returns The largest value <= x that is a multiple of align.
  */
-#define aligndown(x, align) ((x) / (align) * (align))
+#define aligndown(x, align)      ((x) / (align) * (align))
 
 /**
  * @brief Check whether a value is aligned to a boundary.
@@ -87,21 +81,24 @@
  * @param align Alignment boundary.
  * @returns True if x is a multiple of align.
  */
-#define isaligned(x, align) (x % align == 0)
+#define isaligned(x, align)      ((x) % (align) == 0)
 
 /**
- * @brief Branch prediction hint: likely.
+ * @brief Hint to the compiler that the condition
+ * is likely to be true at runtime.
  */
-#define likely(x)           __builtin_expect(!!(x), 1)
+#define likely(x)                __builtin_expect(!!(x), 1)
 
 /**
- * @brief Branch prediction hint: unlikely.
+ * @brief Hint to the compiler that the condition is likely to be
+ * false at runtime.
+ * @sa likely
  */
-#define unlikely(x)         __builtin_expect(!!(x), 0)
+#define unlikely(x)              __builtin_expect(!!(x), 0)
 
 /** @brief Shorthand macro to mark a function parameter as intentionally unused without generating a
  * warning.  */
-#define UnusedParameter(p)  ((void)p)
+#define UnusedParameter(p)       ((void)p)
 
 #define ifnull(ptr, __LAMBDA__)            \
         do {                               \
