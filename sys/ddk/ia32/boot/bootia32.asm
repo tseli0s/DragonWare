@@ -104,7 +104,7 @@ _SystemBootstrapRoutine:
         mov     cr3, eax
     
         mov     eax, cr0
-        or      eax, 0x80000000
+        or      eax, 0x80010020 ; PG | PE | WP | NE
         mov     cr0, eax
 
         lea     ecx, [_PrepareKernelEntry]
