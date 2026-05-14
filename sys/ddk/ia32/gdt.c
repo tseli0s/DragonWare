@@ -113,7 +113,7 @@ void GDTInit(void) {
         tss0.esp0       = (u32)(((uintptr_t)tss_stack) + sizeof(tmp_tss_stack));
         tss0.iomap_base = sizeof(tss0);
         tss0.terminator = 0xFF;
-        GDTSetGate(5, (u32)&tss0, sizeof(tss0) - 1, 0x89, 0x00);
+        GDTSetGate(5, (u32)&tss0, sizeof(tss0) - 1, GDT_ACCESS_PRESENT | GDT_TYPE_TSS, 0x00);
 
         FlushGDT((u32)&gdtptr);
 
