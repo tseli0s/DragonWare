@@ -26,9 +26,16 @@ void _cdecl _DWklog(LogLevel level, const char *msg) {
         __make_syscall_ia32_2param(SYSCALL_KLOG, (u32)level, (u32)msg);
 }
 
+#if 0
 Status _cdecl _DWRaiseIOPL(void) {
         return (Status)__make_syscall_ia32_0param_reti32(SYSCALL_RAISE_IOPL);
 }
+#else
+Status _cdecl _DWRequestPorts(const u16 *port_list, Size port_list_size) {
+        return (Status)__make_syscall_ia32_2param_reti32(SYSCALL_REQUEST_PORTS, (uint32_t)port_list,
+                                                         (uint32_t)port_list_size);
+}
+#endif /* DRAGONWARE_VERSION_PATCH */
 
 Status _cdecl _DWIPCSend(int handle, Message *m, Size message_size) {
         return __make_syscall_ia32_3param_reti32(SYSCALL_SEND, handle, (u32)m, (u32)message_size);

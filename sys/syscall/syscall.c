@@ -17,6 +17,10 @@
 #include <macros.h>
 #include <mmutils.h>
 
+#ifdef __i386__
+#include "ddk/ia32/tss.h"
+#endif /* __i386__ */
+
 #include "identify.h"
 #include "ipc.h"
 #include "object.h"
@@ -55,7 +59,7 @@ static void _DWklog(int level, const char *msg) {
         klog((LogLevel)level, "%s", buf);
 }
 
-/* TODO: Also note the replacement function (Probably by an I/O object?) */
+#if 0
 [[deprecated(
         "_DWRaiseIOPL is no longer available, the TSS I/O bitmap has replaced its functionality")]]
 static Status _DWRaiseIOPL(u32 *eflags) {
@@ -66,6 +70,26 @@ static Status _DWRaiseIOPL(u32 *eflags) {
                 return STATUS_OK;
         } else
                 return STATUS_UNSUPPORTED;
+}
+#endif
+
+static Status _DWRequestPorts(const u16 *port_list, Size list_size) {
+        Process *current = GetCurrentExecutionThread()->owner;
+        if (!(current->flags & PROC_C_IOPL))
+                return STATUS_UNSUPPORTED; /* TODO: Have a STATUS_ACCESS_REJECTED or something */
+
+        if (list_size > MAX_IO_PORTS_PER_PROCESS) return STATUS_BAD_ARGUMENT;
+
+        u16 ports[MAX_IO_PORTS_PER_PROCESS] = {0};
+        if (CopyFromUser(ports, port_list, list_size * sizeof(u16)) != STATUS_OK)
+                return STATUS_BAD_ARGUMENT;
+
+        DisableIOPortsOfProcess(current);
+        for (Size i = 0; i < list_size; i++) current->ioports[i] = ports[i];
+        current->ports_used = (u16)list_size;
+
+        EnableIOPortsOfProcess(current);
+        return STATUS_OK;
 }
 
 void DragonWareSyscall(SystemCallFrame *regs) {
@@ -88,8 +112,8 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                 case SYSCALL_KLOG:
                         _DWklog((int)regs->ebx, (const char *)regs->esi);
                         break;
-                case SYSCALL_RAISE_IOPL: {
-                        regs->eax = (u32)STATUS_BAD_SYSCALL;
+                case SYSCALL_REQUEST_PORTS: {
+                        regs->eax = (u32)_DWRequestPorts((u16 *)regs->ebx, (Size)regs->esi);
                         break;
                 }
                 case SYSCALL_SEND:
