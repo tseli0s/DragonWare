@@ -59,9 +59,16 @@ void AllocHighInit(void) {
                 }
         }
 
-        /* Apply the best region found */
-        himem_start  = best_start;
-        himem_break  = best_break;
+        himem_start = best_start;
+        himem_break = best_break;
+
+        /*
+         * Prevent low memory from being used at all in case it was selected.
+         * Low memory contains the bootloader, the IVT/BDA, and other stuff that
+         * we don't want to overwrite probably.
+         * */
+        if (himem_start < HIGH_MEMORY_START) himem_start = HIGH_MEMORY_START;
+
         n_pages_high = aligndown((himem_break - himem_start), FRAME_SIZE) / FRAME_SIZE;
 
         DebugPrint("Initialized high memory allocator (Claimed region %p-%p), claiming %d pages",
