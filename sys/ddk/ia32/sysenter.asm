@@ -54,7 +54,6 @@ EnableSysenter:
 ; NOTE: Userland doesn't make use of this code yet. It uses the traditional software interrupt method for now.
 ; Meaning this code here is just a stub for the future, and has not been tested yet.
 _SysenterEntry:
-        cli             ; Disable interrupts. The kernel doesn't support reentrancy yet.
         push    ecx     ; useresp
         push    edx     ; usereip (return address)
 
