@@ -52,7 +52,7 @@ void RegisterBootModules(void) {
                 boot_modules[i]           = mods_arr[i];
                 LogMessage(LOG_DEBUG,
                            "Boot module %d: Start address %p, End Address %p, Command Line %s", i,
-                           (u64)boot_modules[i].start, (u64)boot_modules[i].end,
+                           boot_modules[i].start, boot_modules[i].end,
                            (char *)boot_modules[i].cmdline);
         }
 }
