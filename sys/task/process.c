@@ -251,14 +251,11 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
          * typed in the source "recursive paging trick". */
         ((PageDirectory *)pdmap->virt)[MAX_PD_ENTRIES - 1] = pdmap->phys | PAGE_PRESENT | PAGE_RW;
 
-        p->cr3                = pdmap->phys;
-        p->main_thread        = main_thread;
-        p->pid                = process_id_counter++;
-        p->kernel_stack       = kernel_stack_addr + (2 * FRAME_SIZE);
-        p->queue_size         = 0;
-        p->message_queue_head = NullPointer;
-        p->message_queue_tail = NullPointer;
-        p->next               = NullPointer;
+        p->cr3          = pdmap->phys;
+        p->main_thread  = main_thread;
+        p->pid          = process_id_counter++;
+        p->kernel_stack = kernel_stack_addr + (2 * FRAME_SIZE);
+        p->next         = NullPointer;
         kzeromem(&p->handles, sizeof(HandleTable));
 
         main_thread->owner = p;
@@ -325,18 +322,6 @@ Status DeleteProcess(Process *p) {
                         FreeFrame(pd[i] & PAGE_FRAME_MASK);
                 }
         }
-
-        /* Delete any messages left, as they can't be delivered on time anyways. */
-        MessageQueue *m_iter = p->message_queue_head;
-        while (m_iter) {
-                MessageQueue *next_node = m_iter->next;
-                kfree(m_iter);
-                m_iter = next_node;
-        }
-
-        p->message_queue_head = NullPointer;
-        p->message_queue_tail = NullPointer;
-        p->queue_size         = 0;
 
         UnmapSinglePage(pd_virt);
         MarkTmpMapFree((Size)pd_slot);
