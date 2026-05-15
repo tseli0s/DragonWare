@@ -55,6 +55,9 @@ static void _DWklog(int level, const char *msg) {
         klog((LogLevel)level, "%s", buf);
 }
 
+/* TODO: Also note the replacement function (Probably by an I/O object?) */
+[[deprecated(
+        "_DWRaiseIOPL is no longer available, the TSS I/O bitmap has replaced its functionality")]]
 static Status _DWRaiseIOPL(u32 *eflags) {
         /* set the IOPL bit in eflags, but only if the current process possesses the
          * capability to actually use that. */
@@ -86,7 +89,7 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                         _DWklog((int)regs->ebx, (const char *)regs->esi);
                         break;
                 case SYSCALL_RAISE_IOPL: {
-                        regs->eax = (u32)_DWRaiseIOPL(&regs->eflags);
+                        regs->eax = (u32)STATUS_BAD_SYSCALL;
                         break;
                 }
                 case SYSCALL_SEND:

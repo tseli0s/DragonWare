@@ -38,7 +38,6 @@
 typedef struct [[gnu::packed]] _SystemCallFrame {
         u32 ebx, esi, edi, ebp; /* Arguments 0-3 of every system call */
         u32 eax;                /* System call number */
-        u32 eflags;             /* Used for _DWRaiseIOPL only */
 } SystemCallFrame;
 
 /**
@@ -48,12 +47,11 @@ typedef struct [[gnu::packed]] _SystemCallFrame {
  */
 [[gnu::hot]]
 static inline void SyscallFrameFromInterrupt(InterruptStackFrame *iframe, SystemCallFrame *sframe) {
-        sframe->ebx    = iframe->ebx;
-        sframe->esi    = iframe->esi;
-        sframe->edi    = iframe->edi;
-        sframe->ebp    = iframe->ebp;
-        sframe->eax    = iframe->eax;
-        sframe->eflags = iframe->eflags;
+        sframe->ebx = iframe->ebx;
+        sframe->esi = iframe->esi;
+        sframe->edi = iframe->edi;
+        sframe->ebp = iframe->ebp;
+        sframe->eax = iframe->eax;
 }
 
 /* Native DragonWare syscall, we implement our own APIs here */
