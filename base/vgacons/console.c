@@ -30,9 +30,10 @@ static inline void VGAEnableCursor(u8 cursor_start, u8 cursor_end) {
 }
 
 int main(void) {
-        /* Need IOPL permissions to control the VGA cursor */
-        if (_DWRaiseIOPL() != STATUS_OK) return -1;
-        VGAEnableCursor(0, 15);
+        /* Need IOPL permissions to control the VGA cursor. If the kernel rejects the request, leave
+         * the cursor as is. */
+        u16 ports_needed[] = {0x3D4, 0x3D5};
+        if (_DWRequestPorts(ports_needed, 2) == STATUS_OK) VGAEnableCursor(0, 15);
 
         /* Device object, to claim the VGA text mode driver from the kernel */
         Handle consoledev = CreateObject(NullPointer, OBJ_DEVICE, 0);
