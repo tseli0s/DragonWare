@@ -52,8 +52,8 @@ MemoryRegionE820 *FetchMemoryRegions(Size *n) {
 
                 for (unsigned int i = 0; i < n_memory_regions; i++) {
                         const MemoryRegionE820 curr = memory_regions[i];
-                        DebugPrint("Memory region %d: Type %d, start 0x%x, size 0x%x", i, curr.type,
-                                   (u32)curr.base, (u32)curr.length);
+                        DebugPrint("Memory region %d: Type %d, start %r, size %r", i, curr.type,
+                                   curr.base, curr.length);
                 }
         }
         if (n) *n = n_memory_regions;
