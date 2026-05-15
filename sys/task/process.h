@@ -16,10 +16,16 @@
 /** @brief Where the user stack will be placed for each process. A high address is chosen to allow
  * the stack to grow freely if necessary in the future. Reminder that the kernel is mapped to
  * 0xC0000000-0xFFFFFFFF. */
-#define DEFAULT_USER_STACK_ADDR (0xBFFF0000)
+#define DEFAULT_USER_STACK_ADDR  (0xBFFF0000)
 
 /** @brief Maximum amount of device handles a device can have open at a given time. */
-#define MAX_DEVICE_HANDLES      (32)
+#define MAX_DEVICE_HANDLES       (32)
+
+/**
+ * @brief Maximum amount of I/O ports that a process can have.
+ * @since v0.0.2
+ */
+#define MAX_IO_PORTS_PER_PROCESS (20)
 
 typedef u32 ProcessID;
 
@@ -41,9 +47,8 @@ typedef struct _Process {
         u32               kernel_stack; /* That one's virtual, use it with SelectKernelStack */
         ProcessID         pid;
         HandleTable       handles;
-        MessageQueue     *message_queue_head;
-        MessageQueue     *message_queue_tail;
-        Size              queue_size;
+        u16               ioports[MAX_IO_PORTS_PER_PROCESS];
+        u16               ports_used;
         ProcessCapability flags;
         struct _Process  *prev, *next;
 } Process;
