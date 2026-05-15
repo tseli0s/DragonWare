@@ -15,7 +15,7 @@
 #define SYSCALL_EXIT            (1)
 #define SYSCALL_YIELD           (2)
 #define SYSCALL_KLOG            (3)
-#define SYSCALL_RAISE_IOPL      (4)
+#define SYSCALL_REQUEST_PORTS   (4) /* Replaced the old _DWRaiseIOPL syscall */
 #define SYSCALL_SEND            (5)
 #define SYSCALL_RECEIVE         (6)
 #define SYSCALL_TICK_SINCE_BOOT (7)
