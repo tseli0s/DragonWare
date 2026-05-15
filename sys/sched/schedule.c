@@ -15,7 +15,11 @@
 #include <macros.h>
 #include <panic.h>
 
+#ifdef __i386__
 #include "ddk/ia32/ctxswitch.h"
+#include "ddk/ia32/tss.h"
+#endif /* __i386__ */
+
 #include "task/task.h"
 
 /**
@@ -135,8 +139,12 @@ void ScheduleNext(void) {
                 current_thread = next;
                 if (prev && prev->owner && prev->owner == current_thread->owner)
                         should_switch_process = false;
-                if (current_thread->owner && should_switch_process)
+                if (current_thread->owner && should_switch_process) {
                         SwapProcess(current_thread->owner);
+                        if (prev->owner) DisableIOPortsOfProcess(prev->owner);
+
+                        EnableIOPortsOfProcess(current_thread->owner);
+                }
 
                 SwapThreadStack(&prev->esp, next->esp);
         }
