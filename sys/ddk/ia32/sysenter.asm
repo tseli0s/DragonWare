@@ -48,7 +48,6 @@ EnableSysenter:
 ; typedef struct [[gnu::packed]] _SystemCallFrame {
 ;         u32 ebx, esi, edi, ebp; /* Arguments 0-3 of every system call */
 ;         u32 eax;                /* System call number */
-;         u32 eflags;             /* Used for _DWRaiseIOPL only */
 ; } SystemCallFrame;
 ;
 ; We construct it upon entry and then call the system call handler to handle the actual userland system call.
@@ -61,7 +60,6 @@ _SysenterEntry:
 
         ; Now we must construct the SystemCallFrame and give it to the
         ; system call handler.
-        pushfd
         push    eax
         push    ebp
         push    edi
@@ -80,7 +78,6 @@ _SysenterEntry:
         pop     edi
         pop     ebp
         pop     eax
-        popfd
 
         pop     edx                     ; Return address to drop back to
         pop     ecx                     ; User stack to switch to upon return
