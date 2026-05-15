@@ -177,8 +177,12 @@ static Status Probe8042Controller(void) {
 }
 
 int main(void) {
-        /* We need IOPL support from the kernel to read the bytes from the controller. */
-        if (_DWRaiseIOPL() != STATUS_OK) return -1;
+        /* We need IO port access from the kernel to read the bytes from the controller. Note that
+         * PS2_PORT_COMMAND is the same as PS2_PORT_STATUS in this case so no reason to also specify
+         * it */
+        u16 ports_needed[] = {PS2_PORT_STATUS, PS2_PORT_DATA};
+        if (_DWRequestPorts(ports_needed, 2) != STATUS_OK) return -1;
+
         if (Probe8042Controller() != STATUS_OK) {
                 _DWklog(LOG_ERROR, "Unable to probe i8042 controller. Keyboard will be disabled.");
                 return -0xDD;
