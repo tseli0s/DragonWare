@@ -19,20 +19,17 @@
 #include "log.h"
 #include "video/pixels.h"
 
-typedef enum _SerialPort { COM1_PORT = 0x3F8, COM2_PORT = 0x2F8 } SerialPort;
+#define COM1_PORT (0x3F8)
+
 #ifndef __K_DISABLE_SERIAL_OUTPUT
+
 static inline void WaitForPort1(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
-static inline void WaitForPort2(void) { while (!(inb(COM2_PORT + 5) & 0x20)); }
 
 static inline void WriteToSerialPort1(char c) {
         WaitForPort1();
         outb(COM1_PORT, (Byte)c);
 }
 
-static inline void WriteToSerialPort2(char c) {
-        WaitForPort2();
-        outb(COM2_PORT, (Byte)c);
-}
 #endif /* __K_DISABLE_SERIAL_OUTPUT */
 
 /* We can't control the colors of a serial port, so just have a dummy function that's like "yeah bro
@@ -51,12 +48,9 @@ static void WriteSerialChar(void *private, char c) {
         if (c == '\n') {
                 WriteToSerialPort1('\r');
                 WriteToSerialPort1('\n');
-                WriteToSerialPort2('\r');
-                WriteToSerialPort2('\n');
-        } else {
+        } else
                 WriteToSerialPort1(c);
-                WriteToSerialPort2(c);
-        }
+
 #else
         UnusedParameter(c);
 #endif
@@ -65,12 +59,12 @@ static void WriteSerialChar(void *private, char c) {
 static void ResetSerialConsole(void *private_state) { UnusedParameter(private_state); }
 
 typedef struct _DriverState {
-        Bool com1_enabled, com2_enabled;
+        Bool com1_enabled;
 } DriverState;
 
 Status Serial86Init(void) {
         LogMessage(LOG_INFO,
-                   "Starting serial driver for DragonWare (Support for ports COM1/COM2 built in)");
+                   "Starting serial driver for DragonWare (Support for port COM1 built in)");
 #if defined(__K_DISABLE_SERIAL_OUTPUT) || !defined(DRAGONWARE_DEBUG_MODE)
         LogMessage(LOG_INFO,
                    "Kernel not in debug mode or support for serial output was disabled at build "
@@ -104,7 +98,6 @@ Status Serial86Init(void) {
         };
 
         state->com1_enabled         = true;
-        state->com2_enabled         = true;
         node->devtable.ddo->uart    = uart_ops;
         node->devtable.ddo->console = console_ops;
 
