@@ -179,7 +179,7 @@ void *kmalloc(Size size) {
         else if (size > PAGE_SIZE)
                 return NullPointer; /* Huge allocation, not supported yet */
 
-        if (!unlikely(allocator_initialized)) {
+        if (unlikely(!allocator_initialized)) {
                 InitSlabCaches();
                 allocator_initialized = true;
         }
@@ -260,8 +260,16 @@ void kfree(void *ptr) {
 
 void *AllocateVirtualPage(void) {
         uintptr_t frameaddr = AllocateFrame();
-        void     *virtaddr  = GetHeapPageAddress();
-        uintptr_t addr      = (uintptr_t)virtaddr;
+        if (!frameaddr) {
+#ifdef DRAGONWARE_DEBUG_MODE
+                LogMessage(LOG_WARNING,
+                           "Unable to allocate frame for the virtual page, bailing out");
+#endif /* DRAGONWARE_DEBUG_MODE */
+                return NullPointer;
+        }
+
+        void     *virtaddr = GetHeapPageAddress();
+        uintptr_t addr     = (uintptr_t)virtaddr;
 
         MarkHeapPageAsUsed(addr);
 
@@ -274,6 +282,7 @@ void *AllocateVirtualPage(void) {
                            "MapSinglePage(): %s. AllocateVirtualPage() has "
                            "nothing to return.",
                            StatusCodeToString(mapstatus));
+                FreeFrame(frameaddr);
                 return NullPointer;
         }
         return virtaddr;
