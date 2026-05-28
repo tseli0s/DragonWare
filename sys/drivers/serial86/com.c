@@ -50,7 +50,6 @@ static void WriteSerialChar(void *private, char c) {
                 WriteToSerialPort('\n');
         } else
                 WriteToSerialPort(c);
-
 #else
         UnusedParameter(c);
 #endif
