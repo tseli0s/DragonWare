@@ -23,9 +23,7 @@
 
 #ifndef __K_DISABLE_SERIAL_OUTPUT
 
-static inline void WaitForPort1(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
-
-#ifndef __K_DISABLE_SERIAL_OUTPUT
+static inline void WaitForPort(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
 
 static inline void WaitForPort(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
 
