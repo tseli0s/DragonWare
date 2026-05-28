@@ -23,10 +23,10 @@
 
 #ifndef __K_DISABLE_SERIAL_OUTPUT
 
-static inline void WaitForPort1(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
+static inline void WaitForPort(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
 
-static inline void WriteToSerialPort1(char c) {
-        WaitForPort1();
+static inline void WriteToSerialPort(char c) {
+        WaitForPort();
         outb(COM1_PORT, (Byte)c);
 }
 
@@ -46,10 +46,10 @@ static void WriteSerialChar(void *private, char c) {
         UnusedParameter(private);
 #ifndef __K_DISABLE_SERIAL_OUTPUT
         if (c == '\n') {
-                WriteToSerialPort1('\r');
-                WriteToSerialPort1('\n');
+                WriteToSerialPort('\r');
+                WriteToSerialPort('\n');
         } else
-                WriteToSerialPort1(c);
+                WriteToSerialPort(c);
 
 #else
         UnusedParameter(c);
