@@ -213,6 +213,8 @@ static void CopyMemoryRegionsToMultibootStruct(void) {
 
 [[gnu::noreturn]]
 void bootmain(void) {
+        DebugPrint("Welcome to DragonWare Boot Manager!");
+
         extern Byte BootDevice;
         extern Word NumMemoryRegions;
 
