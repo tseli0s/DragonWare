@@ -14,7 +14,6 @@
 #include <power.h>
 
 #include "cpu/idt86.h"
-#include "cpu/modeset.h"
 #include "elfldr/elfloader.h"
 #include "error.h"
 #include "frame.h"
