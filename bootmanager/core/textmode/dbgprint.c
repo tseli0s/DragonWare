@@ -11,6 +11,11 @@
 #include <kstring.h>
 #include <stdarg.h>
 
+#ifndef BOOTMGR_BRANDING_STRING /* I might make this configurable in the future in \
+                                   CMakeLists.txt... */
+#define BOOTMGR_BRANDING_STRING " * BOOT   "
+#endif /* BOOTMGR_BRANDING_STRING */
+
 #ifndef DRAGONWARE_DEBUG_MODE
 #include "macros.h" /* UnusedParameter macro */
 #endif              /* DRAGONWARE_DEBUG_MODE */
@@ -51,6 +56,10 @@ void DebugPrint(const char *msg, ...) {
         va_start(ap, msg);
         vsnprintf(buf, sizeof(buf), msg, ap);
         va_end(ap);
+
+        /* Print the prefix first implicitly */
+        Size prefixlen = strlen(BOOTMGR_BRANDING_STRING);
+        for (Size i = 0; i < prefixlen; i++) WriteSerialChar(BOOTMGR_BRANDING_STRING[i]);
 
         Size len = strlen(buf);
         if (len >= 256) len = 256; /* Make sure it's truncated so we don't overread */
