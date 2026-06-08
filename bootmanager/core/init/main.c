@@ -257,7 +257,6 @@ void bootmain(void) {
         bootinfo->mods_count             = 0;
         CopyMemoryRegionsToMultibootStruct();
 
-        AddEntry("Boot DragonWare (Default hard drive, text mode)", 1, BootDragonWareVGATextMode);
         /* Booting from CD */
         if (BootDevice >= 0xE0) {
                 AddEntry("Boot DragonWare (CD-ROM, text mode)", 0, BootDragonWareFromCD);
@@ -269,6 +268,7 @@ void bootmain(void) {
                 AddEntry("Boot DragonWare (Default hard drive, video mode)", 2,
                          BootDragonWareDefaultOptions);
         }
+        AddEntry("Boot DragonWare (Default hard drive, text mode)", 1, BootDragonWareVGATextMode);
         AddEntry("Reboot", 3, ForceReboot);
 
         DrawUserInterface();
