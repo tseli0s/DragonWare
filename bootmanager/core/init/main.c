@@ -320,6 +320,7 @@ void bootmain(void) {
                 AddEntry("Boot DragonWare (Default hard drive, video mode)", 2,
                          BootDragonWareDefaultOptions);
         }
+        AddEntry("Boot DragonWare (Default hard drive, text mode)", 1, BootDragonWareVGATextMode);
         AddEntry("Reboot", 3, ForceReboot);
 
         DrawUserInterface();
