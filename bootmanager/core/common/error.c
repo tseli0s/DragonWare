@@ -13,6 +13,7 @@
 #include <power.h>
 #include <stdarg.h>
 
+#include "textmode/dbgprint.h"
 #include "textmode/tui.h"
 #include "textmode/vgatext.h"
 
@@ -34,11 +35,14 @@ void FatalError(const char *msg, ...) {
                          "--> You can now safely reboot the machine. If this "
                          "is a bug, please report! https://github.com/tseli0s/DragonWare/issues",
                          colorattr);
+
+        DebugPrint("FATAL ERROR RAISED -- Description: \"%s\"", buf);
         __asm__ volatile("1: jmp 1b");
         __builtin_unreachable();
 }
 
 void RecoverableError(const char *msg, ...) {
+        DebugPrint("XXX Raising recoverable error to the user!");
         Bool    exit     = false;
         char    buf[256] = {0};
         va_list ap;
