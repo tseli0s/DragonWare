@@ -91,21 +91,6 @@ BootloaderMain:
 
         cli
 
-        ; Zero out the BSS section BEFORE jumping to the C code
-        ; I am not sure if the compiler does this too, but let's be sure, it's not like it's some huge
-        ; processing hog to zero out a couple kilobytes
-        xor ax, ax
-        mov es, ax
-        lea di, [__bss_start]
-
-        ; NASM won't let me do the subtraction at assembly time so
-        ; I'll just subtract it at runtime
-        mov cx, __bss_end
-        sub cx, __bss_start
-
-        cld
-        rep stosb
-
         ; Enable the A20 line so that we can address more than 1 megabyte of memory
         ; This is the fast and easy method, which isn't supported on all older systems,
         ; so TODO: support the keyboard controller method too
@@ -191,6 +176,21 @@ _InProtectedMode:
 
         mov ebp, 0x90000 ; Our stack can now be much higher in memory
         mov esp, ebp     ; And we can use a 32 bit address
+
+	; Zero out the BSS section BEFORE jumping to the C code
+        ; I am not sure if the compiler does this too for flat binaries, but
+	; let's be sure, it's not like it's some huge processing hog to zero out a couple kilobytes
+	xor al, al
+        lea edi, [__bss_start]
+
+        ; NASM won't let me do the subtraction at assembly time so
+        ; I'll just subtract it at runtime
+        mov ecx, __bss_end
+        sub ecx, __bss_start
+
+        cld
+        rep stosb
+
 
         call bootmain
 .BootloaderReturned:
