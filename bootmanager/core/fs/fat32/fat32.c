@@ -142,6 +142,7 @@ static void FATEntryToString(const char *raw, char *dest) {
         }
 
         dest[d_ptr] = '\0';
+        DebugPrint("New filename: %s", dest);
 }
 
 static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 cluster,
