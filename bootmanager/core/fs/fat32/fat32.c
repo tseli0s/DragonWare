@@ -142,7 +142,6 @@ static void FATEntryToString(const char *raw, char *dest) {
         }
 
         dest[d_ptr] = '\0';
-        DebugPrint("New filename: %s", dest);
 }
 
 static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 cluster,
@@ -170,7 +169,7 @@ static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 c
                                 char entry_name[13];
                                 FATEntryToString(filename83, entry_name);
 
-                                if (strcmp(entry_name, filename) == 0) {
+                                if (strcasecmp(entry_name, filename) == 0) {
                                         /* Combine the low and high bits into one u32, ensure the
                                          * entry is only 28 bits by masking the top four ones */
                                         u32 first_cluster = (((u32)de->first_cluster_high << 16) |
