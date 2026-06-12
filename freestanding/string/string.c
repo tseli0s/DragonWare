@@ -104,6 +104,19 @@ int strncmp(const char *str1, const char *str2, Size maxlen) {
         return 0;
 }
 
+int strcasecmp(const char *s1, const char *s2) {
+        if (!s1 || !s2) return (s1 == s2) ? 0 : 1;
+
+        int i = 0;
+        while (true) {
+                unsigned char a = (unsigned char)tolower((unsigned char)s1[i]);
+                unsigned char b = (unsigned char)tolower((unsigned char)s2[i]);
+
+                if (a != b || a == '\0') return a - b;
+                i++;
+        }
+}
+
 void itoa(unsigned int value, char *str, int base) {
         if (base < 2 || base > BASE16) {
                 str[0] = '\0';

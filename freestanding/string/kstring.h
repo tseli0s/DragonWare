@@ -73,6 +73,15 @@ int strcmp(const char *s1, const char *s2);
 int strncmp(const char *str1, const char *str2, Size maxlen);
 
 /**
+ * @brief Compare two null-terminated strings, while ignoring case sensitivity.
+ * @param[in] s1 First string to compare with
+ * @param[in] s2 Second string to compare with
+ * @since v0.0.2
+ * @returns 0 if equal, a negative value if s1 < s2, or a positive value if s1 > s2.
+ */
+int strcasecmp(const char *s1, const char *s2);
+
+/**
  * @brief Find the first occurrence of a substring.
  * @param[in] haystack String to search within.
  * @param[in] needle Substring to search for.
