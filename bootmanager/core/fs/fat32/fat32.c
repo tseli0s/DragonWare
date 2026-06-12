@@ -13,13 +13,13 @@
 
 #include <kstring.h>
 #include <ktypes.h>
-#include <limits.h>
 #include <macros.h>
 #include <mmutils.h>
 
 #include "kmalloc.h"
 #include "storage/ata.h"
 #include "storage/partition.h"
+#include "textmode/dbgprint.h"
 
 #define SECTOR_SIZE       (512)
 #define FAT32_EOF         (0x0FFFFFF8)
@@ -66,16 +66,6 @@ typedef struct [[gnu::packed]] _BIOSParameterBlock {
         u16  boot_signature;       /* You know, 0xAA55 */
 } BIOSParameterBlock;
 
-typedef struct [[gnu::packed]] _FSInfo {
-        u32  signature;         /* Must be 0x41615252 */
-        Byte reserved[480];     /* What the fuck Microsoft? */
-        u32  signature_2;       /* Another signature, must be 0x61417272 */
-        u32  last_free_cluster; /* Uh just read the wiki the comment is too long to write */
-        u32  start_looking_at;  /* >> */
-        Byte reserved2[12];     /* ... */
-        u32  boot_signature;    /* Must be 0xAA550000 */
-} FSInfo;
-
 typedef struct [[gnu::packed]] _DirectoryEntry {
         /* Most drivers put this in one field, but I think it looks better like this */
         char name[8];
@@ -102,7 +92,6 @@ typedef struct _FAT32FileData {
 
 _Static_assert(sizeof(BIOSParameterBlock) == SECTOR_SIZE,
                "BIOS Parameter Block is not aligned correctly!");
-_Static_assert(sizeof(FSInfo) == SECTOR_SIZE, "FSInfo structure is not aligned correctly!");
 
 /* Returns the LBA of the first FAT */
 static inline u32 FindFAT(const Partition *p, BIOSParameterBlock *bpb) {
@@ -153,6 +142,7 @@ static void FATEntryToString(const char *raw, char *dest) {
         }
 
         dest[d_ptr] = '\0';
+        DebugPrint("New filename: %s", dest);
 }
 
 static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 cluster,
