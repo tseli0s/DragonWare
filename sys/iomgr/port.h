@@ -24,11 +24,11 @@
  * fast data exchange between two processes.
  */
 typedef struct _Port {
+        Message  msgbuf[MAX_MESSAGES_IN_PORT]; /* Messages held in this port */
+        Size     head, tail, count; /* Indices of the messages currently in the message buffer */
         char     name[MAX_PORT_NAME];
         Spinlock lock;  /* Placeholder for the future, not gonna be used now */
         Thread  *owner; /* Owner of this port. Messages go here. */
-        Message  msgbuf[MAX_MESSAGES_IN_PORT]; /* Messages held in this port */
-        Size     head, tail, count; /* Indices of the messages currently in the message buffer */
 } Port;
 
 /**
