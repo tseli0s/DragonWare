@@ -73,10 +73,10 @@ typedef struct _MessageQueue MessageQueue;
  * @brief Enqueues a new message to be handled by the given @p port owner.
  * @note @p new_message must have the message copied first inside MessageQueue::m!
  * @param[in] port The port to enqueue the message to. Must not be NullPointer.
- * @param[in] new_message The message queue to push back in the port's message queue. Must not be
- * NullPointer.
+ * @param[in] new The message to copy into the port queue. Must not be NullPointer.
  */
-void EnqueueMessage(Port *port, MessageQueue *new_message);
+[[gnu::nonnull]]
+void EnqueueMessage(Port *port, Message *new);
 
 /**
  * @brief Sends a message from the kernel to the thread @p thread

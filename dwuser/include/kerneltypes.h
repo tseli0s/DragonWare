@@ -112,6 +112,7 @@ typedef enum _Status {
         STATUS_TIMEOUT       = -8,  /** << Resource did not become available in valid time frame */
         STATUS_NO_ENDPOINT   = -9,  /** << Message has no valid recipient to be sent to */
         STATUS_BAD_SYSCALL   = -10, /** << Bad or unrecognized system call number */
+        STATUS_MSGQUEUE_FULL = -11  /** << Message queue in port is full, try again later  */
 } Status;
 
 #define KSUCCESS(s) ((Status)(s) == STATUS_OK)
