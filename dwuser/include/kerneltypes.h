@@ -26,39 +26,11 @@ DW_BEGIN_DECLS
 
 #define NullPointer nullptr /* I like the lowercase version better */
 
-#define off_t       u32
-
-/* clang really doesn't like using _BitInt for inline assembly, breaking the build entirely.
- * for now, we'll work around it by trying to guess the width by architecture. */
-#ifndef __clang__
-
-/* Yes I like Rust how could you tell? */
-typedef unsigned _BitInt(8) u8;
-typedef unsigned _BitInt(16) u16;
-typedef unsigned _BitInt(32) u32;
-typedef unsigned _BitInt(64) u64;
-
-typedef signed _BitInt(8) i8;
-typedef signed _BitInt(16) i16;
-typedef signed _BitInt(32) i32;
-typedef signed _BitInt(64) i64;
-
-#else /* __clang__ */
-
 #ifdef __i386__
-typedef unsigned char      u8;
-typedef unsigned short     u16;
-typedef unsigned int       u32;
-typedef unsigned long long u64;
-
-typedef signed char      i8;
-typedef signed short     i16;
-typedef signed int       i32;
-typedef signed long long i64;
-
+#include "arch/ia32/inttypes.h"
+#elifdef __AMD64__
+#include "arch/amd64/inttypes.h"
 #endif /* __i386__ */
-
-#endif /* __clang__  */
 
 /*
  * It's not necessary, but I like the byte definition better. PS: I saw a
