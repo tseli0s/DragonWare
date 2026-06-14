@@ -60,7 +60,7 @@ static inline void MarkHeapPageAsFree(uintptr_t addr) {
         if (!inrange(addr, HEAP_BASE, HEAP_BREAK)) return;
 
         u32 idx = BIT_OF(addr);
-        heap_bitmap[idx / 32] &= ~(1 << (idx % 32));
+        heap_bitmap[idx / 32] &= ~(1U << (idx % 32));
 }
 
 static void *GetHeapPageAddress(void) {
@@ -70,7 +70,7 @@ static void *GetHeapPageAddress(void) {
                 int bit = __builtin_ctz(~heap_bitmap[i]);
                 heap_bitmap[i] |= (1 << bit);
 
-                return (void *)(HEAP_BASE + ((i * 32 + (u32)bit) * 4096));
+                return (void *)(HEAP_BASE + ((i * 32 + (u32)bit) * PAGE_SIZE));
         }
         /* I really should implement an OOM helper or something */
         FatalError("Kernel has ran out of heap memory");
@@ -267,12 +267,9 @@ void *AllocateVirtualPage(void) {
 #endif /* DRAGONWARE_DEBUG_MODE */
                 return NullPointer;
         }
-        extern char _end;
 
         void     *virtaddr = GetHeapPageAddress();
         uintptr_t addr     = (uintptr_t)virtaddr;
-
-        MarkHeapPageAsUsed(addr);
 
         static u32 flags = PAGE_PRESENT | PAGE_RW;
         if (x86FeatureSupported(X86_PGE)) flags |= PAGE_GLOBAL;
@@ -283,6 +280,7 @@ void *AllocateVirtualPage(void) {
                            "MapSinglePage(): %s. AllocateVirtualPage() has "
                            "nothing to return.",
                            StatusCodeToString(mapstatus));
+                MarkHeapPageAsFree(addr);
                 FreeFrame(frameaddr);
                 return NullPointer;
         }
