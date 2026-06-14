@@ -133,7 +133,7 @@ static Status Probe8042Controller(void) {
          * See https://wiki.osdev.org/I8042_PS/2_Controller#Initialising_the_PS/2_Controller to
          * understand the bit values here.
          */
-        new_ccb &= ~((1 << 0) | (1 << 4) | (1 << 6));
+        new_ccb &= (Byte)(~((1U << 0) | (1U << 4) | (1U << 6)));
         i8042Write(PS2_WRITE_CONFIG_BYTE);
         i8042WriteData(new_ccb);
 
