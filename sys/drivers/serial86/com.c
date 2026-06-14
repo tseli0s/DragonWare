@@ -33,8 +33,6 @@ static void InitSerialConnection(void) {
         outb(COM1_PORT + 4, 0x0B);
 }
 
-static inline void WaitForPort(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
-
 static inline void WriteToSerialPort(char c) {
         WaitForPort();
         outb(COM1_PORT, (Byte)c);
