@@ -25,8 +25,6 @@
 
 static inline void WaitForPort(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
 
-static inline void WaitForPort(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
-
 static inline void WriteToSerialPort(char c) {
         WaitForPort();
         outb(COM1_PORT, (Byte)c);
