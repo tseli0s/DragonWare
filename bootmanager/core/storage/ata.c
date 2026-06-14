@@ -289,14 +289,13 @@ static Size ATAPIReadSectors(int index, Size n, u32 lbastart, Byte *dest) {
         u32 total_needed = offset + n;             /* 512 byte sectors needed */
         u32 atapi_count  = (total_needed + 3) / 4; /* Alignment */
 
-        /* Send ATAPI packet command. TODO: Stop using magic numbers here. */
         outb(command_port, ATAPI_CMD_PACKET);
         ATASoftResetDelay(status_port);
 
         while (inb(status_port) & ATA_STATUS_BSY);
         if (WaitForDRQ(status_port) != STATUS_OK) return 0;
 
-        [[gnu::aligned(sizeof(u16))]]
+        [[gnu::aligned(sizeof(u32))]]
         u8 scsi_packet[12] = {0};
         scsi_packet[0]     = 0x28; /* READ command */
         scsi_packet[2]     = (atapi_lba >> 24) & 0xFF;
@@ -305,11 +304,11 @@ static Size ATAPIReadSectors(int index, Size n, u32 lbastart, Byte *dest) {
         scsi_packet[5]     = atapi_lba & 0xFF;
         scsi_packet[7]     = (atapi_count >> 8) & 0xFF;
         scsi_packet[8]     = atapi_count & 0xFF;
-        scsi_packet[9]     = 0x0;
 
-        u16 *packetptr = (u16 *)scsi_packet;
-        for (unsigned int i = 0; i < sizeof(scsi_packet) / sizeof(u16); i++)
-                outw(dataport, packetptr[i]);
+        const size_t scsi_packet_size = sizeof(scsi_packet) / sizeof(u16);
+        u16         *packetptr        = (u16 *)scsi_packet;
+
+        for (size_t i = 0; i < scsi_packet_size; i++) outw(dataport, packetptr[i]);
 
         /* Temporary buffer. We read here and copy whatever we need into dest. */
         u16  tmpbuf[CD_SECTOR_SIZE / sizeof(u16)] = {0};
