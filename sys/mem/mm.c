@@ -52,7 +52,7 @@ static void SortReservedChunks(ReservedRegion *regions, Size n) {
         for (Size i = 1; i < n; i++) {
                 ReservedRegion key = regions[i];
                 Size           j   = i - 1;
-                while (j >= 0 && regions[j].start > key.start) {
+                while (regions[j].start > key.start) {
                         regions[j + 1] = regions[j];
                         j--;
                 }
