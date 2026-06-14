@@ -256,18 +256,24 @@ void bootmain(void) {
         bootinfo->mods_count             = 0;
         CopyMemoryRegionsToMultibootStruct();
 
-        /* Booting from CD */
+        /*
+         * Booting from CD
+         * TODO: Have a better check here I don't think this'll do
+         * */
         if (BootDevice >= 0xE0) {
                 AddEntry("Boot DragonWare (CD-ROM, text mode)", 0, BootDragonWareFromCD);
+                AddEntry("Boot DragonWare (CD-ROM, video mode)", 1,
+                         BootDragonWareDefaultOptions); /* Also TODO here */
                 AddEntry("Boot DragonWare (Default hard drive, video mode)", 2,
                          BootDragonWareDefaultOptions);
         } else {
                 /* TODO */
-                AddEntry("Boot from non-primary drive... (TODO)", 0, NullPointer);
+                AddEntry("Boot DragonWare (Default hard drive, text mode)", 0,
+                         BootDragonWareVGATextMode);
+                AddEntry("Boot from non-primary drive... (TODO)", 1, NullPointer);
                 AddEntry("Boot DragonWare (Default hard drive, video mode)", 2,
                          BootDragonWareDefaultOptions);
         }
-        AddEntry("Boot DragonWare (Default hard drive, text mode)", 1, BootDragonWareVGATextMode);
         AddEntry("Reboot", 3, ForceReboot);
 
         DrawUserInterface();
