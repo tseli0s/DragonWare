@@ -16,15 +16,13 @@
 
 DLC_BEGIN_DECLS
 
-#define NULL          ((void *)0)
+#if __STDC_VERSION__ < 202311L
+#define NULL ((void *)0)
+#else
+#define NULL nullptr
+#endif /* __STDC_VERSION__ */
+
 #define unreachable() ((void)__builtin_unreachable())
-
-#ifdef __GNUC__
-
-typedef __SIZE_TYPE__    size_t;
-typedef __PTRDIFF_TYPE__ ptrdiff_t;
-
-#endif /* __GNUC__ */
 
 typedef struct {
         long long   __ll;
