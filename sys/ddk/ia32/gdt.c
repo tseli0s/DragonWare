@@ -106,11 +106,13 @@ void GDTInit(void) {
         /* This part is for the TSS that requires some different code but
          * whatever*/
         kzeromem(&tss0, sizeof(TSSEntry));
+        memset(tss0.ioperm, 0xFF, TSS_IOPERM_SIZE);
 
         /* Fallback stack, each process will remove this after a while */
         tss0.ss0        = SEL_DATA_KERNEL;
         tss0.esp0       = (u32)(((uintptr_t)tss_stack) + sizeof(tmp_tss_stack));
         tss0.iomap_base = sizeof(tss0);
+        tss0.terminator = 0xFF;
         GDTSetGate(5, (u32)&tss0, sizeof(tss0) - 1, GDT_ACCESS_PRESENT | GDT_TYPE_TSS, 0x00);
 
         FlushGDT((u32)&gdtptr);
@@ -127,4 +129,28 @@ void SelectKernelStack(uintptr_t stack_top) {
 #ifndef _LEGACY_SUPPORT
         if (likely(x86FeatureSupported(X86_SYSENTER))) SwitchSysenterStack(stack_top);
 #endif /* _LEGACY_SUPPORT */
+}
+
+void EnableIOPortsOfProcess(Process *p) {
+        if (!p->ports_used) {
+                tss0.iomap_base = sizeof(TSSEntry);
+                return;
+        } else
+                tss0.iomap_base = offsetof(TSSEntry, ioperm);
+        for (u16 i = 0; i < p->ports_used; i++) {
+                u16 port = p->ioports[i];
+                tss0.ioperm[port / 8] &= ~(1 << (port % 8));
+        }
+}
+
+void DisableIOPortsOfProcess(Process *p) {
+        if (!p->ports_used) {
+                tss0.iomap_base = sizeof(TSSEntry);
+                return;
+        } else
+                tss0.iomap_base = offsetof(TSSEntry, ioperm);
+        for (u16 i = 0; i < p->ports_used; i++) {
+                u16 port = p->ioports[i];
+                tss0.ioperm[port / 8] |= (1 << (port % 8));
+        }
 }

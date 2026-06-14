@@ -17,7 +17,10 @@
 #include <macros.h>
 #include <mmutils.h>
 
-#include "ddk/ia32/interrupts.h"
+#ifdef __i386__
+#include "ddk/ia32/tss.h"
+#endif /* __i386__ */
+
 #include "identify.h"
 #include "ipc.h"
 #include "object.h"
@@ -56,6 +59,9 @@ static void _DWklog(int level, const char *msg) {
         klog((LogLevel)level, "%s", buf);
 }
 
+#if 0
+[[deprecated(
+        "_DWRaiseIOPL is no longer available, the TSS I/O bitmap has replaced its functionality")]]
 static Status _DWRaiseIOPL(u32 *eflags) {
         /* set the IOPL bit in eflags, but only if the current process possesses the
          * capability to actually use that. */
@@ -65,8 +71,28 @@ static Status _DWRaiseIOPL(u32 *eflags) {
         } else
                 return STATUS_UNSUPPORTED;
 }
+#endif
 
-InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
+static Status _DWRequestPorts(const u16 *port_list, Size list_size) {
+        Process *current = GetCurrentExecutionThread()->owner;
+        if (!(current->flags & PROC_C_IOPL))
+                return STATUS_UNSUPPORTED; /* TODO: Have a STATUS_ACCESS_REJECTED or something */
+
+        if (list_size > MAX_IO_PORTS_PER_PROCESS) return STATUS_BAD_ARGUMENT;
+
+        u16 ports[MAX_IO_PORTS_PER_PROCESS] = {0};
+        if (CopyFromUser(ports, port_list, list_size * sizeof(u16)) != STATUS_OK)
+                return STATUS_BAD_ARGUMENT;
+
+        DisableIOPortsOfProcess(current);
+        for (Size i = 0; i < list_size; i++) current->ioports[i] = ports[i];
+        current->ports_used = (u16)list_size;
+
+        EnableIOPortsOfProcess(current);
+        return STATUS_OK;
+}
+
+void DragonWareSyscall(SystemCallFrame *regs) {
         switch (regs->eax) {
                 case SYSCALL_IDENTIFY:
                         SystemIdentifySyscall((SystemIdentify *)regs->ebx);
@@ -84,36 +110,39 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                         YieldCurrentThread();
                         break;
                 case SYSCALL_KLOG:
-                        _DWklog((int)regs->ebx, (const char *)regs->ecx);
+                        _DWklog((int)regs->ebx, (const char *)regs->esi);
                         break;
-                case SYSCALL_RAISE_IOPL: {
-                        regs->eax = (u32)_DWRaiseIOPL(&regs->eflags);
+                case SYSCALL_REQUEST_PORTS: {
+                        regs->eax = (u32)_DWRequestPorts((u16 *)regs->ebx, (Size)regs->esi);
                         break;
                 }
                 case SYSCALL_SEND:
                         regs->eax =
-                                (u32)_DWIPCSend((int)regs->ebx, (Message *)regs->ecx, regs->edx);
+                                (u32)_DWIPCSend((int)regs->ebx, (Message *)regs->esi, regs->edi);
                         break;
                 case SYSCALL_RECEIVE:
-                        regs->eax = (u32)_DWIPCReceive((int)regs->ebx, (Message *)regs->ecx);
+                        regs->eax = (u32)_DWIPCReceive((int)regs->ebx, (Message *)regs->esi);
                         break;
                 case SYSCALL_TICK_SINCE_BOOT: {
                         /* System V ABI says that, for a 64 bit return value, high 32 bits go in
                          * edx, and the low 32 bits go in eax. So we can simply mask out the high 32
                          * bits when assigning to eax and shift down edx by the amount of low
-                         * bits.*/
+                         * bits.
+                         * FIXME: This is broken on sysenter/sysexit instructions (edx must be
+                         * preserved, it holds the return address to userland).
+                         * */
                         u64 ticks = GetTicksSinceBoot();
                         regs->eax = (u32)(ticks & 0xffffffff);
-                        regs->edx = (u32)(((u64)ticks) >> 32);
+                        // regs->edx = (u32)(((u64)ticks) >> 32);
                         break;
                 }
                 case SYSCALL_CREATE_OBJECT:
                         regs->eax = (u32)_DWCreateObject((const char *)regs->ebx,
-                                                         (ObjectType)regs->ecx, regs->edx);
+                                                         (ObjectType)regs->esi, regs->edi);
                         break;
                 case SYSCALL_INVOKE_OBJECT:
                         regs->eax =
-                                (u32)_DWInvokeObject((int)regs->ebx, regs->ecx, (void *)regs->edx);
+                                (u32)_DWInvokeObject((int)regs->ebx, regs->esi, (void *)regs->edi);
                         break;
                 case SYSCALL_DELETE_OBJECT:
                         _DWDeleteObject((int)regs->ebx);
@@ -122,13 +151,11 @@ InterruptStackFrame *DragonWareSyscall(InterruptStackFrame *regs) {
                         regs->eax = (u32)STATUS_BAD_SYSCALL;
                         break;
         }
-        return regs;
 }
 
-InterruptStackFrame *POSIXSyscall(InterruptStackFrame *regs) {
+void POSIXSyscall(SystemCallFrame *regs) {
         LogMessage(LOG_WARNING,
                    "POSIX syscall invoked. POSIX compatibility has not been implemented "
                    "yet.");
         regs->eax = (u32)STATUS_BAD_SYSCALL;
-        return regs;
 }

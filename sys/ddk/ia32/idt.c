@@ -129,14 +129,30 @@ static void InstallInterruptServiceRoutines(void) {
         IRQInstall();
 }
 
+/* I should probably find a better name for this function */
+[[gnu::hot]]
+static inline void CopySyscallState(SystemCallFrame *state, InterruptStackFrame *frame) {
+        frame->eax = state->eax; /* Return value */
+        frame->ebx = state->ebx; /* Argument 0 that (may) be returned from the kernel */
+        frame->esi = state->esi; /* Argument 1 that (may) be returned from the kernel */
+        frame->edi = state->edi; /* Argument 2 that (may) be returned from the kernel */
+        frame->ebp = state->ebp; /* Argument 3 that (may) be returned from the kernel */
+}
+
 [[gnu::hot]]
 void InterruptServiceHandler(InterruptStackFrame *stack_frame) {
         if (stack_frame->int_no == SYSCALL_NO) {
-                DragonWareSyscall(stack_frame);
+                SystemCallFrame f;
+                SyscallFrameFromInterrupt(stack_frame, &f);
+                DragonWareSyscall(&f);
+                CopySyscallState(&f, stack_frame);
                 return;
         }
         if (stack_frame->int_no == SYSCALL_NO + 0x20) {
-                POSIXSyscall(stack_frame);
+                SystemCallFrame f;
+                SyscallFrameFromInterrupt(stack_frame, &f);
+                POSIXSyscall(&f);
+                CopySyscallState(&f, stack_frame);
                 return;
         }
 

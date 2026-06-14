@@ -10,13 +10,17 @@
 #pragma once
 
 #ifndef _KERNEL_API_H
-#define _KERNEL_API_H           1
+#define _KERNEL_API_H    1
 
-#define SYSCALL_IDENTIFY        (0)
-#define SYSCALL_EXIT            (1)
-#define SYSCALL_YIELD           (2)
-#define SYSCALL_KLOG            (3)
-#define SYSCALL_RAISE_IOPL      (4)
+#define SYSCALL_IDENTIFY (0)
+#define SYSCALL_EXIT     (1)
+#define SYSCALL_YIELD    (2)
+#define SYSCALL_KLOG     (3)
+#if 0
+#define SYSCALL_RAISE_IOPL (4)
+#else
+#define SYSCALL_REQUEST_PORTS (4)
+#endif /* SYSCALL_RAISE_IOPL */
 #define SYSCALL_SEND            (5)
 #define SYSCALL_RECEIVE         (6)
 #define SYSCALL_TICK_SINCE_BOOT (7)
@@ -29,8 +33,9 @@
 #include "ipc86.h"
 #include "kerneltypes.h"
 
-#define SI_MAX_NAME (24)
-#define SI_MAX_TAG  (12)
+#define SI_MAX_NAME              (24)
+#define SI_MAX_TAG               (12)
+#define MAX_IO_PORTS_PER_PROCESS (20)
 
 DW_BEGIN_DECLS
 
@@ -182,8 +187,27 @@ void _cdecl _DWklog(LogLevel level, const char *msg);
  * @return STATUS_OK if the process has the capability to talk to I/O ports directly.
  * STATUS_UNSUPPORTED if the process is not allowed to talk to I/O ports because it lacks the
  * kernel-assigned capability.
+ * @deprecated This function has been deprecated in favour of the more secure @ref _DWRequestPorts
+ * and no longer has any effect. It is only kept here until the transition has fully finished.
  */
-Status _cdecl _DWRaiseIOPL(void);
+[[deprecated(
+        "_DWRaiseIOPL has been dropped due to security and compatibility constraints. It has been "
+        "replaced by _DWRequestPorts")]] Status _cdecl _DWRaiseIOPL(void);
+
+/**
+ * @brief _DWRequestPorts system call (#4) wrapper.
+ * @details This function requests from the kernel permission to directly read from the I/O ports
+ * specified inside @p port_list, an array of 16-bit integers of ports that the process needs to
+ * talk to. This function replaces the legacy and insecure @ref _DWRaiseIOPL function and also
+ * provides compatibility with the new system call convention more easily.
+ * @param[in] port_list An array of ports that the process wants to talk to. Elements beyond @ref
+ * MAX_IO_PORT_PER_PROCESS will be ignored.
+ * @param[in] port_list_size The amount of ports to read from the array.
+ * @returns STATUS_OK if the process has been granted the ability to talk to ports. Other @ref
+ * Status codes if it failed, depending on the reason of failure.
+ * @since v0.0.2
+ */
+Status _cdecl _DWRequestPorts(const u16 *port_list, Size port_list_size);
 
 /**
  * @brief _DWIPCSend system call (#5) wrapper
