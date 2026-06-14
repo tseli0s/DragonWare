@@ -162,8 +162,8 @@ void itoa_z(u64 value, char *str, int base) {
         }
 
         while (value > 0) {
-                unsigned int digit = value % (unsigned int)base;
-                buf[i++]           = (char)((digit < 10) ? ('0' + digit) : ('a' + digit - 10));
+                u64 digit = value % (unsigned int)base;
+                buf[i++]  = (char)((digit < 10) ? ('0' + digit) : ('a' + digit - 10));
                 value /= (unsigned int)base;
         }
 
