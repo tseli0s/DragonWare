@@ -120,6 +120,9 @@ int vprintf(const char *restrict format, va_list arg) {
 }
 
 int fprintf(FILE *restrict stream, const char *fmt, ...) {
+        UNUSED(stream);
+        UNUSED(fmt);
+
         errno = ENOENT; /* Couldn't come up with something better this'll do */
         return -1;
 }
@@ -268,6 +271,9 @@ int putchar(int c) {
 int puts(const char *str) { return printf("%s\n", str); }
 
 int fputc(int c, FILE *stream) {
+        UNUSED(c);
+        UNUSED(stream);
+
         errno = ENOENT; /* see comment in fprintf */
         return EOF;
 }

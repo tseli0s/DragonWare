@@ -34,4 +34,8 @@ typedef struct {
 typedef uint32_t wchar_t;
 typedef typeof_unqual(nullptr) nullptr_t;
 
+#ifndef UNUSED
+#define UNUSED(...) ((void)(__VA_ARGS__))
+#endif /* UNUSED */
+
 DLC_END_DECLS
