@@ -9,10 +9,10 @@
 
 #include "bootentry.h"
 
+#include <ktypes.h>
+#include <macros.h>
 #include <mmutils.h>
 #include <power.h>
-
-#include "ktypes.h"
 
 static BootEntry entries[MAX_BOOT_ENTRIES] = {0};
 static Size      num_entries               = 0;
@@ -28,7 +28,7 @@ Status AddEntry(const char *name, unsigned int index, void (*SelectCallback)(voi
 }
 
 void UpdateIndex(unsigned int new) {
-        if (inrange(new, 0, ((unsigned int)num_entries) - 1)) selected_index = new;
+        if (new < num_entries) selected_index = new;
 }
 
 Size GetCurrentIndex(void) { return selected_index; }
