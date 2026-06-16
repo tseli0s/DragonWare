@@ -19,6 +19,11 @@
 #define VESA_LINEAR_FB             (0x4000)
 #define VESA_PRESERVE_MEM          (0x8000)
 
+#define VBE_GET_BIOS_INFO          (0x4F00)
+#define VBE_SUCCESS  (0x004F)
+
+#define VBE_GET_MODE_INFO          (0x4F01)
+
 /**
  * @brief A structure containing vendor information for a VBE-compatible graphics card.
  * @sa VBEModeInfo
@@ -34,6 +39,8 @@ typedef struct [[gnu::packed]] _VBEInfo {
         char *vendorname;
         char *productname;
         char *productrevision;
+        Byte  reserved[222];
+        char  oem_data[256];
 } VBEInfo;
 
 /**
@@ -74,3 +81,12 @@ typedef struct [[gnu::packed]] _VBEModeInfo {
         u16 off_screen_mem_size;
         u8  reserved1[206];
 } VBEModeInfo;
+
+/**
+ * @brief Returns the video card's VESA information block.
+ * @param[out] info Pointer to the allocated @ref VBEInfo structure to write the contents to.
+ * @warning @p info must be within the first megabyte of physical memory.
+ * @return STATUS_OK on success, STATUS_BAD on failure. May invoke @ref FatalError
+ */
+[[gnu::nonnull]]
+Status GetVESAInformationBlock(VBEInfo *info);
