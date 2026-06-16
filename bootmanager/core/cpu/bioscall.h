@@ -21,9 +21,12 @@ typedef struct [[gnu::packed]] _BIOSRegisters {
 } BIOSRegisters;
 
 /**
- * @brief Perform a BIOS interrupt in real mode. 
- * @todo Return any results to @p regs from the BIOS (currently nothing is returned), and check if CF is set (Used mostly to check if the call failed or not)
- * @param vector Vector number of the BIOS interrupt to perform (eg. 0x13 for disk services, 0x10 for video services, and so on)
- * @param[in] regs Register state to load. Must not be NullPointer.
+ * @brief Perform a BIOS interrupt in real mode and return the results in @p regs.
+ * @param vector Vector number of the BIOS interrupt to perform (eg. 0x13 for disk services, 0x10
+ * for video services, and so on)
+ * @param[in,out] regs Register state to load. Must not be NullPointer.
+ * @returns 0 if the carry flag was not set from the BIOS, 1 if it was set. Many BIOS vectors use
+ * the carry flag to indicate success/failure.
  */
-void BIOSCall(int vector, BIOSRegisters *regs);
+[[gnu::nonnull(2)]]
+int BIOSCall(int vector, BIOSRegisters *regs);
