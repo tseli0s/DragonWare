@@ -13,8 +13,6 @@
 
 #include <ktypes.h>
 
-#include "macros.h"
-
 typedef struct [[gnu::packed]] _PSFFont {
         u16 magic;
         u8  mode;
