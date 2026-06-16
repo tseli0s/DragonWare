@@ -17,6 +17,7 @@ CODE_SEG_PROTECTED_16           equ     0x18
 DATA_SEG_PROTECTED_16           equ     0x20
 CODE_SEG_PROTECTED_32           equ     0x08
 DATA_SEG_PROTECTED_32           equ     0x10
+
 section .data
 ProtectedModeIDT:
         dw      0x0000
@@ -26,8 +27,12 @@ RealModeIDT:
         dd      0x00000000
 ProtectedModeStack:
         dd      0x00000000
-ReturnAddress:
-        dd      0x00000000
+BIOSRegistersAddress:
+	dd	0x00000000
+SavedEAX:
+	dd	0x00000000
+SavedCF:
+	db	0x00
 
 section .text
 ; Interrupts must be disabled when this function is called.
@@ -96,10 +101,11 @@ __do_bios_call:
         mov     byte    [.InterruptNumber],     al
 
         pushad
-        mov     ax,     [edx+24]
-        mov     bx,     [edx+28]
-        mov     [.RegisterES],  ax
-        mov     [.RegisterDS],  bx
+	mov	[BIOSRegistersAddress],	edx
+        mov     ax,     		[edx+24]
+        mov     bx,     		[edx+28]
+        mov     [.RegisterES],  	ax
+        mov     [.RegisterDS],		bx
 
         ; Since we need to use EAX for other things, we will also patch it every call
         ; and then restore it here
@@ -137,7 +143,10 @@ bits    16
 .InterruptNumber:       db      0x00    ; Look at the self modification trick above
 .ReturnToProtectedMode:
         pop     ds
-        popf
+	setc	byte	[SavedCF]
+	mov	[SavedEAX], eax 	; SavedEAX now holds whatever the BIOS put there
+
+	popf
         cli
         lidt    [ProtectedModeIDT]
 
@@ -158,6 +167,22 @@ bits    32
         mov     fs,     ax
         mov     ss,     ax
         mov     esp,    [ProtectedModeStack]
+
+	; Before restoring the registers to their original state, we will write the register
+	; values back to the BIOSRegisters passed, since the BIOS often returns information there.
+	; We've preserved all registers since the interrupt happened, except EAX (hence the little dance here
+	; to return that too)
+	mov 	eax,		[BIOSRegistersAddress]
+	mov 	[eax+4],	ebx
+	mov 	[eax+8],	ecx
+	mov 	[eax+12],	edx 
+	mov 	[eax+16],	esi
+	mov 	[eax+20], 	edi
+
+	mov 	edi,	[SavedEAX]
+	mov 	[eax],	edi
+
+	; Now we can safely restore the stack and the registers we saved upon call.
         mov     ebp,    esp
         add     esp,    4       ; Discard the stale return address we pushed when calling RET in real mode. Because the
                                 ; real mode stack is different, the RET instruction above didn't actually touch this stack, so
@@ -167,9 +192,9 @@ bits    32
         ret
 
 global BIOSCall
-; void BIOSCall(int vector, BIOSRegisters *regs)
+; int BIOSCall(int vector, BIOSRegisters *regs)
 ; Temporarily jumps into real mode, performs a BIOS interrupt and returns.
-; Results of the BIOS calls are not returned (FIXME)
+; Returns 0 if carry flag was not set, 1 if it was set.
 ;
 ; BIOSRegisters looks like this:
 ; typedef struct [[gnu::packed]] _BIOSRegisters {
@@ -185,7 +210,9 @@ BIOSCall:
         mov     edx,    [ebp+12]
 
         call    __do_bios_call
+	movzx 	eax,	byte [SavedCF]
 
         popf
         pop     ebp
         ret
+
