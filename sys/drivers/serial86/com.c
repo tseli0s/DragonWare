@@ -80,8 +80,9 @@ Status Serial86Init(void) {
                    "Kernel not in debug mode or support for serial output was disabled at build "
                    "time. Nothing to do.");
         return STATUS_OK;
-#endif
+#else
         InitSerialConnection();
+#endif
         DeviceManagerNode *node =
                 MakeDeviceNode("Serial Port Driver", P_MUTABLE | P_HAVE_CHILDREN | P_USER,
                                DEVCLASS_UART | DEVCLASS_CONSOLE);
