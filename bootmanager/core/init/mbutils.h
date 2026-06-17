@@ -15,8 +15,7 @@
 /**
  * @brief Returns the offset within @p multiboot_file that a Multiboot header is found
  * @param multiboot_file A file read into memory that will be searched for the multiboot header.
- * @return The offset within @p multiboot_file if found, 0x123456 otherwise. Zero cannot be returned
- * as usual, the multiboot header may be present right at the start of the buffer.
+ * @return The offset within @p multiboot_file if found (starting from 0), -1 otherwise.
  */
 [[gnu::nonnull(1)]]
 off_t FindMultibootHeader(u8 *multiboot_file);

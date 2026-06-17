@@ -14,7 +14,7 @@
 #include "textmode/dbgprint.h"
 
 off_t FindMultibootHeader(u8 *multiboot_file) {
-        off_t result = 0x123456;
+        off_t result = -1;
 
         /* Per multiboot spec, the header MUST be aligned to four bytes. Otherwise this code won't
          * work. */
