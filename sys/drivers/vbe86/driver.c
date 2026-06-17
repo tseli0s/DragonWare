@@ -215,10 +215,18 @@ static void CollectVBEInformation(Multiboot *bootinfo, FramebufferControllerInfo
         /* This structure is in low memory, and therefore needs to be mapped to be accessible. Also,
          * many pointers here are segmented pointers, so we have to convert them (look at the
          * bootloader source to get a glimpse) */
-        uintptr_t infoaddr = bootinfo->controlinfo;
-        MapSinglePage(infoaddr, infoaddr, PAGE_PRESENT);
+        if (!bootinfo->controlinfo) goto bad;
 
-        VBEInfo *info         = (VBEInfo *)infoaddr;
+        uintptr_t infoaddr  = aligndown(bootinfo->controlinfo, PAGE_SIZE);
+        Status    mapstatus = MapSinglePage(infoaddr, infoaddr, PAGE_PRESENT);
+        if (mapstatus != STATUS_OK) {
+                LogMessage(LOG_WARNING,
+                           "%s: Mapping controller information (Address %p) failed: %s", __func__,
+                           infoaddr, StatusCodeToString(mapstatus));
+                goto bad;
+        }
+
+        VBEInfo *info         = (VBEInfo *)bootinfo->controlinfo;
         ctrl->oem             = SegmentedToLinearPointer(info->oem);
         ctrl->productname     = SegmentedToLinearPointer(info->productname);
         ctrl->productrevision = SegmentedToLinearPointer(info->productrevision);
@@ -230,6 +238,11 @@ static void CollectVBEInformation(Multiboot *bootinfo, FramebufferControllerInfo
         ctrl->capabilities = info->capabilities;
 
         UnmapSinglePage(infoaddr);
+        return;
+bad:
+        kzeromem(ctrl, sizeof(FramebufferControllerInformation));
+        LogMessage(LOG_WARNING, "Error during %s(), zeroing out FramebufferControllerInformation",
+                   __func__);
 }
 
 Status VBE86DriverInit(void) {
@@ -264,27 +277,30 @@ Status VBE86DriverInit(void) {
 
         /* I'm just praying that we haven't overwritten this data so far. Very unlikely, but could
          * happen, honestly. FIXME? */
-        FramebufferControllerInformation ci = {0};
-        CollectVBEInformation(bootinfo, &ci);
-        {
-                uintptr_t p_vendor   = aligndown((uintptr_t)ci.vendorname, PAGE_SIZE);
-                uintptr_t p_product  = aligndown((uintptr_t)ci.productname, PAGE_SIZE);
-                uintptr_t p_revision = aligndown((uintptr_t)ci.productrevision, PAGE_SIZE);
-                MapSinglePage(p_vendor, p_vendor, PAGE_PRESENT);
-                MapSinglePage(p_product, p_product, PAGE_PRESENT);
-                MapSinglePage(p_revision, p_revision, PAGE_PRESENT);
+        if (bootinfo->flags & MULTIBOOT_VBEINFO) {
+                FramebufferControllerInformation ci = {0};
+                CollectVBEInformation(bootinfo, &ci);
+                {
+                        uintptr_t p_vendor   = aligndown((uintptr_t)ci.vendorname, PAGE_SIZE);
+                        uintptr_t p_product  = aligndown((uintptr_t)ci.productname, PAGE_SIZE);
+                        uintptr_t p_revision = aligndown((uintptr_t)ci.productrevision, PAGE_SIZE);
+                        if (p_vendor) MapSinglePage(p_vendor, p_vendor, PAGE_PRESENT);
+                        if (p_product) MapSinglePage(p_product, p_product, PAGE_PRESENT);
+                        if (p_revision) MapSinglePage(p_revision, p_revision, PAGE_PRESENT);
 
-                LogMessage(LOG_INFO,
-                           "Dumping VESA-compatible controller information in use by the kernel:");
-                LogMessage(LOG_INFO, "\tVendor: %s, Product: %s, Revision %s", ci.vendorname,
-                           ci.productname, ci.productrevision);
-                LogMessage(LOG_INFO, "\tImplementation version %d.%d (rev. %d)", ci.version.major,
-                           ci.version.minor, ci.revision);
-                LogMessage(LOG_INFO, "\tTotal video memory: %d kilobytes", ci.totalmem);
+                        LogMessage(LOG_INFO,
+                                   "Dumping VESA-compatible controller information in use by the "
+                                   "kernel:");
+                        LogMessage(LOG_INFO, "\tVendor: %s, Product: %s, Revision %s",
+                                   ci.vendorname, ci.productname, ci.productrevision);
+                        LogMessage(LOG_INFO, "\tImplementation version %d.%d (rev. %d)",
+                                   ci.version.major, ci.version.minor, ci.revision);
+                        LogMessage(LOG_INFO, "\tTotal video memory: %d kilobytes", ci.totalmem);
 
-                UnmapSinglePage(p_vendor);
-                UnmapSinglePage(p_product);
-                UnmapSinglePage(p_revision);
+                        UnmapSinglePage(p_vendor);
+                        UnmapSinglePage(p_product);
+                        UnmapSinglePage(p_revision);
+                }
         }
 
         FramebufferDeviceOps fbddo = {.WriteSinglePixel       = WriteSinglePixel,
