@@ -26,6 +26,7 @@
 #include "mbutils.h"
 #include "memdetect.h"
 #include "proto/multiboot.h"
+#include "proto/vbe.h"
 #include "storage/partition.h"
 #include "textmode/dbgprint.h"
 #include "textmode/tui.h"
