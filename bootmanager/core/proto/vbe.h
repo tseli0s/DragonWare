@@ -20,9 +20,9 @@
 #define VESA_PRESERVE_MEM          (0x8000)
 
 #define VBE_GET_BIOS_INFO          (0x4F00)
-#define VBE_SUCCESS  (0x004F)
-
 #define VBE_GET_MODE_INFO          (0x4F01)
+#define VBE_SET_VIDEO_MODE         (0x4F02)
+#define VBE_SUCCESS                (0x004F)
 
 /**
  * @brief A structure containing vendor information for a VBE-compatible graphics card.
@@ -90,3 +90,31 @@ typedef struct [[gnu::packed]] _VBEModeInfo {
  */
 [[gnu::nonnull]]
 Status GetVESAInformationBlock(VBEInfo *info);
+
+/**
+ * @brief Finds the best matching VESA mode compared to the width, height and depth requested.
+ * @todo I should probably have a better algorithm to decide the best mode and prune the rest if no
+ * modes match perfectly... Anyways
+ * @param[in] info VESA BIOS information block, must not be a @ref NullPointer. See @ref
+ * GetVESAInformationBlock
+ * @param[out] modeinfo VESA video mode information. When the mode is selected, information about
+ * the mode will be written in that pointer.
+ * @param w Desired width
+ * @param h Desired height
+ * @param d Desired depth (Bits per pixel)
+ * @param[out] mode Where to return the mode number. Must not be a @ref NullPointer.
+ * @returns STATUS_OK if the modes match. STATUS_NOT_FOUND if another similar mode was found but not
+ * an exact match. STATUS_BAD if an error occured.
+ */
+[[gnu::nonnull]]
+Status FindBestVESAMode(VBEInfo *info, VBEModeInfo *modeinfo, int w, int h, int d, u16 *mode);
+
+/**
+ * @brief Switch to the VESA mode given by number @p mode
+ * @param mode Mode number to use.
+ * @warning In @p mode the bits 14 and 15 must not be specified manually. The framebuffer will
+ * always be of linear form and the screen will always be cleared upon modesetting.
+ * @return STATUS_OK if the mode was loaded succesfully, STATUS_BAD if the call to the BIOS failed
+ * or returned error values.
+ */
+Status VESAModeset(u16 mode);
