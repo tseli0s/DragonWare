@@ -206,6 +206,11 @@ Status VBE86DriverInit(void) {
                 return STATUS_OUT_OF_MEMORY;
         }
 
+        LogMessage(LOG_INFO, "Dumping framebuffer information from bootloader protocol:");
+        LogMessage(LOG_INFO, "\tDimensions: %dx%d pixels at %d bytes per pixel", bootinfo->fbwidth, bootinfo->fbheight, bootinfo->bpp);
+        LogMessage(LOG_INFO, "\tPitch: %d bytes", bootinfo->fbpitch);
+        LogMessage(LOG_INFO, "\tPhysical MMIO Address: %p", (uintptr_t)bootinfo->fbaddr);
+
         FramebufferDeviceOps fbddo = {.WriteSinglePixel       = WriteSinglePixel,
                                       .BlitRectangle          = DrawRectangle,
                                       .SetCurrentOutputColors = SetColors,
