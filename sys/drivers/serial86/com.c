@@ -23,6 +23,16 @@
 
 #ifndef __K_DISABLE_SERIAL_OUTPUT
 
+static void InitSerialConnection(void) {
+        outb(COM1_PORT + 1, 0x00);
+        outb(COM1_PORT + 3, 0x80);
+        outb(COM1_PORT, 0x03);
+        outb(COM1_PORT + 1, 0x00);
+        outb(COM1_PORT + 3, 0x03);
+        outb(COM1_PORT + 2, 0xC7);
+        outb(COM1_PORT + 4, 0x0B);
+}
+
 static inline void WaitForPort(void) { while (!(inb(COM1_PORT + 5) & 0x20)); }
 
 static inline void WriteToSerialPort(char c) {
@@ -71,6 +81,7 @@ Status Serial86Init(void) {
                    "time. Nothing to do.");
         return STATUS_OK;
 #endif
+        InitSerialConnection();
         DeviceManagerNode *node =
                 MakeDeviceNode("Serial Port Driver", P_MUTABLE | P_HAVE_CHILDREN | P_USER,
                                DEVCLASS_UART | DEVCLASS_CONSOLE);
@@ -106,7 +117,7 @@ Status Serial86Init(void) {
         return STATUS_OK;
 }
 
-const DriverDescriptor ser86_descriptor = {.name         = "Serial Port Driver (COM1/COM2)",
+const DriverDescriptor ser86_descriptor = {.name         = "x86 Serial Port Driver (COM1)",
                                            .author       = "DragonWare",
                                            .license      = "GPLv3.0",
                                            .init_earlier = true,
