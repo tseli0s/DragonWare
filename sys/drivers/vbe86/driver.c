@@ -49,8 +49,8 @@ typedef struct _FramebufferControllerInformation {
  * and adapted somewhat to this file's needs. */
 static inline void *SegmentedToLinearPointer(void *seg) {
         u32 addr = (u32)seg;
-        u16 hi   = (addr >> 16) & 0xFFFF;
-        u16 lo   = addr & 0xFFFF;
+        u16 hi   = (u16)((addr >> 16) & 0xFFFF);
+        u16 lo   = (u16)(addr & 0xFFFF);
         return (void *)((hi * 16) + lo);
 }
 
@@ -231,11 +231,11 @@ static void CollectVBEInformation(Multiboot *bootinfo, FramebufferControllerInfo
         ctrl->productname     = SegmentedToLinearPointer(info->productname);
         ctrl->productrevision = SegmentedToLinearPointer(info->productrevision);
         ctrl->vendorname      = SegmentedToLinearPointer(info->vendorname);
-        ctrl->version =
-                (VESAVersion){.major = (info->version >> 8) & 0xFF, .minor = info->version & 0xFF};
-        ctrl->revision     = info->revision;
-        ctrl->totalmem     = info->totalmem * 64;
-        ctrl->capabilities = info->capabilities;
+        ctrl->version         = (VESAVersion){.major = (u8)((info->version >> 8) & 0xFF),
+                                              .minor = (u8)(info->version & 0xFF)};
+        ctrl->revision        = info->revision;
+        ctrl->totalmem        = info->totalmem * 64;
+        ctrl->capabilities    = info->capabilities;
 
         UnmapSinglePage(infoaddr);
         return;
