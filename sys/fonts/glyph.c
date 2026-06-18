@@ -9,11 +9,18 @@
 
 #include "glyph.h"
 
-#include "macros.h"
+#ifdef __DRAGONWARE_SYS__
+#include "macros.h" /* unlikely() */
+#endif              /* __DRAGONWARE_SYS__ */
 #include "psfparse.h"
 #include "spleen.h"
 
 #define GLYPH_OFFSET(_char, _charsize) (sizeof(PSFFont) + (Size)(_char) * (Size)(_charsize))
+
+/* Just on the userland, which doesn't have likely()/unlikely() yet */
+#ifndef unlikely
+#define unlikely(x) x
+#endif
 
 Glyph GetGlyphFromDefaultFont(char c) {
         Glyph g    = {0};

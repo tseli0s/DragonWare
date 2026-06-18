@@ -11,9 +11,11 @@
 
 #define PSF_FONT_MAGIC (0x0436)
 
+#ifdef __DRAGONWARE_SYS__ /* Only defined for the kernel build, not for the userland */
 #include <ktypes.h>
-
-#include "macros.h"
+#else
+#include <kerneltypes.h>
+#endif /* __DRAGONWARE_SYS__ */
 
 typedef struct [[gnu::packed]] _PSFFont {
         u16 magic;
@@ -21,10 +23,10 @@ typedef struct [[gnu::packed]] _PSFFont {
         u8  char_size;
 } PSFFont;
 
-typedef enum _PSFError { PSFGood = 0, BadHeader, BadVersion, BadOffset, BadDimensions } PSFError;
-
 /* Parses a PSF file and checks that it's valid. Doesn't require memory allocation. */
-PSFError ParsePSFData(const u8 *data);
+[[gnu::nonnull]]
+Status ParsePSFData(const u8 *data);
 
 /* Returns whether the given memory-mapped data is a valid PSF (1) font */
+[[gnu::nonnull]]
 Bool FontISPSF(const u8 *data);
