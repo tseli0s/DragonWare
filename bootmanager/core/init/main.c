@@ -26,8 +26,6 @@
 #include "mbutils.h"
 #include "memdetect.h"
 #include "proto/multiboot.h"
-#include "proto/vbe.h"
-#include "storage/ata.h"
 #include "storage/partition.h"
 #include "textmode/dbgprint.h"
 #include "textmode/tui.h"
@@ -307,7 +305,6 @@ void bootmain(void) {
         FetchMemoryRegions(NullPointer);
         InitFrameManager();
         AllocHighInit();
-        ATAIdentifyAllDevices(4);
         InitPartitionTable();
 
         InitMultibootStructure(BootDevice);
