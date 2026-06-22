@@ -117,6 +117,20 @@ int strcasecmp(const char *s1, const char *s2) {
         }
 }
 
+int strncasecmp(const char *s1, const char *s2, size_t n_chars) {
+        if (!s1 || !s2) return (s1 == s2) ? 0 : (s1 ? 1 : -1);
+
+        for (size_t i = 0; i < n_chars; i++) {
+                unsigned char a = (unsigned char)tolower((unsigned char)s1[i]);
+                unsigned char b = (unsigned char)tolower((unsigned char)s2[i]);
+
+                if (a != b) return a - b;
+                if (a == '\0') return 0;
+        }
+
+        return 0;
+}
+
 void itoa(unsigned int value, char *str, int base) {
         if (base < 2 || base > BASE16) {
                 str[0] = '\0';
