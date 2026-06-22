@@ -29,15 +29,12 @@
 #include "textmode/dbgprint.h"
 #include "textmode/tui.h"
 #include "textmode/vgatext.h"
-#include "timer/pit.h"
 
 #define DEFAULT_KERNEL_PATH "KRNLIA32.SYS"
 #define BOOTLOADER_ID       "DragonWare Boot Manager"
 
 static Multiboot          *bootinfo = NullPointer;
 static MultibootMMapEntry *mmapaddr = NullPointer;
-
-static int countdown_timer_idx = 0;
 
 [[noreturn]]
 extern void _JumpToKernel(void *mbaddr, void *addr);
@@ -98,8 +95,6 @@ oom:
 }
 
 static void BootDragonWareFromCD(void) {
-        RemoveTickCallbackFunction(countdown_timer_idx);
-
         bootinfo->flags    = MULTIBOOT_MMAP | MULTIBOOT_INFO_BOOTDEV | MULTIBOOT_FRAMEBUFFER_INFO;
         bootinfo->fbtype   = 2; /* Text mode */
         bootinfo->fbwidth  = VGA_WIDTH;
@@ -153,8 +148,6 @@ static void BootDragonWareDefaultOptions(void) {
 }
 
 static void BootDragonWareVGATextMode(void) {
-        RemoveTickCallbackFunction(countdown_timer_idx);
-
         bootinfo->flags    = MULTIBOOT_MMAP | MULTIBOOT_INFO_BOOTDEV | MULTIBOOT_FRAMEBUFFER_INFO;
         bootinfo->fbtype   = 2; /* Text mode */
         bootinfo->fbwidth  = VGA_WIDTH;
@@ -211,6 +204,7 @@ static void CopyMemoryRegionsToMultibootStruct(void) {
 
 [[gnu::noreturn]]
 void bootmain(void) {
+        InitDebugPrint();
         DebugPrint("Welcome to DragonWare Boot Manager!");
 
         extern Byte BootDevice;
@@ -218,17 +212,14 @@ void bootmain(void) {
 
         DebugPrint("Boot device reported from the BIOS to be 0x%x", BootDevice);
         DebugPrint("%d memory regions in this machine.", NumMemoryRegions);
-
+        
         IDTInit();
-        InitDebugPrint();
+        InitPartitionTable();
         VGATextInit();
-
-        StartPITTimer();
         InitPS2Keyboard();
         FetchMemoryRegions(NullPointer);
         InitFrameManager();
         AllocHighInit();
-        InitPartitionTable();
 
         /* We need a page-aligned address here. */
         bootinfo = (Multiboot *)AllocateFrame();
