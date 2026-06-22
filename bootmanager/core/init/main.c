@@ -42,8 +42,6 @@ static MultibootMMapEntry *mmapaddr = NullPointer;
 static VBEInfo     *vbe_info      = NullPointer;
 static VBEModeInfo *vbe_mode_info = NullPointer;
 
-static int countdown_timer_idx = 0;
-
 [[noreturn]]
 extern void _JumpToKernel(void *mbaddr, void *addr);
 
