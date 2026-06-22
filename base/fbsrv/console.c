@@ -75,11 +75,14 @@ static void ScrollFramebuffer(void) {
         memmove(FRAMEBUFFER_ADDR, (u8 *)FRAMEBUFFER_ADDR + (FONT_HEIGHT * info.stride),
                 (info.h - FONT_HEIGHT) * info.stride);
 
-        for (int i = 0; (u32)i < info.w / FONT_WIDTH; i++)
-                WriteSingleCharacterAt(' ', i, (int)(info.h / FONT_HEIGHT) - 1);
+        int last_row = (info.h / FONT_HEIGHT) - 1;
+        int max_cols = info.w / FONT_WIDTH;
 
-        x = (int)(info.h / FONT_HEIGHT) - 1;
-        y = 0;
+        for (int i = 0; i < max_cols; i++)
+                WriteSingleCharacterAt(' ', i, last_row);
+
+        x = 0;
+        y = last_row;
 }
 
 static inline void ClearFramebuffer(void) { memset(FRAMEBUFFER_ADDR, 0x00, info.h * info.stride); }
