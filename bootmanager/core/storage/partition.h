@@ -9,10 +9,14 @@
 
 #pragma once
 
-#include <ktypes.h>
+#ifndef MAX_SYSTEM_DRIVES /* Maybe another compile time feature? */
+#define MAX_SYSTEM_DRIVES 8
+#endif /* MAX_SYSTEM_DRIVES */
 
 /* hd0p0, hd1p1, ... 12 bytes will suffice */
 #define IDENTIFIER_LIMIT (12)
+
+#include <ktypes.h>
 
 typedef enum _PartitionType : unsigned char {
         PART_EMPTY = 0x00,
