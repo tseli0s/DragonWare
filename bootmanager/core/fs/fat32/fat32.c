@@ -17,11 +17,9 @@
 #include <mmutils.h>
 
 #include "kmalloc.h"
-#include "storage/ata.h"
+#include "storage/diskread.h"
 #include "storage/partition.h"
-#include "textmode/dbgprint.h"
 
-#define SECTOR_SIZE       (512)
 #define FAT32_EOF         (0x0FFFFFF8)
 #define FAT32_BAD_CLUSTER (0x0FFFFFF7)
 
@@ -112,8 +110,8 @@ static u32 ReadFAT32Entry(const Partition *p, BIOSParameterBlock *bpb, u32 clust
         u32 fat_sector = FindFAT(p, bpb) + (fat_offset / SECTOR_SIZE);
         u32 ent_offset = fat_offset % SECTOR_SIZE;
 
-        Byte buf[512];
-        ATAReadSectors(0, 1, fat_sector, buf);
+        Byte buf[SECTOR_SIZE];
+        ReadFromDisk(p->drive_index, fat_sector, 1, buf);
 
         u32 entry = *(u32 *)(buf + ent_offset);
         return entry & 0x0FFFFFFF; /* The highest 4 bits are reserved in FAT32, so each entry is
@@ -146,13 +144,13 @@ static void FATEntryToString(const char *raw, char *dest) {
 
 static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 cluster,
                                const char *filename, File *output) {
-        Byte sector[512];
+        Byte sector[SECTOR_SIZE];
         /* Clusters 0 and 1 are reserved in FAT */
         while (cluster < FAT32_EOF && cluster >= 2) {
                 u32 lba = ClusterToLBA(&p, bpb, cluster);
 
                 for (int s = 0; s < bpb->sectors_per_cluster; s++) {
-                        ATAReadSectors(0, 1, lba + s, sector);
+                        ReadFromDisk(p.drive_index, lba + s, 1, sector);
 
                         for (int i = 0; i < SECTOR_SIZE; i += sizeof(DirectoryEntry)) {
                                 Byte *ent = sector + i;
@@ -201,7 +199,7 @@ static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 c
 Status OpenFile_FAT32(const Partition p, const char *path, File *output) {
         output->t = PART_FAT32_LBA;
         BIOSParameterBlock bpb;
-        ATAReadSectors(0, 1, (u32)p.lba_start, (Byte *)&bpb);
+        ReadFromDisk(p.drive_index, p.lba_start, 1, &bpb);
 
         return ScanDirectoryFor(p, &bpb, bpb.root_cluster, path, output);
 }
@@ -209,7 +207,8 @@ Status OpenFile_FAT32(const Partition p, const char *path, File *output) {
 int ReadFile_FAT32(File *f, Size n_bytes, void *output) {
         FAT32FileData     *data = f->internal;
         BIOSParameterBlock bpb;
-        if (ATAReadSectors(0, 1, (u32)data->part.lba_start, (Byte *)&bpb) < 1) return -1;
+        if (ReadFromDisk(data->part.drive_index, data->part.lba_start, 1, &bpb) != STATUS_OK)
+                return -1;
         u32 bytes_per_cluster = bpb.sectors_per_cluster * SECTOR_SIZE;
         u32 cluster           = data->first_cluster;
 
@@ -230,7 +229,9 @@ int ReadFile_FAT32(File *f, Size n_bytes, void *output) {
                 for (u32 s = sector_in_cluster; s < bpb.sectors_per_cluster && bytes_read < n_bytes;
                      s++) {
                         Byte sector_temp[SECTOR_SIZE];
-                        if (ATAReadSectors(0, 1, lba + s, sector_temp) < 1) return -1;
+                        if (ReadFromDisk(data->part.drive_index, lba + s, 1, sector_temp) !=
+                            STATUS_OK)
+                                return -1;
 
                         u32 can_read = SECTOR_SIZE - offset_in_sector;
                         u32 to_copy  = (n_bytes - bytes_read < can_read) ? (n_bytes - bytes_read)
