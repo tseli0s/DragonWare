@@ -174,7 +174,9 @@ static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 c
                                                              (u32)de->first_cluster_low) &
                                                             0x0FFFFFFF;
                                         FAT32FileData *private = kmalloc(sizeof(FAT32FileData));
-                                        if (!private) return STATUS_OUT_OF_MEMORY;
+                                        if (!private) {
+                                                return STATUS_OUT_OF_MEMORY;
+                                        }
 
                                         private->first_cluster = first_cluster;
                                         private->attributes    = de->attributes;
