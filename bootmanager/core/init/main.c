@@ -212,7 +212,7 @@ void bootmain(void) {
 
         DebugPrint("Boot device reported from the BIOS to be 0x%x", BootDevice);
         DebugPrint("%d memory regions in this machine.", NumMemoryRegions);
-        
+
         IDTInit();
         InitPartitionTable();
         VGATextInit();
@@ -266,6 +266,7 @@ void bootmain(void) {
         AddEntry("Reboot", 3, ForceReboot);
 
         DrawUserInterface();
+        __asm__ volatile("sti");
 
         while (1) {
                 __asm__ volatile("hlt");
