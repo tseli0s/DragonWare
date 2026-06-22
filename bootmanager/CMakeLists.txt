@@ -11,7 +11,7 @@ set(CORE_SOURCES core/init/main.c core/init/loader.asm core/cpu/idt86.c core/cpu
                  core/common/error.c core/fs/fs.c core/fs/fat32/fat32.c core/fs/iso9660/iso9660.c
                  core/common/frame.c core/common/kmalloc.c core/textmode/dbgprint.c
                  core/init/mbutils.c core/elfldr/elfloader.c core/cpu/bioscall.asm
-                 core/proto/vbe.c)
+                 core/proto/vbe.c core/init/mbutils.c core/elfldr/elfloader.c core/storage/diskread.c)
 
 set(BOOTIMG ${CMAKE_CURRENT_BINARY_DIR}/boot.img        PARENT_SCOPE)
 set(BOOTIMG_CD ${CMAKE_CURRENT_BINARY_DIR}/bootcd.img   PARENT_SCOPE)
