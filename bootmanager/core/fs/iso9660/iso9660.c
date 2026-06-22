@@ -16,23 +16,20 @@
 
 #include "error.h"
 #include "kmalloc.h"
-#include "storage/ata.h"
+#include "storage/diskread.h"
 #include "storage/partition.h"
 #include "textmode/dbgprint.h"
 
-#define SECTOR_SIZE          (512)
-#define CD_SECTOR_SIZE       (4 * SECTOR_SIZE)
-#define SECTORS_IN_CD_SECTOR (CD_SECTOR_SIZE / SECTOR_SIZE)
-#define DESCRIPTOR_ADDR_LBA  (16)
-#define MAX_READ_RETRIES     (3)
+#define DESCRIPTOR_ADDR_LBA (16)
+#define MAX_READ_RETRIES    (3)
 
 /* Bits 5 and 6 are reserved, hence the sudden jump */
-#define ENTRY_HIDDEN         (0x01)
-#define ENTRY_DIRECTORY      (0x02)
-#define ENTRY_ASSOCIATED     (0x04)
-#define ENTRY_FORMAT_IN_EA   (0x08)
-#define ENTRY_PERMISSIONS    (0x10)
-#define ENTRY_HUGE_FILE      (0x80)
+#define ENTRY_HIDDEN        (0x01)
+#define ENTRY_DIRECTORY     (0x02)
+#define ENTRY_ASSOCIATED    (0x04)
+#define ENTRY_FORMAT_IN_EA  (0x08)
+#define ENTRY_PERMISSIONS   (0x10)
+#define ENTRY_HUGE_FILE     (0x80)
 
 /* ISO9660 is biendian, so we must have an integer type for biendian integers here. See
  * https://wiki.osdev.org/ISO_9660#Numerical_formats for more details.
@@ -121,9 +118,7 @@ static Status FindDirectoryEntry(const Partition p, const char *path, File *outp
                 return STATUS_UNSUPPORTED;
         }
         ISO9660DirectoryRecord *root = (ISO9660DirectoryRecord *)pvd->root_directory;
-
-        u32 lba  = root->lba.le * (CD_SECTOR_SIZE / SECTOR_SIZE);
-        u32 size = alignup(root->data_length.le, SECTOR_SIZE);
+        u32                     lba  = root->lba.le;
 
         /* FIXME: This assumes the entire directory will fit in one sector. This works while we're
          * still minimal, but if we put too much data in the boot CD, we're doomed. */
@@ -132,8 +127,7 @@ static Status FindDirectoryEntry(const Partition p, const char *path, File *outp
 
         Bool read_success = false;
         for (int retry = 0; retry < MAX_READ_RETRIES && !read_success; retry++) {
-                if (ATAReadSectors(p.drive_index, size / SECTOR_SIZE, lba, buf) ==
-                    size / SECTOR_SIZE) {
+                if (ReadFromDisk(p.drive_index, lba, 1, buf) == STATUS_OK) {
                         read_success = true;
                         break;
                 }
@@ -174,7 +168,7 @@ static Status FindDirectoryEntry(const Partition p, const char *path, File *outp
                         offset += stepped;
                         continue;
                 }
-                if (strncmp(path, entry->file_id, name_size) != 0) {
+                if (strncasecmp(path, entry->file_id, name_size) != 0) {
                         offset += stepped;
                         continue;
                 }
@@ -205,15 +199,11 @@ Status OpenFile_ISO9660(const Partition p, const char *path, File *output) {
         Bool       pvd_found    = false;
         ZeroMemory(current_descriptor);
 
-        /* LBAs for CDs must be multiplied by 4, because the sector sizes are four times larger.
-         * In case there's a faulty PVD, have a limit to how much we are going to read before just
-         * stopping */
         for (int i = 0; i < max_search && !pvd_found; i++) {
                 Bool read_success = false;
                 for (unsigned int j = 0; j < read_retries && !read_success; j++) {
-                        if (ATAReadSectors(p.drive_index, SECTORS_IN_CD_SECTOR,
-                                           (DESCRIPTOR_ADDR_LBA + i) * SECTORS_IN_CD_SECTOR,
-                                           current_descriptor) == SECTORS_IN_CD_SECTOR)
+                        if (ReadFromDisk(p.drive_index, DESCRIPTOR_ADDR_LBA + i, 1,
+                                         current_descriptor) == STATUS_OK)
                                 read_success = true;
                 }
                 if (!read_success)
@@ -247,12 +237,9 @@ int ReadFile_ISO9660(File *f, Size n_bytes, Byte *output) {
                 /* Determine which sector does the cursor currently sit at */
                 u32  current_cd_sector_offset = f->cursor / CD_SECTOR_SIZE;
                 Size offset_in_sector         = f->cursor % CD_SECTOR_SIZE;
-
-                u32 absolute_cd_lba  = fdata->starting_lba + current_cd_sector_offset;
-                u32 absolute_ata_lba = absolute_cd_lba * SECTORS_IN_CD_SECTOR;
-
-                if (ATAReadSectors(fdata->volume.drive_index, SECTORS_IN_CD_SECTOR,
-                                   absolute_ata_lba, tmpbuf) != SECTORS_IN_CD_SECTOR) {
+                if (ReadFromDisk(fdata->volume.drive_index,
+                                 fdata->starting_lba + current_cd_sector_offset, 1,
+                                 tmpbuf) != STATUS_OK) {
                         break; /* Read failed, return what we have so far */
                 }
 

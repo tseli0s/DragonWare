@@ -93,5 +93,4 @@ void IDTInit(void) {
 
         __lidt((u32)&idtptr);
         IRQInit();
-        __asm__ volatile("sti");
 }
