@@ -1,49 +1,120 @@
 /**********************************************************************
  * FILE: console.c
- * PURPOSE: Console service implemented on top of the framebuffer driver
+ * PURPOSE: Framebuffer-based console implementation
  * PROJECT: DragonWare Base System
  * DATE: 06-2026
  * AUTHOR: Aggelos Tselios <aggelostselios777@gmail.com>
  * LICENSE: GPL-3.0-or-later (https://spdx.org/licenses/GPL-3.0-or-later.html)
  ***********************************************************************/
 
-/*
- * MAJOR FIXME IN THIS FILE: Currently, all functions here assume a depth of 32 bits, without the
- * ability to use 24, 16 (much less 40+) bits to render. This *will* be broken in a lot of hardware,
- * so this is one of the things that should be addressed here first. At the moment, it also assumes
- * a fixed resolution of 1024x768 pixels, so if the bootloader chooses literally any other
- * resolution, this will look broken and cause crashes.
- */
+#include <string.h>
+#define BLACK_COLOR (0x00000000)
+#define WHITE_COLOR (0xFFFFFFFF)
+
+#include <kerneltypes.h>
 
 #include "console.h"
-
-#include <ipc86.h>
-
 #include "font/glyph.h"
-#include "protocol.h"
+#include "pixel.h"
 
-/* Vertical position we are currently at */
-static int xpos = 0;
+/* Character coordinates. Sorry if the name sucks, I like single character variables for this. */
+static int x = 0;
+static int y = 0;
 
-/* Horizontal position we are currently at. */
-static int ypos = 0;
+static struct {
+        u32 w, h, d;
+        u32 stride;
+} info;
 
-static inline void PutPixel32(u32 *addr, unsigned long fbwidth, unsigned long x, unsigned long y,
-                              u32 color) {
-        Size idx  = PIXEL_INDEX(x, y, fbwidth);
-        addr[idx] = color;  // NOLINT(clang-analyzer-core.FixedAddressDereference)
-        /* (that NOLINT line above is because clang-tidy thinks we're doing something stupid )*/
+[[gnu::hot]]
+static void WriteSinglePixel(u32 xc, u32 yc, u32 color) {
+        switch (info.d) {
+                case 32: {
+                        PutPixel32(FRAMEBUFFER_ADDR, info.w, xc, yc, color);
+                        break;
+                }
+                case 24: {
+                        PutPixel24(FRAMEBUFFER_ADDR, info.stride, xc, yc, color);
+                        break;
+                }
+
+                default:
+                        /* Just assume 32 bits for now */
+                        PutPixel32(FRAMEBUFFER_ADDR, info.w, xc, yc, color);
+                        break;
+        }
 }
 
 [[gnu::hot]]
-static void WriteSinglePixel(int x, int y, u32 rgba) {}
+static void RenderGlyph(int xc, int yc, Glyph *g) {
+        u8 *glyph = g->font + g->offset;
+
+        for (u32 row = 0; row < FONT_HEIGHT; row++) {
+                u8 bits = glyph[row];
+
+                for (u32 col = 0; col < FONT_WIDTH; col++) {
+                        u32 px = (u32)xc + col;
+                        u32 py = (u32)yc + row;
+
+                        if (px >= info.w || py >= info.h) continue;
+
+                        u32 color = (bits & (0x80 >> col)) ? WHITE_COLOR : BLACK_COLOR;
+                        WriteSinglePixel(px, py, color);
+                }
+        }
+}
 
 [[gnu::hot]]
-static void DrawCharacterAuto(char c) {}
+static inline void WriteSingleCharacterAt(char c, int xc, int yc) {
+        const Glyph g = GetGlyphFromDefaultFont(c);
+        RenderGlyph(xc * FONT_WIDTH, yc * FONT_HEIGHT, (Glyph *)&g);
+}
 
-void HandleConsoleClientRequest(Message *m) {
-        switch (m->header.type) {
-                default:
-                        break;
+[[gnu::hot]]
+static void ScrollFramebuffer(void) {
+        memmove(FRAMEBUFFER_ADDR, (u8 *)FRAMEBUFFER_ADDR + (FONT_HEIGHT * info.stride),
+                (info.h - FONT_HEIGHT) * info.stride);
+
+        for (int i = 0; (u32)i < info.w / FONT_WIDTH; i++)
+                WriteSingleCharacterAt(' ', i, (int)(info.h / FONT_HEIGHT) - 1);
+
+        x = (int)(info.h / FONT_HEIGHT) - 1;
+        y = 0;
+}
+
+static inline void ClearFramebuffer(void) { memset(FRAMEBUFFER_ADDR, 0x00, info.h * info.stride); }
+
+void RegisterDeviceInfo(DeviceMapDescriptor *dev) {
+        info.w      = dev->fb.width;
+        info.h      = dev->fb.height;
+        info.d      = dev->fb.bpp;
+        info.stride = dev->fb.stride;
+        ClearFramebuffer();
+}
+
+void WriteCharacterToConsole(char c) {
+        int max_cols = (int)(info.w / FONT_WIDTH) - 2;
+
+        if (c == '\n') {
+                x = 0;
+                y++;
+                if ((u32)y >= (info.h / FONT_HEIGHT) - 1) ScrollFramebuffer();
+                return;
+        } else if (c == '\t') {
+                x = (int)(((unsigned int)x + 4) & (Size)~3);
+                return;
+        }
+        WriteSingleCharacterAt(c, x, y);
+        x++;
+        if (x >= max_cols) {
+                x = 0;
+                y++;
+        }
+}
+
+void WriteStringToConsole(const char *str) {
+        size_t len = strlen(str);
+        for (size_t i = 0; i < len; i++) {
+                WriteCharacterToConsole(str[i]);
         }
 }

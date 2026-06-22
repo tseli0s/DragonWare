@@ -9,45 +9,126 @@
 
 #include <kernelapi.h>
 #include <kerneltypes.h>
+#include <message.h>
+#include <object.h>
+#include <string.h>
 
-#define EXPECTED_FRAMEBUFFER_ADDR ((void *)(0x80000000))
+#include "fbsrv/console.h"
+#include "protocol.h" /* This also defines the vgacons-related protocol data */
+#include "ps2kbd/protocol.h"
 
 int main(void) {
-        int                 handle            = _DWCreateObject(NullPointer, OBJ_DEVICE, 0);
-        DeviceMapDescriptor device_descriptor = {0};
+        if (_DWRaiseIOPL() != STATUS_OK) return -1;
 
-        if (handle < 0) {
-                _DWklog(LOG_ERROR,
-                        "Unable to create device object (Required to claim framebuffer)");
-                return -1;
-        }
-        if (_DWInvokeObject(handle, DEVICE_GET, "/Devices/Kernel Framebuffer") != STATUS_OK) {
-                _DWklog(LOG_ERROR,
-                        "Unable to find /Devices/Kernel Framebuffer in the kernel device tree.");
-                return -1;
-        }
-        if (_DWInvokeObject(handle, DEVICE_CLAIM, &device_descriptor) != STATUS_OK) {
-                _DWklog(LOG_ERROR, "Unable to claim /Devices/Kernel Framebuffer for server use");
-                return -1;
-        }
+        /* The framebuffer server also provides the system console. It may become optional in the
+         * far future, but until then, this driver has two responsibilities (And even more under the
+         * hood)*/
+        Handle              consoleport        = CreateObject("CONSOLE", OBJ_PORT, 0);
+        Handle              fbdev              = CreateObject(NullPointer, OBJ_DEVICE, 0);
+        Handle              kbdport            = CreateObject(NullPointer, OBJ_PORT, 0);
+        Handle              console_controller = -1;
+        DeviceMapDescriptor dev;
 
-        if (_DWInvokeObject(handle, DEVICE_MAP, EXPECTED_FRAMEBUFFER_ADDR) != STATUS_OK) {
-                _DWklog(LOG_ERROR,
-                        "Framebuffer device could not be mapped to the framebuffer "
-                        "server.");
-                return -1;
-        }
+        if (fbdev < 0 || kbdport < 0 || consoleport < 0) goto cleanup;
+        if (InvokeObject(fbdev, DEVICE_GET, "/Devices/Kernel Framebuffer") != STATUS_OK)
+                goto cleanup;
+        if (InvokeObject(fbdev, DEVICE_CLAIM, &dev) != STATUS_OK) goto cleanup;
+        if (InvokeObject(fbdev, DEVICE_MAP, FRAMEBUFFER_ADDR) != STATUS_OK) goto cleanup;
 
-        u32 *buf = EXPECTED_FRAMEBUFFER_ADDR;
-        for (unsigned int i = 0; i < (device_descriptor.mmio_len / 4) - 1; i++) buf[i] = 0x00000000;
+        if (InvokeObject(kbdport, PORT_OPEN, "KEYBOARD") != STATUS_OK) goto cleanup;
 
-        while (1) {
+        /* Now that we have claimed the framebuffer, ensure our console implementation knows about
+         * it */
+        RegisterDeviceInfo(&dev);
+
+        Handle kbdreply = CreateObject(NullPointer, OBJ_PORT, 0);
+        if (!kbdreply) goto cleanup;
+
+        /* Need to know if the request was accepted or not */
+        Message kbdack;
+        ReceiveMessage(kbdreply, &kbdack);
+        if (kbdack.payload.raw[0] != STATUS_OK) goto cleanup;
+
+        /* TODO: Here we must clear the screen. We need support from the kernel though to tell us
+         * the information about the framebuffer format. */
+        if (InvokeObject(consoleport, PORT_CREATE, NullPointer) != STATUS_OK) goto cleanup;
+
+        Message claim_msg;
+        memset(&claim_msg, 0, sizeof(Message));
+        claim_msg.header.protocol       = KBD_PROTOCOL_V0;
+        claim_msg.header.type           = KBD_LISTENER_REQUEST;
+        claim_msg.header.payload_length = 0;
+        claim_msg.header.reply_handle   = consoleport;
+
+        SendMessage(kbdport, &claim_msg, sizeof(claim_msg.header));
+        while (true) {
                 Message m;
-                if (_DWIPCReceive(0, &m) == 0) {
-                        _DWklog(LOG_DEBUG,
-                                "Message received to framebuffer server. This is just a "
-                                "placeholder.");
+                /* If not STATUS_OK, the message was malformed, so we can't trust it */
+                if (ReceiveMessage(consoleport, &m) != STATUS_OK) continue;
+
+                switch (m.header.protocol) {
+                        case KBD_PROTOCOL_V0: {
+                                char c = (char)m.payload.raw[0];
+
+                                /* hackish way to avoid deleting stuff from the screen we shouldnt
+                                 * when there's a program running beneath
+                                 */
+                                if (c != '\b' || (c == '\b' && console_controller < 0)) {
+                                        WriteCharacterToConsole(c);
+                                }
+
+                                if (console_controller >= 0)
+                                        SendMessage(console_controller, &m,
+                                                    sizeof(m.header) + m.header.payload_length);
+                                break;
+                        }
+                        case VGACONS_PROTOCOL_V0:
+                                switch (m.header.type) {
+                                        case VGACONS_CLAIM_CONSOLE: {
+                                                if (m.header.reply_handle < 0) break;
+
+                                                Status reply = STATUS_BAD;
+                                                if (console_controller >= 0)
+                                                        break;
+                                                else {
+                                                        reply              = STATUS_OK;
+                                                        console_controller = m.header.reply_handle;
+                                                }
+                                                Message replymsg;
+                                                replymsg.header.payload_length = 1;
+                                                replymsg.header.type           = m.header.type;
+                                                replymsg.header.protocol     = VGACONS_PROTOCOL_V0;
+                                                replymsg.header.reply_handle = -1;
+                                                replymsg.payload.raw[0]      = (Byte)reply;
+                                                SendMessage(m.header.reply_handle, &replymsg,
+                                                            sizeof(replymsg.header) + sizeof(Byte));
+                                                break;
+                                        }
+                                        case VGACONS_REQUEST_STRING_DRAW: {
+                                                char string[MESSAGE_BUFFER_SIZE];
+                                                strncpy(string, (const char *)m.payload.raw,
+                                                        m.header.payload_length);
+                                                string[m.header.payload_length] = '\0';
+                                                WriteStringToConsole(string);
+                                                break;
+                                        }
+                                        case VGACONS_REQUEST_CHAR_DRAW: {
+                                                char c = (char)m.payload.raw[0];
+                                                WriteCharacterToConsole(c);
+                                                break;
+                                        }
+                                        default:
+                                                break;
+                                }
+                                break;
+                        default:
+                                break;
                 }
         }
         return 0;
+cleanup:
+        if (consoleport >= 0) DeleteObject(consoleport);
+        if (fbdev >= 0) DeleteObject(fbdev);
+        if (kbdport >= 0) DeleteObject(kbdport);
+        return -1;
 }

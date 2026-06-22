@@ -18,7 +18,6 @@
 #include <kerneltypes.h>
 #endif /* __DRAGONWARE_SYS__ */
 
-
 typedef struct _Glyph {
         u8  *font;
         u8   charsize;
