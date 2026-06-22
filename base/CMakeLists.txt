@@ -30,7 +30,7 @@ macro(add_user_program binname)
         set_property(GLOBAL APPEND PROPERTY DRAGONWARE_USER_TARGETS ${binname}.run)
 endmacro()
 
-add_user_program(fbsrv fbsrv/main.c)
+add_user_program(fbsrv fbsrv/main.c fbsrv/console.c fbsrv/font/glyph.c fbsrv/font/psfparse.c fbsrv/font/spleen.c)
 add_user_program(ps2kbd ps2kbd/ps2kbd.c)
 add_user_program(vgacons vgacons/console.c vgacons/driver.c)
 add_user_program(dcp dcp/main.c dcp/command.c)
