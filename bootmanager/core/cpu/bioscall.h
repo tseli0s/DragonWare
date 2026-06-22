@@ -12,10 +12,10 @@
 #include <ktypes.h>
 
 /*
- * Needed in real mode, where we have segmented addressing. Briefly, the way to convert a seg:offset address
- * to a linear address is (seg * 16) + offset. These two macros reverse that process by taking a linear address
- * and calculating the segment it is part of and what is the offset.
-*/
+ * Needed in real mode, where we have segmented addressing. Briefly, the way to convert a seg:offset
+ * address to a linear address is (seg * 16) + offset. These two macros reverse that process by
+ * taking a linear address and calculating the segment it is part of and what is the offset.
+ */
 
 #define SEGMENT_OF(symbol)           (u16)(((uintptr_t)&(symbol) >> 4U) & 0xFFFFU)
 #define OFFSET_IN_SEGMENT_OF(symbol) (u16)((uintptr_t)&(symbol) & 0x000FU)
