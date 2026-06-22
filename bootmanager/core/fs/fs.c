@@ -16,12 +16,9 @@
 #include "error.h"
 #include "fat32/fat32.h"
 #include "fs/iso9660/iso9660.h"
-#include "storage/ata.h"
 #include "storage/mbr.h"
 #include "storage/partition.h"
 #include "textmode/dbgprint.h"
-
-#define SECTOR_SIZE 512
 
 File OpenFile(const char *partition, const char *path) {
         Partition p     = {.lba_start = 0, .n_sectors = 0, .identifier = {0}, .type = 0};
@@ -31,7 +28,7 @@ File OpenFile(const char *partition, const char *path) {
                            .loaded   = false,
                            .t        = PART_EMPTY};
         bool      found = false;
-        for (int i = 0; i < MAX_ATA_DISKS && !found; i++) {
+        for (int i = 0; i < MAX_SYSTEM_DRIVES && !found; i++) {
                 for (int j = 0; j < MAX_MBR_ENTRIES && !found; j++) {
                         p = GetPartitionEntryFromDisk(i, j);
                         if (p.n_sectors != 0 && p.type != PART_EMPTY) {
