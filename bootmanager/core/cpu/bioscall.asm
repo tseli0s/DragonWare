@@ -92,7 +92,7 @@ bits    32
 ;       u32 es, ds;
 ; } BIOSRegisters;
 __do_bios_call:
-        cli
+        pushf
 
         ; Self modify the instruction. I took this directly from the Linux kernel, because there's no
 	; other easy way to do this.
@@ -188,7 +188,7 @@ bits    32
                                 ; real mode stack is different, the RET instruction above didn't actually touch this stack, so
                                 ; we must clean up ourselves.
         popad
-        sti
+        popf
         ret
 
 global BIOSCall
