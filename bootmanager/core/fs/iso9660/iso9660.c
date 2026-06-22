@@ -168,7 +168,7 @@ static Status FindDirectoryEntry(const Partition p, const char *path, File *outp
                         offset += stepped;
                         continue;
                 }
-                if (strncmp(path, entry->file_id, name_size) != 0) {
+                if (strncasecmp(path, entry->file_id, name_size) != 0) {
                         offset += stepped;
                         continue;
                 }
