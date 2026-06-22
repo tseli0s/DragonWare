@@ -5,7 +5,7 @@ set(BOOTCDIMG_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/bootsect/cdrom/bootcd.asm)
 
 set(CORE_SOURCES core/init/main.c core/init/loader.asm core/cpu/idt86.c core/cpu/irq.c
                  core/cpu/isrgen.asm core/cpu/irqgen.asm core/cpu/pic.c core/common/highmem.c
-                 core/kbd/kbd.c core/timer/pit.c core/textmode/vgatext.c core/textmode/tui.c
+                 core/kbd/kbd.c core/textmode/vgatext.c core/textmode/tui.c
                  core/init/bootentry.c core/common/memdetect.c core/storage/partition.c
                  core/storage/mbr.c core/init/jmpkrnl.asm core/cpu/bioscall.asm
                  core/common/error.c core/fs/fs.c core/fs/fat32/fat32.c core/fs/iso9660/iso9660.c

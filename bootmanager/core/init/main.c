@@ -30,7 +30,6 @@
 #include "textmode/dbgprint.h"
 #include "textmode/tui.h"
 #include "textmode/vgatext.h"
-#include "timer/pit.h"
 
 #define DEFAULT_KERNEL_PATH "KRNLIA32.SYS"
 #define BOOTLOADER_ID       "DragonWare Boot Manager"
@@ -111,7 +110,6 @@ oom:
 }
 
 static void LoadAndBootKernel(const char *volume, Bool fbmode) {
-        RemoveTickCallbackFunction(countdown_timer_idx);
         bootinfo->flags    = MULTIBOOT_MMAP | MULTIBOOT_INFO_BOOTDEV | MULTIBOOT_FRAMEBUFFER_INFO;
         bootinfo->fbtype   = 2; /* Text mode */
         bootinfo->fbwidth  = VGA_WIDTH;
@@ -288,6 +286,7 @@ static void InitMultibootStructure(Byte BootDevice) {
 
 [[gnu::noreturn]]
 void bootmain(void) {
+        InitDebugPrint();
         DebugPrint("Welcome to DragonWare Boot Manager!");
 
         extern Byte BootDevice;
@@ -295,17 +294,14 @@ void bootmain(void) {
 
         DebugPrint("Boot device reported from the BIOS to be 0x%x", BootDevice);
         DebugPrint("%d memory regions in this machine.", NumMemoryRegions);
-
+        
         IDTInit();
-        InitDebugPrint();
+        InitPartitionTable();
         VGATextInit();
-
-        StartPITTimer();
         InitPS2Keyboard();
         FetchMemoryRegions(NullPointer);
         InitFrameManager();
         AllocHighInit();
-        InitPartitionTable();
 
         InitMultibootStructure(BootDevice);
         /*
