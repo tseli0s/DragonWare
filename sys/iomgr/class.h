@@ -34,6 +34,13 @@ typedef u64 DeviceClass;
 #define DEVCLASS_CLOCK       (1ULL << 3)
 #define DEVCLASS_IOMEDIA     (1ULL << 4)
 
+typedef struct _FramebufferInformation {
+        u32 width;
+        u32 height;
+        u32 bpp;
+        u32 stride;
+} FramebufferInformation;
+
 typedef struct _FramebufferDeviceOps {
         void (*WriteSinglePixel)(void *privatedata, Size x, Size y, PixelColor color);
         void (*BlitRectangle)(void *privatedata, Size startx, Size starty, Size width, Size height,
@@ -41,6 +48,7 @@ typedef struct _FramebufferDeviceOps {
         void (*Flush)(void *privatedata);
         void (*SetCurrentOutputColors)(void *privatedata, PixelColor fg, PixelColor bg);
         void (*ClearScreen)(void *privatedata);
+        FramebufferInformation (*GetFramebufferInformation)(void *privatedata);
 } FramebufferDeviceOps;
 
 typedef struct _ConsoleDeviceOps {

@@ -22,6 +22,7 @@
 #include "fbstate.h"
 #include "fonts/glyph.h"
 #include "init/bootinfo.h"
+#include "iomgr/class.h"
 #include "iomgr/devmgr.h"
 #include "iomgr/node.h"
 #include "vbe.h"
@@ -157,6 +158,18 @@ static void WriteSingleCharacter(void *privatedata, char c) {
                 state->column = 0;
                 state->row++;
         }
+}
+
+FramebufferInformation GetFramebufferInfo(void *privatedata) {
+        FramebufferState      *state = privatedata;
+        FramebufferInformation info  = {
+                 .width  = state->width,
+                 .height = state->height,
+                 .bpp    = state->bpp,
+                 .stride = state->pitch /* i believe stride and pitch are the same i dont remember
+                                         honestly */
+        };
+        return info;
 }
 
 static void DeleteSingleCharacter(void *privatedata) {
@@ -303,11 +316,14 @@ Status VBE86DriverInit(void) {
                 }
         }
 
-        FramebufferDeviceOps fbddo = {.WriteSinglePixel       = WriteSinglePixel,
-                                      .BlitRectangle          = DrawRectangle,
-                                      .SetCurrentOutputColors = SetColors,
-                                      .ClearScreen            = ClearFramebuffer,
-                                      .Flush                  = FlushFramebuffer};
+        FramebufferDeviceOps fbddo = {
+                .WriteSinglePixel          = WriteSinglePixel,
+                .BlitRectangle             = DrawRectangle,
+                .SetCurrentOutputColors    = SetColors,
+                .ClearScreen               = ClearFramebuffer,
+                .Flush                     = FlushFramebuffer,
+                .GetFramebufferInformation = GetFramebufferInfo,
+        };
 
         ConsoleDeviceOps conddo       = {.WriteSingleChar   = WriteSingleCharacter,
                                          .DeleteSingleChar  = DeleteSingleCharacter,
