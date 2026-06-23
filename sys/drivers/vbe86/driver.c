@@ -22,10 +22,38 @@
 #include "fbstate.h"
 #include "fonts/glyph.h"
 #include "init/bootinfo.h"
+#include "iomgr/class.h"
 #include "iomgr/devmgr.h"
 #include "iomgr/node.h"
+#include "vbe.h"
 #include "vendor/multiboot.h"
 #include "video/pixels.h"
+
+typedef struct [[gnu::packed]] _VESAVersion {
+        u8 major, minor;
+} VESAVersion;
+
+/* This is almost identical to VBEInfo, but some unused parts have been omitted, so that we can put
+ * it directly into the driver data without needing to allocate huge amounts of memory. */
+typedef struct _FramebufferControllerInformation {
+        VESAVersion version;
+        char       *oem;
+        u32         capabilities;
+        u32         totalmem;
+        u16         revision;
+        char       *vendorname;
+        char       *productname;
+        char       *productrevision;
+} FramebufferControllerInformation;
+
+/* Only used for VBE pointers which come from real mode. Taken from bootmanager/core/cpu/bioscall.h
+ * and adapted somewhat to this file's needs. */
+static inline void *SegmentedToLinearPointer(void *seg) {
+        u32 addr = (u32)seg;
+        u16 hi   = (u16)((addr >> 16) & 0xFFFF);
+        u16 lo   = (u16)(addr & 0xFFFF);
+        return (void *)((hi * 16) + lo);
+}
 
 [[gnu::hot]]
 static void WriteSinglePixel(void *privatedata, Size x, Size y, PixelColor color) {
@@ -132,6 +160,18 @@ static void WriteSingleCharacter(void *privatedata, char c) {
         }
 }
 
+FramebufferInformation GetFramebufferInfo(void *privatedata) {
+        FramebufferState      *state = privatedata;
+        FramebufferInformation info  = {
+                 .width  = state->width,
+                 .height = state->height,
+                 .bpp    = state->bpp,
+                 .stride = state->pitch /* i believe stride and pitch are the same i dont remember
+                                         honestly */
+        };
+        return info;
+}
+
 static void DeleteSingleCharacter(void *privatedata) {
         FramebufferState *state = privatedata;
         if (state->column != 0) state->column--;
@@ -182,6 +222,42 @@ static void SetConsoleColorAttributes(void *privatedata, PixelColor bg, PixelCol
         SetColors(privatedata, fg, bg);
 }
 
+/* TODO: Mode information storing too */
+[[gnu::nonnull]]
+static void CollectVBEInformation(Multiboot *bootinfo, FramebufferControllerInformation *ctrl) {
+        /* This structure is in low memory, and therefore needs to be mapped to be accessible. Also,
+         * many pointers here are segmented pointers, so we have to convert them (look at the
+         * bootloader source to get a glimpse) */
+        if (!bootinfo->controlinfo) goto bad;
+
+        uintptr_t infoaddr  = aligndown(bootinfo->controlinfo, PAGE_SIZE);
+        Status    mapstatus = MapSinglePage(infoaddr, infoaddr, PAGE_PRESENT);
+        if (mapstatus != STATUS_OK) {
+                LogMessage(LOG_WARNING,
+                           "%s: Mapping controller information (Address %p) failed: %s", __func__,
+                           infoaddr, StatusCodeToString(mapstatus));
+                goto bad;
+        }
+
+        VBEInfo *info         = (VBEInfo *)bootinfo->controlinfo;
+        ctrl->oem             = SegmentedToLinearPointer(info->oem);
+        ctrl->productname     = SegmentedToLinearPointer(info->productname);
+        ctrl->productrevision = SegmentedToLinearPointer(info->productrevision);
+        ctrl->vendorname      = SegmentedToLinearPointer(info->vendorname);
+        ctrl->version         = (VESAVersion){.major = (u8)((info->version >> 8) & 0xFF),
+                                              .minor = (u8)(info->version & 0xFF)};
+        ctrl->revision        = info->revision;
+        ctrl->totalmem        = info->totalmem * 64;
+        ctrl->capabilities    = info->capabilities;
+
+        UnmapSinglePage(infoaddr);
+        return;
+bad:
+        kzeromem(ctrl, sizeof(FramebufferControllerInformation));
+        LogMessage(LOG_WARNING, "Error during %s(), zeroing out FramebufferControllerInformation",
+                   __func__);
+}
+
 Status VBE86DriverInit(void) {
         Multiboot *bootinfo = GetBootInformationStructure();
         if (!bootinfo) return STATUS_NOT_FOUND;
@@ -206,11 +282,48 @@ Status VBE86DriverInit(void) {
                 return STATUS_OUT_OF_MEMORY;
         }
 
-        FramebufferDeviceOps fbddo = {.WriteSinglePixel       = WriteSinglePixel,
-                                      .BlitRectangle          = DrawRectangle,
-                                      .SetCurrentOutputColors = SetColors,
-                                      .ClearScreen            = ClearFramebuffer,
-                                      .Flush                  = FlushFramebuffer};
+        LogMessage(LOG_INFO, "Dumping framebuffer information from bootloader protocol:");
+        LogMessage(LOG_INFO, "\tDimensions: %dx%d pixels at %d bytes per pixel", bootinfo->fbwidth,
+                   bootinfo->fbheight, bootinfo->bpp);
+        LogMessage(LOG_INFO, "\tPitch: %d bytes", bootinfo->fbpitch);
+        LogMessage(LOG_INFO, "\tPhysical MMIO Address: %p", (uintptr_t)bootinfo->fbaddr);
+
+        /* I'm just praying that we haven't overwritten this data so far. Very unlikely, but could
+         * happen, honestly. FIXME? */
+        if (bootinfo->flags & MULTIBOOT_VBEINFO) {
+                FramebufferControllerInformation ci = {0};
+                CollectVBEInformation(bootinfo, &ci);
+                {
+                        uintptr_t p_vendor   = aligndown((uintptr_t)ci.vendorname, PAGE_SIZE);
+                        uintptr_t p_product  = aligndown((uintptr_t)ci.productname, PAGE_SIZE);
+                        uintptr_t p_revision = aligndown((uintptr_t)ci.productrevision, PAGE_SIZE);
+                        if (p_vendor) MapSinglePage(p_vendor, p_vendor, PAGE_PRESENT);
+                        if (p_product) MapSinglePage(p_product, p_product, PAGE_PRESENT);
+                        if (p_revision) MapSinglePage(p_revision, p_revision, PAGE_PRESENT);
+
+                        LogMessage(LOG_INFO,
+                                   "Dumping VESA-compatible controller information in use by the "
+                                   "kernel:");
+                        LogMessage(LOG_INFO, "\tVendor: %s, Product: %s, Revision %s",
+                                   ci.vendorname, ci.productname, ci.productrevision);
+                        LogMessage(LOG_INFO, "\tImplementation version %d.%d (rev. %d)",
+                                   ci.version.major, ci.version.minor, ci.revision);
+                        LogMessage(LOG_INFO, "\tTotal video memory: %d kilobytes", ci.totalmem);
+
+                        UnmapSinglePage(p_vendor);
+                        UnmapSinglePage(p_product);
+                        UnmapSinglePage(p_revision);
+                }
+        }
+
+        FramebufferDeviceOps fbddo = {
+                .WriteSinglePixel          = WriteSinglePixel,
+                .BlitRectangle             = DrawRectangle,
+                .SetCurrentOutputColors    = SetColors,
+                .ClearScreen               = ClearFramebuffer,
+                .Flush                     = FlushFramebuffer,
+                .GetFramebufferInformation = GetFramebufferInfo,
+        };
 
         ConsoleDeviceOps conddo       = {.WriteSingleChar   = WriteSingleCharacter,
                                          .DeleteSingleChar  = DeleteSingleCharacter,

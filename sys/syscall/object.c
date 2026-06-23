@@ -14,10 +14,12 @@
 #include <ktypes.h>
 #include <log.h>
 #include <macros.h>
+#include <mmutils.h>
 
 #include "ddk/ia32/irq.h"
 #include "ddk/ia32/paging.h"
 #include "ddk/ia32/vmm.h"
+#include "iomgr/class.h"
 #include "iomgr/devmgr.h"
 #include "iomgr/node.h"
 #include "iomgr/object.h"
@@ -33,6 +35,12 @@ typedef struct [[gnu::packed]] _DeviceMapDescriptor {
         u32 irq;
         u64 mmio_addr;
         u64 mmio_len;
+        struct [[gnu::packed]] {
+                u32 width;
+                u32 height;
+                u32 bpp;
+                u32 stride;
+        } fb;
 } DeviceMapDescriptor;
 
 static Status HandleDeviceObjectRequest(Object *obj, DeviceObjectOp op, void *arg) {
@@ -69,14 +77,28 @@ static Status HandleDeviceObjectRequest(Object *obj, DeviceObjectOp op, void *ar
                         if (likely(dev)) {
                                 if (unlikely(dev->attr.claimed)) return STATUS_BAD;
 
-                                dev->attr.claimed         = true;
                                 DeviceMapDescriptor descr = {.irq       = 0, /* TODO */
                                                              .mmio_addr = dev->attr.mmio_addr,
                                                              .mmio_len  = dev->attr.mmio_len};
+                                if (SupportsClass(dev, DEVCLASS_FRAMEBUFFER)) {
+                                        /* Wheeewh wheeewh wheeewh */
+                                        FramebufferInformation fbi =
+                                                dev->devtable.ddo->framebuffer
+                                                        .GetFramebufferInformation(
+                                                                dev->private_state);
+                                        descr.fb.width  = fbi.width;
+                                        descr.fb.height = fbi.height;
+                                        descr.fb.bpp    = fbi.bpp;
+                                        descr.fb.stride = fbi.stride;
+                                } else {
+                                        /* Better zero it out to be sure */
+                                        kzeromem(&descr.fb, sizeof(descr.fb));
+                                }
                                 if (CopyToUser(devdescr, &descr, sizeof(DeviceMapDescriptor)) !=
                                     STATUS_OK)
                                         return STATUS_BAD_ARGUMENT;
 
+                                dev->attr.claimed = true;
                                 LogMessage(LOG_INFO, "Device '%s' at %p claimed by process %d",
                                            dev->attr.name, dev, p_current->pid);
                                 if (SupportsClass(dev, DEVCLASS_FRAMEBUFFER) ||

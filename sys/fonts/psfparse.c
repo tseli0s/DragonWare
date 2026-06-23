@@ -9,25 +9,25 @@
 
 #include "psfparse.h"
 
-#include <log.h>
+#ifdef __DRAGONWARE_SYS__ /* Only defined for the kernel build, not for the userland */
+#include <ktypes.h>
 #include <mmutils.h>
+#else
+#include <kerneltypes.h>
+#include <string.h>
+#endif /* __DRAGONWARE_SYS__ */
 
-#include "lib/assert.h"
-#include "spleen.h"
-
-PSFError ParsePSFData(const u8 *data) {
+Status ParsePSFData(const u8 *data) {
         PSFFont font = {0};
         memcpy(&font, data, sizeof(PSFFont));
 
-        if (font.magic != PSF_FONT_MAGIC) return BadVersion;
-        if (font.char_size != 16) return BadDimensions; /* We will require 8x16 for now */
+        if (font.magic != PSF_FONT_MAGIC) return STATUS_UNSUPPORTED;
+        if (font.char_size != 16) return STATUS_BAD_ARGUMENT; /* We will require 8x16 for now */
 
-        return PSFGood;
+        return STATUS_OK;
 }
 
 Bool FontISPSF(const u8 *data) {
-        kassert(data != NullPointer);
-
         const PSFFont *f = (const PSFFont *)data;
         if (f->magic != PSF_FONT_MAGIC || f->char_size != 16) return false;
 

@@ -52,6 +52,7 @@ typedef struct _SystemIdentify {
 
 /**
  * @brief Device descriptor for a claimed device returned by @ref _DWDeviceClaim.
+ * @since v0.0.1
  */
 typedef struct [[gnu::packed]] _DeviceMapDescriptor {
         u32 irq;       /** < IRQ occupied by this device. If 0, this device does not use IRQs. */
@@ -59,6 +60,14 @@ typedef struct [[gnu::packed]] _DeviceMapDescriptor {
                           accessed through MMIO. */
         u64 mmio_len;  /** < Length of the physical address of this device's mapping. Only valid if
                           mmio_addr is also valid. */
+        struct [[gnu::packed]] {
+                u32 width;
+                u32 height;
+                u32 bpp;
+                u32 stride;
+        } fb; /** < Framebuffer information. Only valid for framebuffer devices (Like the
+                 kernel-arbited "Kernel Framebuffer"). Only for versions v0.0.2 of DragonWare and
+                 later. */
 } DeviceMapDescriptor;
 
 /**

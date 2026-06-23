@@ -30,8 +30,7 @@ POSSIBILITY OF SUCH DAMAGE. */
 
 #include "spleen.h"
 
-#include <macros.h>
-
-__attribute__((section(".fontdata"))) const u8 _kernel_font[] = {
+[[gnu::section(".fontdata")]]
+const Byte _kernel_font[] = {
 #embed "spleen-8x16.psfu"
 };

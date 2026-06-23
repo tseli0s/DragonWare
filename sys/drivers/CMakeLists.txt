@@ -6,3 +6,4 @@ set(ALL_DRIVERS_SOURCE ${PS2KBD_SRC} ${VBE86_SRC} ${SER86_SRC} ${VGATEXT_SRC})
 add_library(drvobj.sys OBJECT ${ALL_DRIVERS_SOURCE})
 target_compile_options(drvobj.sys PRIVATE -ffreestanding -nostdlib -Wall -Wextra -Wpedantic -Wno-error=pedantic -Wshadow -Wconversion
 	                -Wsign-conversion -Wuninitialized -fno-lto -fno-omit-frame-pointer -fno-builtin -m32)
+target_compile_definitions(drvobj.sys PRIVATE __DRAGONWARE_SYS__=1)

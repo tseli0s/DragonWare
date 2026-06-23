@@ -9,11 +9,16 @@
 
 #pragma once
 
+#ifdef __DRAGONWARE_SYS__ /* Only defined for the kernel build, not for the userland */
 #include <ktypes.h>
+#else
+#include <kerneltypes.h>
+#endif /* __DRAGONWARE_SYS__ */
 
 /*
  * Pointer to the font that the kernel uses.
  * The font is placed in a special section called .fontdata,
  * so that we can map it separately later.
  */
-extern __attribute__((section(".fontdata"), visibility("default"))) const u8 _kernel_font[];
+[[gnu::section(".fontdata"), gnu::visibility("default")]]
+extern const Byte _kernel_font[];

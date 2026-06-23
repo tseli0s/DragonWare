@@ -12,10 +12,6 @@
 #include <ktypes.h>
 #include <macros.h>
 
-#define VBE_FLAG_SWITCHABLE_DAC    (0x1) /* Whatever the fuck that means */
-#define VBE_ADAPTER_VGA_COMPATIBLE (0x2)
-#define VBE_RAMDAC_FIX             (0x4) /* Literally what the fuck... ion care lmao */
-
 /**
  * @brief A structure containing vendor information for a VBE-compatible graphics card.
  * @sa VBEModeInfo

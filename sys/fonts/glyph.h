@@ -12,7 +12,11 @@
 #define FONT_WIDTH  (8)
 #define FONT_HEIGHT (16)
 
+#ifdef __DRAGONWARE_SYS__ /* Only defined for the kernel build, not for the userland */
 #include <ktypes.h>
+#else
+#include <kerneltypes.h>
+#endif /* __DRAGONWARE_SYS__ */
 
 typedef struct _Glyph {
         u8  *font;

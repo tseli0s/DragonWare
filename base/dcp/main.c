@@ -55,7 +55,7 @@ int main(void) {
         }
 
         puts("* Welcome to DragonWare!\n");
-        puts("* DragonWare is a compact, free software, microkernel-based operating system for PC"
+        puts("* DragonWare is a compact, free software, microkernel-based operating system for PC "
              "platforms. You can view the source code at https://github.com/tseli0s/DragonWare "
              "(And thank you for trying it out!)\n");
         puts("You are currently in the \"DragonWare Command Prompt\". The so-called shell in "
