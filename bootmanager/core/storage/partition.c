@@ -82,8 +82,19 @@ int InitPartitionTable(void) {
         for (drive_num = 0x80; drive_num <= 0xFF && disks_used < MAX_SYSTEM_DRIVES; drive_num++) {
                 if (!DriveIsPresent(drive_num)) continue;
                 if (DriveIsCDROM(drive_num)) {
-                        /* Assume this is a CD-ROM, so fake a partition, that spans the whole volume
-                         */
+                        /* Okay, briefly. This is a workaround for some quirk in my machine's CSM
+                         * and VirtualBox. For whatever reason, it marks something (Definitely not
+                         * what I'm booting off of) as a CD-ROM in the BIOS. So I was
+                         * reading garbage from an unrelated device, and therefore couldn't locate
+                         * the PVD to load the kernel in the ISO9660 driver. I have absolutely no
+                         * idea why that happens. Adding this check makes it work again. If somebody
+                         * is seeing this, I would love an explanation. I can't seem to find
+                         * anything in the standard about it. If there's a better way than relying
+                         * on heuristics, please let me know, this is such an ugly workaround. */
+                        if (drive_num < 0xE0) {
+                                continue;
+                        }
+
                         Partition *curr   = &system_partitions[disks_used][0];
                         curr->drive_index = drive_num;
                         curr->lba_start   = 0;
