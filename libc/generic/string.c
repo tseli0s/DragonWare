@@ -11,17 +11,6 @@
 
 #include "stdlib.h"
 
-void *memcpy(void *restrict dest, const void *restrict src, size_t size) {
-        if (!size) return dest;
-
-        char       *d = dest;
-        const char *s = src;
-        while (size--) {
-                d[size] = s[size];
-        }
-        return dest;
-}
-
 void *memmove(void *dest, const void *src, size_t size) {
         if (!size || dest == src) return dest;
 
@@ -36,41 +25,6 @@ void *memmove(void *dest, const void *src, size_t size) {
                 while (size--) *--d = *--s;
         }
         return dest;
-}
-
-void *memset(void *dest, int value, size_t size) {
-        uint8_t *d = dest;
-        while (size--) *d++ = (uint8_t)value;
-        return dest;
-}
-
-int memcmp(const void *s1, const void *s2, size_t n) {
-        const unsigned char *a = s1;
-        const unsigned char *b = s2;
-
-        for (; n; n--, a++, b++) {
-                if (*a != *b) return *a - *b;
-        }
-        return 0;
-}
-
-char *strcpy(char *dest, const char *src) {
-        char *ret = dest;
-        while ((*dest++ = *src++)); /* shut up clang*/
-
-        return ret;
-}
-
-char *strncpy(char *dest, const char *src, size_t n) {
-        char *ret = dest;
-        while (n && *src) {
-                *dest++ = *src++;
-                n--;
-        }
-        while (n--) {
-                *dest++ = '\0';
-        }
-        return ret;
 }
 
 char *strcat(char *dest, const char *src) {
@@ -89,6 +43,18 @@ char *strncat(char *dest, const char *src, size_t n) {
                 n--;
         }
         *dest = '\0';
+        return ret;
+}
+
+char *strncpy(char *dest, const char *src, size_t n) {
+        char *ret = dest;
+        while (n && *src) {
+                *dest++ = *src++;
+                n--;
+        }
+        while (n--) {
+                *dest++ = '\0';
+        }
         return ret;
 }
 
@@ -120,12 +86,6 @@ char *strchr(const char *s, int c) {
                 s++;
         }
         return ch == '\0' ? (char *)s : NULL;
-}
-
-size_t strlen(const char *s) {
-        const char *p = s;
-        while (*p) p++;
-        return (size_t)(p - s);
 }
 
 /*

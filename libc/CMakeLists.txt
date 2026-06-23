@@ -11,7 +11,10 @@ set(COMPAT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/compat/arith64.c)
 set(INCLUDEDIRS    ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/base)
 
 if (${ARCH} STREQUAL "IA32")
-        list(APPEND ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/syscalls/syscall86.asm ${CMAKE_CURRENT_SOURCE_DIR}/crt0.asm)
+        list(APPEND ASM_SRC
+             ${CMAKE_CURRENT_SOURCE_DIR}/syscalls/syscall86.asm
+             ${CMAKE_CURRENT_SOURCE_DIR}/crt0.asm
+             ${CMAKE_CURRENT_SOURCE_DIR}/arch/ia32/string.asm)
 endif()
 
 add_library(dlibc STATIC ${GENERIC_SOURCES} ${SYSCALL_SOURCES} ${COMPAT_SOURCES} ${ASM_SRC})
