@@ -78,8 +78,7 @@ static void ScrollFramebuffer(void) {
         int last_row = (info.h / FONT_HEIGHT) - 1;
         int max_cols = info.w / FONT_WIDTH;
 
-        for (int i = 0; i < max_cols; i++)
-                WriteSingleCharacterAt(' ', i, last_row);
+        for (int i = 0; i < max_cols; i++) WriteSingleCharacterAt(' ', i, last_row);
 
         x = 0;
         y = last_row;
@@ -102,6 +101,15 @@ void WriteCharacterToConsole(char c) {
                 x = 0;
                 y++;
                 if ((u32)y >= (info.h / FONT_HEIGHT) - 1) ScrollFramebuffer();
+                return;
+        } else if (c == '\b') {
+                if (x > 0)
+                        x--;
+                else if (y > 0) {
+                        y--;
+                        x = (info.w / FONT_WIDTH) - 1;
+                }
+                WriteSingleCharacterAt(' ', x, y);
                 return;
         } else if (c == '\t') {
                 x = (int)(((unsigned int)x + 4) & (Size)~3);
