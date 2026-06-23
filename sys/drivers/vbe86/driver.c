@@ -167,7 +167,7 @@ FramebufferInformation GetFramebufferInfo(void *privatedata) {
                  .height = state->height,
                  .bpp    = state->bpp,
                  .stride = state->pitch /* i believe stride and pitch are the same i dont remember
-                                         honestly */
+                                        honestly */
         };
         return info;
 }
