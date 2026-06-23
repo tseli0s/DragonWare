@@ -72,12 +72,13 @@ static int GetSectorSizeForDrive(u8 drive) {
          * but may not be supported on all hardware.
          * (https://en.wikipedia.org/wiki/INT_13H#INT_13h_AH=48h:_Extended_Read_Drive_Parameters)
          */
-        BIOSExtendedDriveParameters p      = {0};
-        BIOSRegisters               r      = {.eax = 0x4800,
-                                              .edx = drive,
-                                              .ds  = (u16)(((uintptr_t)&p >> 4) & 0xFFFF),
-                                              .esi = (u16)((uintptr_t)&p & 0x000F)};
-        int                         status = BIOSCall(0x13, &r);
+        BIOSExtendedDriveParameters p = {0};
+        p.size                        = sizeof(BIOSExtendedDriveParameters);
+        BIOSRegisters r               = {.eax = 0x4800,
+                                         .edx = drive,
+                                         .ds  = (u16)(((uintptr_t)&p >> 4) & 0xFFFF),
+                                         .esi = (u16)((uintptr_t)&p & 0x000F)};
+        int           status          = BIOSCall(0x13, &r);
         if (status == 0)
                 return p.bytes_per_sector;
         else {
