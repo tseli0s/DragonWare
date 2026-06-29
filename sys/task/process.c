@@ -256,6 +256,8 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
         p->pid          = process_id_counter++;
         p->kernel_stack = kernel_stack_addr + (2 * FRAME_SIZE);
         p->next         = NullPointer;
+        p->ports_used = 0;
+        ZeroMemory(p->ioports);
         kzeromem(&p->handles, sizeof(HandleTable));
 
         main_thread->owner = p;
