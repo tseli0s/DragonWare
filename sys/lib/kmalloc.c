@@ -267,6 +267,7 @@ void *AllocateVirtualPage(void) {
 #endif /* DRAGONWARE_DEBUG_MODE */
                 return NullPointer;
         }
+        extern char _end;
 
         void     *virtaddr = GetHeapPageAddress();
         uintptr_t addr     = (uintptr_t)virtaddr;

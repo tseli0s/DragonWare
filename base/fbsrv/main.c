@@ -18,8 +18,6 @@
 #include "ps2kbd/protocol.h"
 
 int main(void) {
-        if (_DWRaiseIOPL() != STATUS_OK) return -1;
-
         /* The framebuffer server also provides the system console. It may become optional in the
          * far future, but until then, this driver has two responsibilities (And even more under the
          * hood)*/
