@@ -11,6 +11,7 @@ IA32_SYSENTER_CS        equ     0x174
 IA32_SYSENTER_ESP       equ     0x175
 IA32_SYSENTER_EIP       equ     0x176
 KERNEL_CS_ENTRY         equ     0x08
+USER_DS_SELECTOR        equ     0x23    ; see in _SysenterEntry
 
 bits 32
 section .text
@@ -49,10 +50,7 @@ EnableSysenter:
 ;         u32 ebx, esi, edi, ebp; /* Arguments 0-3 of every system call */
 ;         u32 eax;                /* System call number */
 ; } SystemCallFrame;
-;
 ; We construct it upon entry and then call the system call handler to handle the actual userland system call.
-; NOTE: Userland doesn't make use of this code yet. It uses the traditional software interrupt method for now.
-; Meaning this code here is just a stub for the future, and has not been tested yet.
 _SysenterEntry:
         push    ecx     ; useresp
         push    edx     ; usereip (return address)
@@ -68,6 +66,27 @@ _SysenterEntry:
         push    esp                     ; Push the stack as the SystemCallFrame
         call    DragonWareSyscall       ; Call the system call handler
         add     esp,    4               ; Now discard the argument we pushed
+
+        ; So, long story short. I hit a bug while developing this feature that had me completely puzzled for months.
+        ; Today it's 1st of July 2026, I opened the sysenter support pull request on May 10th.
+        ; Now on the bug: If I pressed keys way too fast, or a lot of scrolling was done by the console, suddenly you had a
+        ; general protection fault in a move instruction. The fuck????
+        ; Well, after tons of debugging with gdb, and with the article on osdev.org not being clear enough for this case, I found out
+        ; that the segment selectors were set to 0. Obviously invalid, but I don't touch them anywhere, so even more "what the fuck?".
+        ; Oh, even worse, QEMU didn't reproduce this bug at all. Only Bochs did.
+        ;
+        ; As it turns out, x86 CPUs automatically zero out any of DS/ES/FS/GS registers whose DPL is more privileged than the
+        ; new CPL during the transition to userspace. And even worse, this would only manifest in a very specific, rare scenario where
+        ; the servers would voluntarily yielded causing the scheduler to switch to another thread causing that security protection to kick in
+        ; A DS set to zero is invalid, hence the crash with a #GP.
+        ;
+        ; (Source: Intel developer manuals, volume 3, chapter 6, and https://github.com/torvalds/linux/blob/master/arch/x86/entry/entry_32.S,
+        ; though the latter is far more complicated because it caters to a different internla design)
+        mov     ax,     USER_DS_SELECTOR
+        mov     ds,     ax
+        mov     es,     ax
+        mov     fs,     ax
+        mov     gs,     ax
 
         ; Get whatever the kernel returned into those arguments and restore it
         ; for the user process. Most importantly, eax holds the return code and
