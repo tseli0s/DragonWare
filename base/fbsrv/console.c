@@ -18,8 +18,8 @@
 #include "pixel.h"
 
 /* Character coordinates. Sorry if the name sucks, I like single character variables for this. */
-static int x = 0;
-static int y = 0;
+static u32 x = 0;
+static u32 y = 0;
 
 static struct {
         u32 w, h, d;
@@ -46,7 +46,7 @@ static void WriteSinglePixel(u32 xc, u32 yc, u32 color) {
 }
 
 [[gnu::hot]]
-static void RenderGlyph(int xc, int yc, Glyph *g) {
+static void RenderGlyph(u32 xc, u32 yc, Glyph *g) {
         u8 *glyph = g->font + g->offset;
 
         for (u32 row = 0; row < FONT_HEIGHT; row++) {
@@ -65,7 +65,7 @@ static void RenderGlyph(int xc, int yc, Glyph *g) {
 }
 
 [[gnu::hot]]
-static inline void WriteSingleCharacterAt(char c, int xc, int yc) {
+static inline void WriteSingleCharacterAt(char c, u32 xc, u32 yc) {
         const Glyph g = GetGlyphFromDefaultFont(c);
         RenderGlyph(xc * FONT_WIDTH, yc * FONT_HEIGHT, (Glyph *)&g);
 }
@@ -75,10 +75,10 @@ static void ScrollFramebuffer(void) {
         memmove(FRAMEBUFFER_ADDR, (u8 *)FRAMEBUFFER_ADDR + (FONT_HEIGHT * info.stride),
                 (info.h - FONT_HEIGHT) * info.stride);
 
-        int last_row = (info.h / FONT_HEIGHT) - 1;
-        int max_cols = info.w / FONT_WIDTH;
+        u32 last_row = (info.h / FONT_HEIGHT) - 1;
+        u32 max_cols = info.w / FONT_WIDTH;
 
-        for (int i = 0; i < max_cols; i++) WriteSingleCharacterAt(' ', i, last_row);
+        for (unsigned i = 0; i < max_cols; i++) WriteSingleCharacterAt(' ', i, last_row);
 
         x = 0;
         y = last_row;
@@ -95,7 +95,7 @@ void RegisterDeviceInfo(DeviceMapDescriptor *dev) {
 }
 
 void WriteCharacterToConsole(char c) {
-        int max_cols = (int)(info.w / FONT_WIDTH) - 2;
+        u32 max_cols = (info.w / FONT_WIDTH) - 2;
 
         if (c == '\n') {
                 x = 0;
@@ -112,7 +112,7 @@ void WriteCharacterToConsole(char c) {
                 WriteSingleCharacterAt(' ', x, y);
                 return;
         } else if (c == '\t') {
-                x = (int)(((unsigned int)x + 4) & (Size)~3);
+                x = ((unsigned int)x + 4) & (Size)~3;
                 return;
         }
         WriteSingleCharacterAt(c, x, y);
