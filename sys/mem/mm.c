@@ -49,14 +49,29 @@ typedef struct _ReservedRegion {
  */
 [[gnu::nonnull(1)]]
 static void SortReservedChunks(ReservedRegion *regions, Size n) {
+        /* 
+         * ΚΥΡΙΕ ΚΑΘΗΓΗΤΑ ΤΟ ΒΛΕΠΕΤΕ ΤΟ ΞΕΡΩ ΑΠ'ΕΞΩ:
+         *
+         * ΓΙΑ Ι ΑΠΟ 2 ΜΕΧΡΙ Ν
+         *     ΓΙΑ Ξ ΑΠΟ Ν ΜΕΧΡΙ Ι ΜΕ_ΒΗΜΑ -1
+         *         ΑΝ Π[Ξ] < Π[Ξ - 1] ΤΟΤΕ
+         *             ΤΜΡ <- Π[Ξ]
+         *             Π[Ξ] <- Π[Ξ-1]
+         *             Π[Ξ-1] <- ΤΜΡ
+         *         ΤΕΛΟΣ_ΑΝ
+         *     ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+         * ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+         *
+         * ΓΑΜΩ ΤΙΣ ΠΑΝΕΛΛΗΝΙΕΣ ΣΑΣ ΓΑΜΩ ΡΕ
+        */
         for (Size i = 1; i < n; i++) {
-                ReservedRegion key = regions[i];
-                Size           j   = i - 1;
-                while (regions[j].start > key.start) {
-                        regions[j + 1] = regions[j];
-                        j--;
+                for (Size j = n - 1; j >= i; j--) { 
+                        if (regions[j].start < regions[j - 1].start) {
+                                ReservedRegion r1 = regions[j];
+                                regions[j]        = regions[j - 1];
+                                regions[j - 1]    = r1;
+                        }
                 }
-                regions[j + 1] = key;
         }
 }
 Status AddMemoryRegions(Multiboot *bootinfo) {
