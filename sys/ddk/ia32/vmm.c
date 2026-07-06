@@ -147,7 +147,7 @@ Status MapSinglePage(uintptr_t phys, uintptr_t virt, u32 flags) {
         /* This will only run for addresses below KERNEL_VM_BASE because we have preallocated all
          * the page tables for the kernel */
         if (unlikely(!(pd[pdindex] & PAGE_PRESENT))) {
-                uintptr_t new_pt_phys = AllocateLowMemory();
+                uintptr_t new_pt_phys = AllocateFrame();
                 if (!new_pt_phys) return STATUS_OUT_OF_MEMORY;
 
                 pd[pdindex]        = (uintptr_t)new_pt_phys | pdflags;
