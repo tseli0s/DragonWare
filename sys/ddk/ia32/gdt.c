@@ -139,7 +139,7 @@ void EnableIOPortsOfProcess(Process *p) {
                 tss0.iomap_base = offsetof(TSSEntry, ioperm);
         for (u16 i = 0; i < p->ports_used; i++) {
                 u16 port = p->ioports[i];
-                tss0.ioperm[port / 8] &= ~(1 << (port % 8));
+                tss0.ioperm[port / 8] &= (Byte) ~(1 << (port % 8));
         }
 }
 
