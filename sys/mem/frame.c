@@ -1,185 +1,163 @@
 /**********************************************************************
  * FILE: frame.c
- * PURPOSE: Simple frame allocator implementation
+ * PURPOSE: Bitmap-based kernel physical memory management
  * PROJECT: DragonWare Kernel
  * DATE: 11-2025
  * AUTHOR: Aggelos Tselios <aggelostselios777@gmail.com>
  * LICENSE: GPL-3.0-or-later (https://spdx.org/licenses/GPL-3.0-or-later.html)
  ***********************************************************************/
 
+/*
+ * This memory manager was rewritten entirely from scratch in July 2026. It switched to a bitmap
+ * based allocator, removed some weird quirks the previous implementation had related to freeing,
+ * and focused on improved performance and low allocation overhead. I wanted to leave this note here
+ * so that other people can read about the changelog towards v0.0.2.
+ *
+ * By design, we ignore the first two frames to be sure that we never touch the BIOS/bootloader
+ * stuff. This avoids bugs where pointers pointing to 0 are writeable and
+ * allocatable. (Of course they're not supposed to be writeable or allocatable!). This also means
+ * any physical address below 0x2000 cannot be considered a valid address (That also includes
+ * NullPointer). It's something that holds from the earliest days of DragonWare (actually, it didn't
+ * even have a name at that point), and much of the codebase assumes this to be the case.
+ */
+
 #include "frame.h"
 
 #include <early_kmalloc.h>
 #include <ktypes.h>
+#include <log.h>
 #include <macros.h>
 #include <mmutils.h>
 
 #include "lib/assert.h"
-#include "log.h"
 #include "mm.h"
 #include "panic.h"
 
-#define MAX_POOLS_PHYS                                                      \
-        (MAX_MEM_REGIONS - 1) /* I mean, at least one memory region will be \
-                                reserved right? */
-extern const char _begin;
-extern const char _end;
+/* Four gigabytes of physical memory, divided by the size of a single frame, that's 4294967296 /
+ * 4096 = 1048576, divided by 32 bits per dword, that's 32768. Alignment because I don't know I like
+ * it when things are aligned.
+ *
+ * Currently, yes, it's hardcoded to be always 4GBs at most, as we don't support PAE. When we move
+ * to 64 bit processor support, this will be configurable, obviously, and I'm thinking of a hard
+ * limit of 64GBs and using another allocator if somebody has more RAM than that.
+ *
+ */
+[[gnu::aligned(sizeof(DoubleWord))]]
+static u32 bitmap[32768] = {0};
 
-typedef struct _PhysicalPool {
-        uintptr_t frame_start; /* mem_start / FRAME_SIZE */
-        Size      n_frames;    /* mem_len / FRAME_SIZE */
-} PhysicalPool;
+/*
+ * This tracks the highest available page aligned address reported available by the
+ * bootloader/firmware. It's an easy way to catch bad calls to FreeFrame() without having to parse
+ * the memory map every time, though it doesn't protect against other ways.
+ */
+static uintptr_t highest_addr = 0;
 
-typedef struct _FreeRange {
-        uintptr_t          frame_start;
-        Size               n_frames;
-        struct _FreeRange *next;
-} FreeRange;
+static inline void MarkFrameAvailable(uintptr_t frameaddr) {
+        /* Skip the first two frames to be sure that we never touch the BIOS/bootloader
+         * stuff. This avoids bugs where pointers pointing to 0 are writeable and
+         * allocatable. (Of course they're not supposed to be writeable or allocatable!)
+         */
+        if (unlikely(frameaddr < 2 * FRAME_SIZE)) return;
+        if (frameaddr > highest_addr) return;
 
-static PhysicalPool pool[MAX_POOLS_PHYS];
-static FreeRange   *list      = NullPointer;
-static Size         pool_size = 0;
-
-static inline Size GetListSize(void) {
-        Size       s    = 0;
-        FreeRange *iter = list;
-        while (iter != NullPointer) {
-                iter = iter->next;
-                s++;
-        }
-        return s;
+        u32 index = (frameaddr / FRAME_SIZE) / 32;
+        u32 bit   = (frameaddr / FRAME_SIZE) % 32;
+        bitmap[index] &= ~(1U << bit);
 }
 
-static void AddPoolRegion(uintptr_t start, uintptr_t len) {
-        pool[pool_size].frame_start = start / FRAME_SIZE;
-        pool[pool_size].n_frames    = len / FRAME_SIZE;
+static inline void MarkFrameReserved(uintptr_t frameaddr) {
+        u32 index = (frameaddr / FRAME_SIZE) / 32;
+        u32 bit   = (frameaddr / FRAME_SIZE) % 32;
+        bitmap[index] |= (1U << bit);
+}
 
-        FreeRange *node   = AllocateStaticMemory(sizeof(FreeRange));
-        node->frame_start = pool[pool_size].frame_start;
-        node->n_frames    = pool[pool_size].n_frames;
-        node->next        = NullPointer;
+static inline Bool IsFrameAllocated(uintptr_t frameaddr) {
+        u32 index = (frameaddr / FRAME_SIZE) / 32;
+        u32 bit   = (frameaddr / FRAME_SIZE) % 32;
+        return (bitmap[index] & (1U << bit));
+}
 
-        if (!list) {
-                list = node;
-        } else {
-                FreeRange *iter = list;
-                while (iter->next) iter = iter->next;
-                iter->next = node;
+static uintptr_t GetFirstFreeHighFrame(void) {
+        /* (1048576 / 4096) / 32 = 8 = First high memory address available in the bitmap */
+        for (u32 i = 8; i < arraysize(bitmap); i++) {
+                if (bitmap[i] == 0xFFFFFFFF) continue;
+
+                int bit = __builtin_ctz(~bitmap[i]);
+                return (i * 32 + (u32)bit) * FRAME_SIZE;
         }
+        return 0;
+}
 
-        if ((pool_size + 1) >= MAX_POOLS_PHYS)
-                LogMessage(LOG_WARNING,
-                           "Too many PMM pools! Won't continue registering more pools.");
-        else
-                pool_size++;
+static uintptr_t GetFirstFreeLowFrame(void) {
+        /* (1048576 / 4096) / 32 = 8 = Valid bitmap low memory */
+        for (u32 i = 0; i < 8; i++) {
+                if (bitmap[i] == 0xFFFFFFFF) continue;
+
+                int bit = __builtin_ctz(~bitmap[i]);
+                return (i * 32 + (u32)bit) * FRAME_SIZE;
+        }
+        return 0;
 }
 
 void InitFrameManager(void) {
-        kzeromem(pool, sizeof(pool));
+        memset(bitmap, 0xFF, sizeof(bitmap));
 
         Size          n_regions = 0;
         MemoryRegion *regions   = FetchMemoryRegions(&n_regions);
 
-        for (Size i = 0; i < n_regions; i++) {
-                MemoryRegion current = regions[i];
-                if (!current.available) continue;
-
-                /* Skip the first two frames to be sure that we never touch the BIOS/bootloader
-                 * stuff. This avoids bugs where pointers pointing to 0 are writeable and
-                 * allocatable. (Of course they're not supposed to be writeable or allocatable!)
-                 */
-                if (current.start == 0x0) {
-                        current.start += 2 * FRAME_SIZE;
-                        current.len -= 2 * FRAME_SIZE;
-                }
-
-                AddPoolRegion(current.start, current.len);
-        }
-        if (GetListSize() < 1) {
+        if (n_regions < 1) {
                 FatalError(
                         "There are no usable memory regions in this machine! "
                         "This is possibly a bug, please report it at "
                         "https://github.com/tseli0s/DragonWare/issues");
         }
+
+        for (Size i = 0; i < n_regions; i++) {
+                MemoryRegion current = regions[i];
+                if (!current.available) continue;
+
+                Size end = current.start + current.len;
+                if (end > highest_addr) highest_addr = end;
+
+                /* Generally addresses are page aligned. I haven't seen anything other than that. If
+                 * I do, I'll update this code, until then I think this assumption helps keeping
+                 * things clean. */
+                for (Size j = current.start; j < current.start + current.len; j += FRAME_SIZE)
+                        MarkFrameAvailable(j);
+        }
 }
 
 [[gnu::hot]]
 uintptr_t AllocateFrame(void) {
-        FreeRange *current = list;
-        uintptr_t  ptr     = 0x0;
-
-        while (current) {
-                if (current->n_frames > 0 && (current->frame_start * FRAME_SIZE) >= 0x00100000) {
-                        ptr = current->frame_start * FRAME_SIZE;
-
-                        current->frame_start++;
-                        current->n_frames--;
-                        return ptr;
-                }
-                current = current->next;
-        }
-
-        if (!ptr) {
-                LogMessage(LOG_WARNING,
-                           "Machine is running out of memory, forced to allocate from low memory.");
-
-                return AllocateLowMemory();
-        }
-
-        return ptr;
+        uintptr_t frame = GetFirstFreeHighFrame();
+        MarkFrameReserved(frame);
+        return frame;
 }
 
 uintptr_t AllocateLowMemory(void) {
-        FreeRange *current = list;
-        while (current) {
-                if (current->n_frames > 0 && (current->frame_start * FRAME_SIZE) <= 0x00100000) {
-                        uintptr_t ptr = current->frame_start * FRAME_SIZE;
-
-                        current->frame_start++;
-                        current->n_frames--;
-
-                        return ptr;
-                }
-                current = current->next;
-        }
-        FatalError("Host ran out of memory!");
+        uintptr_t frame = GetFirstFreeLowFrame();
+        MarkFrameReserved(frame);
+        return frame;
 }
 
 void FreeFrame(uintptr_t frameaddr) {
+/* Just for performance reasons, we'll only check this in debug builds */
+#ifdef DRAGONWARE_DEBUG_MODE
+        if (frameaddr < 2 * FRAME_SIZE) {
+                LogMessage(LOG_DEBUG,
+                           "Address %p too low to be freed, ignoring call to FreeFrame()",
+                           frameaddr);
+                return;
+        }
+#endif /* DRAGONWARE_DEBUG_MODE */
+
         /* Make sure we're trying to actually free a frame and not garbage */
         kassert(isaligned(frameaddr, FRAME_SIZE));
-        uintptr_t frame_index = frameaddr / FRAME_SIZE;
-
-        FreeRange *prev    = NullPointer;
-        FreeRange *current = list;
-
-        while (current && current->frame_start < frame_index) {
-                prev    = current;
-                current = current->next;
-        }
-
-        if (prev && (prev->frame_start + prev->n_frames == frame_index)) {
-                prev->n_frames++;
-                if (current && frame_index + 1 == current->frame_start) {
-                        prev->n_frames += current->n_frames;
-                        prev->next = current->next;
-                }
+        if (!IsFrameAllocated(frameaddr)) {
+#ifdef DRAGONWARE_DEBUG_MODE
+                LogMessage(LOG_ERROR, "Attempting to double free a frame at address %p", frameaddr);
+#endif
                 return;
         }
-
-        if (current && frame_index + 1 == current->frame_start) {
-                current->frame_start--;
-                current->n_frames++;
-                return;
-        }
-
-        FreeRange *node   = AllocateStaticMemory(sizeof(FreeRange));
-        node->frame_start = frame_index;
-        node->n_frames    = 1;
-        node->next        = current;
-
-        if (prev)
-                prev->next = node;
-        else
-                list = node;
+        MarkFrameAvailable(frameaddr);
 }
