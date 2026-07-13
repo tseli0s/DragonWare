@@ -24,6 +24,7 @@ void InitFrameManager(void);
  * @brief Allocate a single physical memory frame.
  * @details The returned address is always in high memory (> 1 MiB). For allocations
  * in low memory, use @ref AllocateLowMemory.
+ * @warning Return values less than 0x2000 are to be considered invalid.
  * @returns Physical address of the allocated frame, or 0 on failure.
  */
 uintptr_t AllocateFrame(void);
@@ -32,12 +33,14 @@ uintptr_t AllocateFrame(void);
  * @brief Allocate a single physical memory frame in low memory.
  * @details Use this function when a physical address below 1 MiB is required,
  * such as for certain legacy hardware or bootloader requirements.
+ * @warning Return values less than 0x2000 are to be considered invalid.
  * @returns Physical address of the allocated low memory frame, or 0 on failure.
  */
 uintptr_t AllocateLowMemory(void);
 
 /**
  * @brief Free a previously allocated physical frame.
- * @param frameaddr Physical address of the frame to free.
+ * @param frameaddr Physical address of the frame to free. Values less or equal to 0x2000 are
+ * ignored.
  */
 void FreeFrame(uintptr_t frameaddr);

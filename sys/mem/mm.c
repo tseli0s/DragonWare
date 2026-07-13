@@ -10,6 +10,7 @@
 #include "mm.h"
 
 #include <ktypes.h>
+#include <limits.h>
 #include <log.h>
 #include <macros.h>
 #include <mmutils.h>
@@ -49,7 +50,7 @@ typedef struct _ReservedRegion {
  */
 [[gnu::nonnull(1)]]
 static void SortReservedChunks(ReservedRegion *regions, Size n) {
-        /* 
+        /*
          * ΚΥΡΙΕ ΚΑΘΗΓΗΤΑ ΤΟ ΒΛΕΠΕΤΕ ΤΟ ΞΕΡΩ ΑΠ'ΕΞΩ:
          *
          * ΓΙΑ Ι ΑΠΟ 2 ΜΕΧΡΙ Ν
@@ -63,9 +64,9 @@ static void SortReservedChunks(ReservedRegion *regions, Size n) {
          * ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
          *
          * ΓΑΜΩ ΤΙΣ ΠΑΝΕΛΛΗΝΙΕΣ ΣΑΣ ΓΑΜΩ ΡΕ
-        */
+         */
         for (Size i = 1; i < n; i++) {
-                for (Size j = n - 1; j >= i; j--) { 
+                for (Size j = n - 1; j >= i; j--) {
                         if (regions[j].start < regions[j - 1].start) {
                                 ReservedRegion r1 = regions[j];
                                 regions[j]        = regions[j - 1];
@@ -114,6 +115,25 @@ Status AddMemoryRegions(Multiboot *bootinfo) {
                 u64 start = (u64)current->addr;
                 u64 end   = (u64)(((u64)current->addr + (u64)current->len) - 1);
 
+/* Because we can't address more than four gigabytes of memory (Physical or virtual)
+ * with a 32 bit address space, we'll just act like memory beyond that mark doesn't exist. This
+ * fixes bugs in machines with a lot of memory, until we add PAE or 64 bit support.
+ */
+#if PROCESSOR_BITS == 32
+                Bool addressable = true;
+                if (start >= PTR32_MAX_ADDRESSABLE) {
+                        addressable = false;
+                } else if (end >= PTR32_MAX_ADDRESSABLE) {
+                        /* Try to grab as much memory as we can and chop off the rest. Though again,
+                         * I'm not sure if this always works with non-frame-aligned addresses. */
+                        end = PTR32_MAX_ADDRESSABLE - 1;
+                }
+                if (!addressable) {
+                        idx += current->size + sizeof(current->size);
+                        continue;
+                }
+#endif /* PROCESSOR_BITS */
+
                 switch (current->type) {
                         case REGION_AVAILABLE:
                                 LogMessage(LOG_DEBUG, "Memory region %r-%r is available", start,
@@ -143,8 +163,9 @@ Status AddMemoryRegions(Multiboot *bootinfo) {
 
                 if (current->type == REGION_AVAILABLE || current->type == REGION_ACPI_RECLAIMABLE) {
                         Size region_start = (Size)current->addr;
-                        Size region_end   = region_start + (Size)current->len;
-                        Size curr_start   = region_start;
+                        Size region_end = (Size)end; /* Truncation is safe, we've checked the value
+                                                        during the PROCESSOR_BITS check */
+                        Size curr_start = region_start;
 
                         for (Size i = 0; i < reserved_count; i++) {
                                 if (reserved[i].end <= curr_start) continue;
