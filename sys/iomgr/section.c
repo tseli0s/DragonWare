@@ -9,8 +9,10 @@
 
 #include "section.h"
 
+#include <assert.h>
 #include <kmalloc.h>
 #include <log.h>
+#include <macros.h>
 #include <mmutils.h>
 #include <panic.h>
 
@@ -18,6 +20,7 @@
 #include "ddk/ia32/vmm.h"
 #include "macros.h"
 #include "mem/frame.h"
+#include "sched/schedule.h"
 
 /* Scans the address space to find a region of at least n_pages that are NOT mapped. Used to find
  * where to map a section. */
@@ -48,9 +51,10 @@ Section *AllocateSection(Size needed_pages, SectionPermissions permissions) {
         scn->address_space = 0; /* Set by the system calls later. */
         scn->permissions   = permissions;
         scn->n_pages       = needed_pages;
+        scn->refcnt        = 0; /* Incremented only during MapSection(). */
         scn->vmbase        = 0;
 
-        ZeroMemory(scn->physframes);
+        ZeroMemory(scn->physframes); /* VERY IMPORTANT, see MapSection below. */
         return scn;
 }
 
@@ -72,40 +76,60 @@ uintptr_t MapSection(Section *section, Bool copy_on_write) {
         Size pages_mapped     = 0;
 
         for (Size i = 0; i < section->n_pages; i++) {
-                uintptr_t pageaddr     = start + (i * PAGE_SIZE);
-                section->physframes[i] = AllocateFrame();
-                if (!section->physframes[i])
-                        goto fail;
-                else
-                        frames_allocated++;
+                Bool      previously_allocated = section->physframes[i] > 0;
+                uintptr_t pageaddr             = start + (i * PAGE_SIZE);
+
+                if (!previously_allocated) {
+                        section->physframes[i] = AllocateFrame();
+                        if (!section->physframes[i])
+                                goto fail;
+                        else
+                                frames_allocated++;
+                }
 
                 if (MapSinglePage(section->physframes[i], pageaddr, flags) != STATUS_OK)
                         goto fail;
                 else {
-                        kzeromem((void *)pageaddr, PAGE_SIZE);
+                        if (!previously_allocated) kzeromem((void *)pageaddr, PAGE_SIZE);
                         pages_mapped++;
                 }
         }
         goto success;
 fail:
-        for (Size i = 0; i < frames_allocated; i++) FreeFrame(section->physframes[i]);
-        for (Size i = 0; i < pages_mapped; i++) UnmapSinglePage(start + (i * PAGE_SIZE));
-        ZeroMemory(section->physframes);
+        DEREF(section, {
+                for (Size i = 0; i < frames_allocated; i++) FreeFrame(section->physframes[i]);
+                for (Size i = 0; i < pages_mapped; i++) UnmapSinglePage(start + (i * PAGE_SIZE));
+                ZeroMemory(section->physframes);
+        });
         return 0;
 
 success:
+        REFER(section);
         section->vmbase = start;
         return start;
 }
 
-void DeleteSection(Section *section) {
-        if (section->n_pages >= MAX_SECTION_FRAMES)
-                return;                /* Probably invalid section, ignore it */
-        if (!section->n_pages) return; /* >> */
+void UnmapSection(Section *section, void *base) {
+        kassert(((uintptr_t)base) > 0);
+        kassert(isaligned((uintptr_t)base, PAGE_SIZE));
 
-        for (Size i = 0; i < section->n_pages; i++) {
-                FreeFrame(section->physframes[i]);
-                UnmapSinglePage(section->vmbase + (i * PAGE_SIZE));
-        }
-        kfree(section);
+        DEREF(section, {
+                if (!section->n_pages) return; /* >> */
+                for (Size i = 0; i < section->n_pages; i++) {
+                        FreeFrame(section->physframes[i]);
+                        uintptr_t addr = ((uintptr_t)base) + (i * PAGE_SIZE);
+                        kzeromem((void *)addr, PAGE_SIZE);
+                        UnmapSinglePage(addr);
+                }
+        });
+}
+
+void DeleteSection(Section *section) {
+        kassert(section->vmbase > 0);
+        if (section->address_space != GetCurrentExecutionThread()->id) return;
+
+        DEREF(section, {
+                UnmapSection(section, (void *)section->vmbase);
+                kfree(section);
+        });
 }
