@@ -59,6 +59,7 @@ typedef enum _SectionObjectOp : unsigned long {
         SECTION_REQUEST, /** << Request the creation of a new section */
         SECTION_MAP,     /** << Map the section in the address space */
         SECTION_SHARE,   /** << Share the section's memory with another process */
+        SECTION_UNMAP,   /** << Unmap the section pointed to, from the current address space  */
 } SectionObjectOp;
 
 /**
