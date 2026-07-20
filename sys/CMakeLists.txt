@@ -55,7 +55,6 @@ list(APPEND C_SOURCES
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/log.c
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/stdio.c
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/kmalloc.c
-     ${CMAKE_CURRENT_SOURCE_DIR}/lib/early_kmalloc.c
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/panic.c
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/stackprot.c
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/sanitize.c

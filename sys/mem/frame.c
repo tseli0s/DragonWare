@@ -23,7 +23,6 @@
 
 #include "frame.h"
 
-#include <early_kmalloc.h>
 #include <ktypes.h>
 #include <log.h>
 #include <macros.h>
