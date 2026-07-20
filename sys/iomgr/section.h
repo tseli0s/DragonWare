@@ -33,6 +33,7 @@ typedef struct _Section {
         uintptr_t vmbase; /* Where the section starts in virtual memory, used to unmap it later. */
         uintptr_t physframes[MAX_SECTION_FRAMES]; /* Array of frame addresses that are mapped to the
                                                      section's virtual addresses. */
+        int       refcnt; /* Reference count when this section is used by multiple processes. */
 } Section;
 
 /** @brief Flags describing the permissions of a single section. */
