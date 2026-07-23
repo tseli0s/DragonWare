@@ -56,7 +56,8 @@ void *memset(void *dest, int value, size_t size);
  * @param[in] p2 Pointer to the second object to compare.
  * @param n Amount of bytes to compare.
  * @returns A negative value if the first different byte in @p p1 is less than @p p2, a positive
- * value if the first different byte in @p p1 is greater than @p p2 or 0 if the @p n bytes of @p p1 and
+ * value if the first different byte in @p p1 is greater than @p p2 or 0 if the @p n bytes of @p p1
+ * and
  * @p p2 are equal.
  */
 int memcmp(const void *p1, const void *p2, size_t n);
@@ -65,7 +66,8 @@ int memcmp(const void *p1, const void *p2, size_t n);
  * @brief Copies @p src to @p dest up until finding a NULL byte.
  * @param[out] dest Destination to copy the string to.
  * @param[in] src Source string to copy from.
- * @note The NULL terminating byte is copied as well and does not need to be written manually at the end of @p dest by the caller.
+ * @note The NULL terminating byte is copied as well and does not need to be written manually at the
+ * end of @p dest by the caller.
  * @returns @p dest
  */
 char *strcpy(char *dest, const char *src);
@@ -113,7 +115,8 @@ int strncmp(const char *s1, const char *s2, size_t n);
  * the first occurence of that byte.
  * @param[in] s String to search into.
  * @param c Character to search for.
- * @returns Pointer to the character @p c within @p s or @ref NULL if the character @p c was not found
+ * @returns Pointer to the character @p c within @p s or @ref NULL if the character @p c was not
+ * found
  */
 char *strchr(const char *s, int c);
 
