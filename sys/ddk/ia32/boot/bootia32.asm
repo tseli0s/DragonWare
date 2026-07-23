@@ -48,6 +48,15 @@ KernelReturned: db "Kernel returned from execution without a valid path to do so
 section .text
 global _SystemBootstrapRoutine
 
+__I_SEE_REEEEEEEED_REEEEEEEEEEED_OHHHH_REEEEEEEEEEEEEED:
+        mov edi,        0xB8000
+        mov ax,         0x4020  ; Dark red background, 0x20 = space character
+        mov ecx,        2000    ; 80 * 25
+        cld
+        rep stosw
+
+        ret
+
 _SystemBootstrapRoutine:
         cli
         mov     [BootRegisters - VIRT_OFFSET],      eax
@@ -130,7 +139,7 @@ _PrepareKernelEntry:
         push    eax
         call    FatalError
 .not_multiboot:
-        ; FIXME: Somehow inform the user here.
+        call    __I_SEE_REEEEEEEED_REEEEEEEEEEED_OHHHH_REEEEEEEEEEEEEED
         cli
         hlt 
         jmp .not_multiboot
