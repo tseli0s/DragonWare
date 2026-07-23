@@ -95,12 +95,6 @@ Status _DWIPCSend(int handle, Message *m, u32 message_size) {
         } else
                 kmsg->header.reply_handle = -1;
 
-        /* Something I got from Windows NT: Donate the quantum of the current thread to the target
-         * thread (port handler, in our case). This allows the recipient to get more time to process
-         * the message. But don't clear the current thread's quantum, as it may want to handle the
-         * reply later or not even expect a reply, because it has to do other things. IPC is
-         * asynchronous when it comes to sending for DragonWare. */
-        port->owner->quantum += GetCurrentExecutionThread()->quantum;
         port->tail = (port->tail + 1) % MAX_MESSAGES_IN_PORT;
         port->count++;
 
