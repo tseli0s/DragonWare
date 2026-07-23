@@ -26,8 +26,6 @@
 #include "task/task.h"
 #include "usercopy.h"
 
-#define MAX_QUEUED_MESSAGES (128)
-
 /* XXX This is probably the backbone of all of DragonWare so it must be optimized down to the
  * tiniest performance gains.  */
 [[gnu::hot]]
