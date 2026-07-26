@@ -24,6 +24,17 @@
 /* Close enough for me */
 static inline Bool CharacterIsPrintable(char c) { return (c >= 0x20); }
 
+static void PrintWelcomeMessage(void) {
+        puts("Welcome to DragonWare!\n");
+        puts("* Homepage: https://tseli0s.github.io/DragonWare");
+        puts("* Source Code: https://github.com/tseli0s/DragonWare");
+        puts("* Bug Tracker: https://github.com/tseli0s/DragonWare/issues");
+        puts("");
+        puts("To show version and build information, use the 'identify' command. You must supply version information during every bug report.");
+        puts("Type 'help' to get more information about available built in commands to this shell.");
+        puts("");
+}
+
 int main(void) {
         Handle consport            = CreateObject(NullPointer, OBJ_PORT, 0);
         Handle commport            = CreateObject(NullPointer, OBJ_PORT, 0);
@@ -54,16 +65,7 @@ int main(void) {
                 accept_status = (Status)reply.payload.raw[0];
         }
 
-        puts("* Welcome to DragonWare!\n");
-        puts("* DragonWare is a compact, free software, microkernel-based operating system for PC "
-             "platforms. You can view the source code at https://github.com/tseli0s/DragonWare "
-             "(And thank you for trying it out!)\n");
-        puts("You are currently in the \"DragonWare Command Prompt\". The so-called shell in "
-             "most other operating systems. You are running a very early, preview version of "
-             "DragonWare, so you can't run other programs yet.\n");
-        puts("* Type 'help' below to view some of the available builtin commands, "
-             "or exit to exit this process.\n");
-
+        PrintWelcomeMessage();
         printf("DragonWare >> ");
 
         while (true) {
