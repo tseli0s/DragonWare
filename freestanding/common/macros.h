@@ -101,9 +101,17 @@
 #define UnusedParameter(p)       ((void)p)
 
 /**
+ * @brief Marks a code path/branch as unreachable at runtime.
+ * @warning If this path is actually reached, a fault will occur and the program's execution will be
+ * terminated.
+ * @since v0.0.2
+ */
+#define unreachable ((void)__builtin_unreachable())
+
+/**
  * @brief Preconfigured address of the global framebuffer, usually placed 8MBs before cutoff from
  * the address space.
  * @warning This approach is not scalable, and will be replaced in the future. Eg. A high resolution
  * (1080p) framebuffer will crash the kernel.
  */
-#define FRAMEBUFFER_ADDR         ((uintptr_t)0xFF800000)
+#define FRAMEBUFFER_ADDR ((uintptr_t)0xFF800000)
