@@ -9,6 +9,7 @@
 
 #include "string.h"
 
+#include "ctype.h"
 #include "stdlib.h"
 
 void *memmove(void *dest, const void *src, size_t size) {
@@ -66,6 +67,14 @@ int strcmp(const char *s1, const char *s2) {
         return (unsigned char)*s1 - (unsigned char)*s2;
 }
 
+int strcasecmp(const char *s1, const char *s2) {
+        while (*s1 && (tolower((unsigned char)*s1) == tolower((unsigned char)*s2))) {
+                s1++;
+                s2++;
+        }
+        return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+}
+
 int strncmp(const char *s1, const char *s2, size_t n) {
         while (n && *s1 && (*s1 == *s2)) {
                 s1++;
@@ -77,7 +86,6 @@ int strncmp(const char *s1, const char *s2, size_t n) {
 
         return (unsigned char)*s1 - (unsigned char)*s2;
 }
-/* TODO: strcasecmp ... */
 
 char *strchr(const char *s, int c) {
         char ch = (char)c;

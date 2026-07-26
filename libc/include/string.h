@@ -111,6 +111,18 @@ int strcmp(const char *s1, const char *s2);
 int strncmp(const char *s1, const char *s2, size_t n);
 
 /**
+ * @brief Compares two NULL terminated strings and returns the results, without considering case
+ * differences.
+ * @example @code strcasecmp("john", "JOHN") == 0 @endcode because they only differ in the character
+ * cases, but the strings are the same in every other way.
+ * @param[in] s1 First string to compare.
+ * @param[in] s2 Second string to compare.
+ * @returns A positive value if @p s1 is greater than @p s2, a negative value of @p s1 is lesser
+ * than @p s2, or 0 if the two strings are equal.
+ */
+int strcasecmp(const char *s1, const char *s2);
+
+/**
  * @brief Searches for a given character within @p s and returns a pointer within @p s pointing to
  * the first occurence of that byte.
  * @param[in] s String to search into.
