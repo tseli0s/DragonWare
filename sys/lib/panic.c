@@ -194,7 +194,7 @@ void FatalError(const char *fmt, ...) {
                 PrintStringToAllOutputs("\n\n");
                 PrintStringToAllOutputs("TOTAL SYSTEM STALL :: YOU CAN REBOOT YOUR MACHINE NOW\n");
         } else
-                ForceReboot(); /* TODO: More outputs here */
+                ForceReboot();
 
         StallMachine();
 }

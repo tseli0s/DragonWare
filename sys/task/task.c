@@ -87,7 +87,6 @@ Thread *AllocateUserThread(ThreadEntryPoint entry, uintptr_t useresp, uintptr_t 
         Thread *t = kmalloc(sizeof(Thread));
         if (!t) return NullPointer;
 
-        /* TODO: Allocate a user-mapped page here instead. */
         u32 *esp = (u32 *)kernel_stack;
 
         /* Thread stack frame. iret pops ss, useresp, eflags, cs, and eip when iret is called */

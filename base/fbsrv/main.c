@@ -47,8 +47,6 @@ int main(void) {
         ReceiveMessage(kbdreply, &kbdack);
         if (kbdack.payload.raw[0] != STATUS_OK) goto cleanup;
 
-        /* TODO: Here we must clear the screen. We need support from the kernel though to tell us
-         * the information about the framebuffer format. */
         if (InvokeObject(consoleport, PORT_CREATE, NullPointer) != STATUS_OK) goto cleanup;
 
         Message claim_msg;
