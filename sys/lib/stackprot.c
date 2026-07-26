@@ -11,8 +11,6 @@
 #include <macros.h>
 #include <panic.h>
 
-/* TODO: We should randomize this per build for greater security, when we have userspace support
- * running of course */
 #ifndef STACK_CHECK_GUARD
 #define STACK_CHECK_GUARD (0xa4dc10be)
 #endif /* STACK_CHECK_GUARD */

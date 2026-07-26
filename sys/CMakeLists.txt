@@ -103,6 +103,8 @@ enable_language(C)
 add_library(kernel86.sys OBJECT ${ASM_SOURCES})
 target_compile_options(kernel86.sys PRIVATE -felf32)
 
+string(RANDOM LENGTH 8 ALPHABET "0123456789abcdef" STACK_GUARD_MAGIC)
+
 add_subdirectory(drivers) # To provide drvobj.sys, which is a collection of object files to put in the drivers section.
 
 add_executable(kernel.sys ${C_SOURCES} $<TARGET_OBJECTS:kernel86.sys> $<TARGET_OBJECTS:drvobj.sys>)
@@ -117,4 +119,4 @@ target_link_libraries(kernel.sys PRIVATE gcc dwfsl)
 target_link_options(kernel.sys PRIVATE -T "${CMAKE_CURRENT_SOURCE_DIR}/linker.lds" -ffreestanding -nostdlib)
 get_target_property(KERNEL_CFLAGS_LIST kernel.sys COMPILE_OPTIONS)
 string(JOIN " " KERNEL_CFLAGS ${KERNEL_CFLAGS_LIST})
-target_compile_definitions(kernel.sys PRIVATE __DRAGONWARE_SYS__=1 __KERNEL_BUILDID__=${BUILDID} _KERNEL_CFLAGS=\"${KERNEL_CFLAGS}\")
+target_compile_definitions(kernel.sys PRIVATE __DRAGONWARE_SYS__=1 __KERNEL_BUILDID__=${BUILDID} _KERNEL_CFLAGS=\"${KERNEL_CFLAGS}\" STACK_CHECK_GUARD=0x${STACK_GUARD_MAGIC})
