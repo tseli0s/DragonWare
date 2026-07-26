@@ -16,6 +16,7 @@
 #include <log.h>
 #include <macros.h>
 #include <mmutils.h>
+#include "ddk/ia32/vmm.h"
 
 #ifdef __i386__
 #include "ddk/ia32/tss.h"
@@ -92,6 +93,12 @@ static Status _DWRequestPorts(const u16 *port_list, Size list_size) {
         return STATUS_OK;
 }
 
+static inline void _DWGetTicksSinceBoot(u64 *store) {
+        if (!ADDRESS_IS_MAPPED(store)) return;
+        u64 ticks = GetTicksSinceBoot();
+        CopyToUser(store, &ticks, sizeof(u64));
+}
+
 void DragonWareSyscall(SystemCallFrame *regs) {
         switch (regs->eax) {
                 case SYSCALL_IDENTIFY:
@@ -124,16 +131,7 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                         regs->eax = (u32)_DWIPCReceive((int)regs->ebx, (Message *)regs->esi);
                         break;
                 case SYSCALL_TICK_SINCE_BOOT: {
-                        /* System V ABI says that, for a 64 bit return value, high 32 bits go in
-                         * edx, and the low 32 bits go in eax. So we can simply mask out the high 32
-                         * bits when assigning to eax and shift down edx by the amount of low
-                         * bits.
-                         * FIXME: This is broken on sysenter/sysexit instructions (edx must be
-                         * preserved, it holds the return address to userland).
-                         * */
-                        u64 ticks = GetTicksSinceBoot();
-                        regs->eax = (u32)(ticks & 0xffffffff);
-                        // regs->edx = (u32)(((u64)ticks) >> 32);
+                        _DWGetTicksSinceBoot((u64*)regs->ebx);
                         break;
                 }
                 case SYSCALL_CREATE_OBJECT:
