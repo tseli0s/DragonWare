@@ -105,6 +105,7 @@ Status _DWIPCReceive(int handle, Message *msave) {
         if (!obj || obj->type != OBJ_PORT || !obj->data) return STATUS_NO_ENDPOINT;
 
         Port *port = (Port *)obj->data;
+        if (port->owner->owner != curr_proc) return STATUS_BAD_ARGUMENT;
 
         /* Block if there are no messages */
         while (!port->count) {
