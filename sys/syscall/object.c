@@ -25,6 +25,7 @@
 #include "iomgr/object.h"
 #include "iomgr/port.h"
 #include "iomgr/section.h"
+#include "iomgr/thread.h"
 #include "sched/schedule.h"
 #include "syscall/usercopy.h"
 #include "task/process.h"
@@ -223,6 +224,34 @@ static Status HandleSectionObjectRequest(int handle, Object *obj, SectionObjectO
         return STATUS_OK;
 }
 
+static Status HandleThreadObjectRequest(int handle, Object *obj, ThreadObjectOp op, void *arg) {
+        UnusedParameter(handle);
+        switch (op) {
+                case THREAD_CREATE: {
+                        /* already created thread, avoid allocating twice */
+                        if (obj->data) return STATUS_BAD_ARGUMENT;
+                        UserThreadData data;
+                        if (CopyFromUser(&data, arg, sizeof(UserThreadData)) != STATUS_OK)
+                                return STATUS_BAD_ARGUMENT;
+
+                        obj->data = CreateThread((ThreadEntryPoint)data.entry, data.stack);
+                        return (obj->data) ? STATUS_OK : STATUS_BAD;
+                }
+                case THREAD_RUN: {
+                        if (obj && obj->data) {
+                                RunThread(obj);
+                                return STATUS_OK;
+                        } else
+                                return STATUS_BAD_ARGUMENT;
+                }
+                case THREAD_DELETE:
+                        /* TODO */
+                        return STATUS_UNSUPPORTED;
+                default:
+                        return STATUS_BAD_ARGUMENT;
+        }
+}
+
 int _DWCreateObject(const char *name, ObjectType type, u32 permissions) {
         UnusedParameter(permissions);
 
@@ -269,6 +298,8 @@ Status _DWInvokeObject(int handle, unsigned long op, void *argptr) {
                         return HandlePortObjectRequest(handle, target, op, argptr);
                 case OBJ_SECTION:
                         return HandleSectionObjectRequest(handle, target, op, argptr);
+                case OBJ_THREAD:
+                        return HandleThreadObjectRequest(handle, target, op, argptr);
                 default:
                         return STATUS_BAD_ARGUMENT;
         }
