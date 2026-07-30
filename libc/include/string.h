@@ -24,7 +24,7 @@ DLC_BEGIN_DECLS
  * @param size Amount of bytes to copy.
  * @returns @p dest
  */
-void *memcpy(void *dest, const void *src, size_t size);
+void *memcpy(void *restrict dest, const void *restrict src, size_t size);
 
 /**
  * @brief Copies @p size bytes from @p src to @p dest while safely handling overlapping regions.
