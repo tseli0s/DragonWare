@@ -67,10 +67,11 @@ static void *GetHeapPageAddress(void) {
         for (u32 i = 0; i < BIT_WORDS_NEEDED; i++) {
                 if (heap_bitmap[i] == 0xFFFFFFFF) continue;
 
-                int bit = __builtin_ctz(~heap_bitmap[i]);
-                heap_bitmap[i] |= (1 << bit);
+                int       bit  = __builtin_ctz(~heap_bitmap[i]);
+                uintptr_t addr = (HEAP_BASE + ((i * 32 + (u32)bit) * PAGE_SIZE));
+                MarkHeapPageAsUsed(addr);
 
-                return (void *)(HEAP_BASE + ((i * 32 + (u32)bit) * PAGE_SIZE));
+                return (void *)addr;
         }
         /* I really should implement an OOM helper or something */
         FatalError("Kernel has ran out of heap memory");
