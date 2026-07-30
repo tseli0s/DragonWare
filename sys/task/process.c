@@ -248,7 +248,6 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
         p->cr3          = pdmap->phys;
         p->main_thread  = main_thread;
         p->pid          = process_id_counter++;
-        p->kernel_stack = kernel_stack_addr + (2 * FRAME_SIZE);
         p->next         = NullPointer;
         p->ports_used   = 0;
         ZeroMemory(p->ioports);

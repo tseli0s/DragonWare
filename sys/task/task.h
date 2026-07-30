@@ -57,6 +57,7 @@ typedef enum _ThreadPriorityLevel : signed short {
 
 typedef struct _Thread {
         u32 esp;       /* The current stack pointer */
+        uintptr_t kernel_stack; /* Only valid for unprivileged (non-kernel) threads. */
         u32 trapframe; /* Trap frame. Contains the frame required to return into userspace (iret
                           frame in other words) */
         u32 stack_top; /* We keep a pointer to the original stack so we can just reset threads in

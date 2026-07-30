@@ -50,7 +50,6 @@ typedef enum _ProcessCapability {
 typedef struct _Process {
         Thread           *main_thread;
         u32               cr3;          /* WARNING: Physical address */
-        u32               kernel_stack; /* That one's virtual, use it with SelectKernelStack */
         ProcessID         pid;
         HandleTable       handles;
         u16               ioports[MAX_IO_PORTS_PER_PROCESS];

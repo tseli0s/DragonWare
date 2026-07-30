@@ -109,6 +109,7 @@ Thread *AllocateUserThread(ThreadEntryPoint entry, uintptr_t useresp, uintptr_t 
         /* Now the thread frame is ready, set it up */
         t->esp = t->stack_top = (u32)esp;
         t->state              = THREAD_READY;
+        t->kernel_stack       = kernel_stack;
         t->owner              = NullPointer; /* Set by CreateProcess */
         t->next               = NullPointer;
         t->pl                 = THREAD_USER;
