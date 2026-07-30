@@ -15,6 +15,8 @@
 #include <macros.h>
 #include <panic.h>
 
+#include "ddk/ia32/gdt.h"
+
 #ifdef __i386__
 #include "ddk/ia32/ctxswitch.h"
 #include "ddk/ia32/tss.h"
@@ -146,6 +148,9 @@ void ScheduleNext(void) {
                         EnableIOPortsOfProcess(current_thread->owner);
                 }
 
+                /* Kernel threads have kernel_stack set to zero by default, so we mustn't switch to
+                 * them. */
+                if (next->kernel_stack > 0) SelectKernelStack(next->kernel_stack);
                 SwapThreadStack(&prev->esp, next->esp);
         }
 }
