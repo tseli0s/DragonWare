@@ -60,20 +60,6 @@ static void _DWklog(int level, const char *msg) {
         klog((LogLevel)level, "%s", buf);
 }
 
-#if 0
-[[deprecated(
-        "_DWRaiseIOPL is no longer available, the TSS I/O bitmap has replaced its functionality")]]
-static Status _DWRaiseIOPL(u32 *eflags) {
-        /* set the IOPL bit in eflags, but only if the current process possesses the
-         * capability to actually use that. */
-        if (GetCurrentExecutionThread()->owner->flags & PROC_C_IOPL) {
-                *eflags |= (3 << 12);
-                return STATUS_OK;
-        } else
-                return STATUS_UNSUPPORTED;
-}
-#endif
-
 static Status _DWRequestPorts(const u16 *port_list, Size list_size) {
         Process *current = GetCurrentExecutionThread()->owner;
         if (!(current->flags & PROC_C_IOPL))
