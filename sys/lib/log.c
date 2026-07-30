@@ -75,6 +75,10 @@ static void PrintPrefixFor(LogLevel level) {
                         fg     = RedPixel;
                         break;
                 }
+                default: {
+                        fg = LightGrayPixel;
+                        break;
+                }
         }
         PrintToOutputs(prefix, BlackPixel, fg);
 }
