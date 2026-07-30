@@ -10,17 +10,13 @@
 #pragma once
 
 #ifndef _KERNEL_API_H
-#define _KERNEL_API_H    1
+#define _KERNEL_API_H           1
 
-#define SYSCALL_IDENTIFY (0)
-#define SYSCALL_EXIT     (1)
-#define SYSCALL_YIELD    (2)
-#define SYSCALL_KLOG     (3)
-#if 0
-#define SYSCALL_RAISE_IOPL (4)
-#else
-#define SYSCALL_REQUEST_PORTS (4)
-#endif /* SYSCALL_RAISE_IOPL */
+#define SYSCALL_IDENTIFY        (0)
+#define SYSCALL_EXIT            (1)
+#define SYSCALL_YIELD           (2)
+#define SYSCALL_KLOG            (3)
+#define SYSCALL_REQUEST_PORTS   (4)
 #define SYSCALL_SEND            (5)
 #define SYSCALL_RECEIVE         (6)
 #define SYSCALL_TICK_SINCE_BOOT (7)
@@ -184,31 +180,10 @@ void _cdecl _DWYield(void);
 void _cdecl _DWklog(LogLevel level, const char *msg);
 
 /**
- * @brief _DWRaiseIOPL system call (#4) wrapper.
- * @details This function will attempt to set bits 12-13 in the EFLAGS register of the calling
- * process allowing it to manage hardware directly by talking to I/O ports. Only processes that the
- * kernel trusts (Usually its own userspace drivers only) can succeed in this call, see the warning
- * below as to why.
- * @warning This is a very dangerous function - It is only intended for DragonWare microkernel
- * drivers, which is why there's an entire separate capability just for this function. Processes
- * having the relevant permission set are able to adjust timer frequency, read directly from the
- * disk (bypassing any drivers and permissions) and access user data without any checks.
- * @return STATUS_OK if the process has the capability to talk to I/O ports directly.
- * STATUS_UNSUPPORTED if the process is not allowed to talk to I/O ports because it lacks the
- * kernel-assigned capability.
- * @deprecated This function has been deprecated in favour of the more secure @ref _DWRequestPorts
- * and no longer has any effect. It is only kept here until the transition has fully finished.
- */
-[[deprecated(
-        "_DWRaiseIOPL has been dropped due to security and compatibility constraints. It has been "
-        "replaced by _DWRequestPorts")]] Status _cdecl _DWRaiseIOPL(void);
-
-/**
  * @brief _DWRequestPorts system call (#4) wrapper.
  * @details This function requests from the kernel permission to directly read from the I/O ports
  * specified inside @p port_list, an array of 16-bit integers of ports that the process needs to
- * talk to. This function replaces the legacy and insecure @ref _DWRaiseIOPL function and also
- * provides compatibility with the new system call convention more easily.
+ * talk to. It is only relevant for x86-based systems at the moment.
  * @param[in] port_list An array of ports that the process wants to talk to. Elements beyond @ref
  * MAX_IO_PORT_PER_PROCESS will be ignored.
  * @param[in] port_list_size The amount of ports to read from the array.
