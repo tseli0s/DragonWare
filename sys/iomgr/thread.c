@@ -37,27 +37,41 @@ static uintptr_t GetNextKernelStackAddress(void) {
                 current_addr += (2 * PAGE_SIZE);
         }
 
-        FatalError("Not enough virtual memory left for the kernel stacks.");
+        return 0;
 }
 
 void *CreateThread(void (*entryaddr)(void), void *stack) {
+        /* Declaring it on top otherwise the bitch called clangd says "Variable
+         * 't' is used uninitialized whenever 'if' condition is true" in the checks below */
+        Thread *t = NullPointer;
+
         uintptr_t phys_stack_1 = AllocateFrame();
         uintptr_t phys_stack_2 = AllocateFrame();
         uintptr_t stackaddr    = GetNextKernelStackAddress() + (2 * PAGE_SIZE);
-        MapSinglePage(phys_stack_2, stackaddr - PAGE_SIZE, PAGE_PRESENT | PAGE_RW);
-        MapSinglePage(phys_stack_1, stackaddr - (2 * PAGE_SIZE), PAGE_PRESENT | PAGE_RW);
 
-        Thread *t = AllocateUserThread(entryaddr, (uintptr_t)stack, stackaddr);
-        if (!t) return NullPointer;
+        if (!phys_stack_1 || !phys_stack_2) goto bad;
+        if (MapSinglePage(phys_stack_2, stackaddr - PAGE_SIZE, PAGE_PRESENT | PAGE_RW) != STATUS_OK)
+                goto bad;
+        if (MapSinglePage(phys_stack_1, stackaddr - (2 * PAGE_SIZE), PAGE_PRESENT | PAGE_RW) !=
+            STATUS_OK)
+                goto bad;
+
+        t = AllocateUserThread(entryaddr, (uintptr_t)stack, stackaddr);
+        if (!t) goto bad;
 
         t->owner = GetCurrentExecutionThread()->owner;
         return t;
+
+bad:
+        if (phys_stack_1) FreeFrame(phys_stack_1);
+        if (phys_stack_2) FreeFrame(phys_stack_2);
+        UnmapSinglePage(stackaddr - PAGE_SIZE);
+        UnmapSinglePage(stackaddr - (2 * PAGE_SIZE));
+        if (t) DeleteThread(t);
+
+        return NullPointer;
 }
 
-/**
- * @brief Appends @p thread to the scheduler list, preparing it for execution.
- * @param[in] thread The thread to use. Must not be a @ref NullPointer
- */
 [[gnu::nonnull]]
 void RunThread(Object *thread) {
         AddThreadToScheduler(thread->data);
