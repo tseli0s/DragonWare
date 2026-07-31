@@ -14,11 +14,8 @@ global FlushGDT
 ; performs a far jump into the new kernel code segments,
 ; then reloads the segment registers with their appropriate kernel
 ; values for data and returns.
-;
-; GPRs are preserved.
 FlushGDT:
 	mov eax, [esp+4]
-	pushad
 	lgdt [eax]
 	jmp 0x08:.NewCS
 .NewCS:
@@ -26,8 +23,5 @@ FlushGDT:
 	mov ds, ax
 	mov es, ax
 	mov ss, ax
-	mov fs, ax
-	mov gs, ax
 	
-	popad
 	ret
