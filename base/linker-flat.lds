@@ -11,7 +11,7 @@ ENTRY(_start)
 
 SECTIONS {
         /* This is where the entry point is configured to be by default. */
-        . = 0x1000;
+        . = 0x100000;
 
         .text : ALIGN(4) {
                 *(.entry*)

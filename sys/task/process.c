@@ -37,7 +37,7 @@
 /* ---------------------------------------------------------------------------------------------*/
 
 /* Where do flat binaries expect execution to start (In other words, where their origin is set) */
-#define FLAT_BINARY_DEFAULT_ENTRY ((ThreadEntryPoint)(0x1000))
+#define FLAT_BINARY_DEFAULT_ENTRY ((ThreadEntryPoint)(0x100000))
 
 /* Beginning of all kernel stacks in virtual memory. */
 #define KERNEL_STACK_BASE         (0xE0000000)
