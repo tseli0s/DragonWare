@@ -91,7 +91,8 @@ int InitPartitionTable(void) {
                          * is seeing this, I would love an explanation. I can't seem to find
                          * anything in the standard about it. If there's a better way than relying
                          * on heuristics, please let me know, this is such an ugly workaround. */
-                        if (drive_num < 0xE0) {
+                        extern Byte BootDevice;
+                        if (drive_num < 0xE0 && drive_num != BootDevice) {
                                 continue;
                         }
 
