@@ -39,13 +39,15 @@ void DeleteObject(Object *obj) {
                 return;
         }
 
-        if (obj->refcnt > 0) obj->refcnt = 0;
         switch (obj->type) {
                 case OBJ_PORT:
                         DeletePort((Port *)obj->data);
                         break;
                 case OBJ_SECTION:
                         DeleteSection((Section *)obj->data);
+                        break;
+                case OBJ_THREAD:
+                        DeleteThread(obj->data);
                         break;
                 case OBJ_DEVICE: /* The device manager should not have nodes deleted. */
                 case OBJ_UNKNOWN:
