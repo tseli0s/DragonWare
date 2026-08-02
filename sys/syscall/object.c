@@ -234,6 +234,8 @@ static Status HandleThreadObjectRequest(int handle, Object *obj, ThreadObjectOp 
                         if (CopyFromUser(&data, arg, sizeof(UserThreadData)) != STATUS_OK)
                                 return STATUS_BAD_ARGUMENT;
 
+                        if (!data.stack || !data.entry) return STATUS_BAD_ARGUMENT;
+                        
                         obj->data = CreateThread((ThreadEntryPoint)data.entry, data.stack);
                         return (obj->data) ? STATUS_OK : STATUS_BAD;
                 }
