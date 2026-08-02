@@ -52,7 +52,7 @@ def _start():
                 '-cdrom', args.disk_image,
                 '-display', 'gtk,show-tabs=on',
                 '-machine', 'acpi=on',
-                '-boot', 'c',
+                '-boot', 'd',
                 '-full-screen',
                 '-m', '16M',
                 '-cpu', 'pentium2',
