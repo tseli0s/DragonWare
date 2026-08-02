@@ -68,7 +68,6 @@ typedef enum _SectionObjectOp : unsigned long {
 typedef enum _ThreadObjectOp : unsigned long {
         THREAD_CREATE,
         THREAD_RUN,
-        THREAD_DELETE
 } ThreadObjectOp;
 
 /**

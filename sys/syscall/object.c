@@ -246,9 +246,6 @@ static Status HandleThreadObjectRequest(int handle, Object *obj, ThreadObjectOp 
                         } else
                                 return STATUS_BAD_ARGUMENT;
                 }
-                case THREAD_DELETE:
-                        /* TODO */
-                        return STATUS_UNSUPPORTED;
                 default:
                         return STATUS_BAD_ARGUMENT;
         }
