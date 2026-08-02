@@ -47,10 +47,10 @@ void *CreateThread(void (*entryaddr)(void), void *stack) {
 
         uintptr_t phys_stack_1 = AllocateFrame();
         uintptr_t phys_stack_2 = AllocateFrame();
-        uintptr_t stackaddr    = GetNextKernelStackAddress() + (2 * PAGE_SIZE);
-
+        uintptr_t stackaddr    = GetNextKernelStackAddress();
         if (!stackaddr) return NullPointer;
         
+        stackaddr +=  + (2 * PAGE_SIZE);
         if (!phys_stack_1 || !phys_stack_2) goto bad;
         if (MapSinglePage(phys_stack_2, stackaddr - PAGE_SIZE, PAGE_PRESENT | PAGE_RW) != STATUS_OK)
                 goto bad;
