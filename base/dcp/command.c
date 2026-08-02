@@ -42,15 +42,9 @@ static void IdentifySystem(void) {
 
 void HandleCommandBuffer(const char *cmd) {
         if (STREQUAL(cmd, "help")) {
-                if (hasspace(cmd))
-                        puts("Bad amount of arguments\n");
-                else
-                        PrintHelp();
+                PrintHelp();
         } else if (STREQUAL(cmd, "identify")) {
-                if (hasspace(cmd))
-                        puts("Bad amount of arguments\n");
-                else
-                        IdentifySystem();
+                IdentifySystem();
         } else if (STREQUAL(cmd, "exit")) {
                 exit(0);
         } else {
