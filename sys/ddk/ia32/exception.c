@@ -9,11 +9,13 @@
 
 #include "exception.h"
 
+#include <ktypes.h>
+#include <power.h>
+
 #include "gdt.h"
 #include "interrupts.h"
 #include "log.h"
 #include "panic.h"
-#include "power.h"
 #include "sched/schedule.h"
 #include "task/process.h"
 #include "task/task.h"
@@ -27,15 +29,19 @@ static void _DWUserException(InterruptStackFrame *stack_frame) {
                 case I_GPF:
                 case I_PF:
                 default: {
-                        u32     cr2  = GetFaultingAddress();
-                        Thread *curr = GetCurrentExecutionThread();
-                        curr->state  = THREAD_TERMINATED;
+                        u32      cr2  = GetFaultingAddress();
+                        Process *curr = GetCurrentExecutionThread()->owner;
                         LogMessage(
                                 LOG_ERROR,
                                 "Process %u exception 0x%x, EFLAGS 0x%x, ERRCODE 0x%x EIP %p, ESP "
                                 "%p CR2 0x%x",
-                                curr->owner->pid, stack_frame->int_no, stack_frame->eflags,
+                                curr->pid, stack_frame->int_no, stack_frame->eflags,
                                 stack_frame->err_code, stack_frame->eip, stack_frame->useresp, cr2);
+
+                        Status del = DeleteProcess(curr);
+                        if (unlikely(del != STATUS_OK))
+                                LogMessage(LOG_ERROR, "Deleting process %u failed (%s)", curr->pid,
+                                           StatusCodeToString(del));
 
                         /* TODO: If it's a server, it must be restarted, otherwise the system may be
                          * unable to *serve* applications that depended on it */
