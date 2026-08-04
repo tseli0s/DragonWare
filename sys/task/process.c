@@ -283,7 +283,10 @@ Status DeleteProcess(Process *p) {
         p->next = NullPointer;
         p->prev = NullPointer;
 
-        for (int i = 0; i < MAX_OBJ_PER_PROCESS; i++) DeleteFromHandleTable(&p->handles, i);
+        for (int i = 0; i < MAX_OBJ_PER_PROCESS; i++) {
+                Object *ob = DeleteFromHandleTable(&p->handles, i);
+                if (ob) DeleteObject(ob);
+        }
 
         static const char *no_vmem_msg = "Not enough virtual memory left for a temporary mapping";
         int                pd_slot     = FindFreeTmpMapSlot();
@@ -298,6 +301,7 @@ Status DeleteProcess(Process *p) {
         MapSinglePage(p->cr3, pd_virt, PAGE_PRESENT | PAGE_RW);
         PageDirectory *pd = (PageDirectory *)pd_virt;
 
+        p->main_thread->state = THREAD_TERMINATED;
         for (unsigned int i = 0; i < KERNEL_PD_INDEX; i++) {
                 if (pd[i] & PAGE_PRESENT) {
                         Status mapstatus = MapSinglePage(pd[i] & PAGE_FRAME_MASK, pt_virt,
