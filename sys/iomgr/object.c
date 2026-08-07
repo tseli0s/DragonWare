@@ -39,23 +39,27 @@ void DeleteObject(Object *obj) {
                 return;
         }
 
-        switch (obj->type) {
-                case OBJ_PORT:
-                        DeletePort((Port *)obj->data);
-                        break;
-                case OBJ_SECTION:
-                        DeleteSection((Section *)obj->data);
-                        break;
-                case OBJ_THREAD:
-                        DeleteThread(obj->data);
-                        break;
-                case OBJ_DEVICE: /* The device manager should not have nodes deleted. */
-                case OBJ_UNKNOWN:
-                default:
-                        break;
+        if (likely(obj->data)) {
+                switch (obj->type) {
+                        case OBJ_PORT:
+                                DeletePort((Port *)obj->data);
+                                break;
+                        case OBJ_SECTION:
+                                DeleteSection((Section *)obj->data);
+                                break;
+                        case OBJ_THREAD:
+                                DeleteThread(obj->data);
+                                break;
+                        case OBJ_DEVICE: /* The device manager should not have nodes deleted. */
+                        case OBJ_UNKNOWN:
+                        default:
+                                break;
+                }
         }
+
         kfree(obj);
 }
+
 int AppendToHandleTable(HandleTable *table, Object *obj) {
         u32 free_mask = ~table->valid_bitmap;
         if (free_mask == 0) return -1;
