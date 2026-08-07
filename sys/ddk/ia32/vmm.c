@@ -166,6 +166,18 @@ Status MapSinglePage(uintptr_t phys, uintptr_t virt, u32 flags) {
 }
 
 void UnmapSinglePage(uintptr_t virt) {
+        /* Unmapped address, nothing to do, but still, I'm printing a debug log here in case
+         * something slips by */
+        if (!IsVirtualPageMapped(virt)) {
+#ifdef DRAGONWARE_DEBUG_MODE
+                LogMessage(LOG_WARNING,
+                           "Attempting to unmap page 0x%x from address space while "
+                           "IsVirtualPageMapped returned false!",
+                           virt);
+#endif /* DRAGONWARE_DEBUG_MODE */
+                return;
+        }
+
         const Size pdindex = PD_INDEX(virt);
         const Size ptindex = PT_INDEX(virt);
 

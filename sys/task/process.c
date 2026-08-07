@@ -39,12 +39,6 @@
 /* Where do flat binaries expect execution to start (In other words, where their origin is set) */
 #define FLAT_BINARY_DEFAULT_ENTRY ((ThreadEntryPoint)(0x100000))
 
-/* Beginning of all kernel stacks in virtual memory. */
-#define KERNEL_STACK_BASE         (0xE0000000)
-
-/* Last address we can map as a kernel stack for a process before panicking. */
-#define KERNEL_STACK_END          (0xEFFF0000)
-
 /* Size of the stack in pages. Each page = 4096 bytes, so 16KBs of stack per process. */
 #define USER_STACK_SIZE_PAGES     (4)
 
@@ -254,7 +248,6 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
         p->cr3          = pdmap->phys;
         p->main_thread  = main_thread;
         p->pid          = process_id_counter++;
-        p->kernel_stack = kernel_stack_addr + (2 * FRAME_SIZE);
         p->next         = NullPointer;
         p->ports_used   = 0;
         ZeroMemory(p->ioports);
@@ -290,7 +283,10 @@ Status DeleteProcess(Process *p) {
         p->next = NullPointer;
         p->prev = NullPointer;
 
-        for (int i = 0; i < MAX_OBJ_PER_PROCESS; i++) DeleteFromHandleTable(&p->handles, i);
+        for (int i = 0; i < MAX_OBJ_PER_PROCESS; i++) {
+                Object *ob = DeleteFromHandleTable(&p->handles, i);
+                if (ob) DeleteObject(ob);
+        }
 
         static const char *no_vmem_msg = "Not enough virtual memory left for a temporary mapping";
         int                pd_slot     = FindFreeTmpMapSlot();
@@ -305,6 +301,7 @@ Status DeleteProcess(Process *p) {
         MapSinglePage(p->cr3, pd_virt, PAGE_PRESENT | PAGE_RW);
         PageDirectory *pd = (PageDirectory *)pd_virt;
 
+        p->main_thread->state = THREAD_TERMINATED;
         for (unsigned int i = 0; i < KERNEL_PD_INDEX; i++) {
                 if (pd[i] & PAGE_PRESENT) {
                         Status mapstatus = MapSinglePage(pd[i] & PAGE_FRAME_MASK, pt_virt,

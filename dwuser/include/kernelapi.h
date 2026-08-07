@@ -81,6 +81,16 @@ typedef struct [[gnu::packed]] {
         u32 reserved; /** << Reserved for future expansion */
 } IRQBindingDescriptor;
 
+/**
+ * @brief Data describing thread initial state for use with thread objects.
+ * @since v0.0.2
+ */
+typedef struct [[gnu::packed]] _UserThreadData {
+        void *entry;      /** << Entry point of a thread  */
+        void *stack;      /** << Stack memory for the thread*/
+        void *extra_data; /** << Extra data that will be given to the thread upon execution.*/
+} UserThreadData;
+
 /** @brief Flags describing the permissions of a single section. */
 typedef enum _SectionPermissions : unsigned long {
         SECTION_NONE      = 0x00, /** << Nothing allowed on */
@@ -106,6 +116,7 @@ typedef enum _ObjectType : unsigned long {
         OBJ_DEVICE,      /** << Device manager object */
         OBJ_PORT,        /** << Port (IPC endpoint) object */
         OBJ_SECTION,     /** << Section (Memory management) object */
+        OBJ_THREAD,      /** << Thread (Unit of execution) object */
 } ObjectType;
 
 /**
@@ -134,6 +145,15 @@ typedef enum _SectionObjectOp : unsigned long {
         SECTION_MAP,     /** << Map the section in the address space */
         SECTION_SHARE,   /** << Share the section's memory with another process */
 } SectionObjectOp;
+
+/**
+ * @brief An operation to be performed on a thread object.
+ * @since v0.0.2
+ */
+typedef enum _ThreadObjectOp : unsigned long {
+        THREAD_CREATE, /** << Create a new thread */
+        THREAD_RUN,    /** << Enlist the thread in the scheduler */
+} ThreadObjectOp;
 
 /**
  * @brief _DWSystemIdentify system call (#0) wrapper

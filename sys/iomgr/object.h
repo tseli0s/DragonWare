@@ -35,6 +35,7 @@ typedef enum _ObjectType : unsigned long {
         OBJ_DEVICE,
         OBJ_PORT,
         OBJ_SECTION,
+        OBJ_THREAD,
 } ObjectType;
 
 /** @brief An operation to be performed on a device object */
@@ -59,6 +60,15 @@ typedef enum _SectionObjectOp : unsigned long {
         SECTION_MAP,     /** << Map the section in the address space */
         SECTION_SHARE,   /** << Share the section's memory with another process */
 } SectionObjectOp;
+
+/**
+ * @brief An operation to be performed on a thread object.
+ * @since v0.0.2
+ */
+typedef enum _ThreadObjectOp : unsigned long {
+        THREAD_CREATE,
+        THREAD_RUN,
+} ThreadObjectOp;
 
 /**
  * @brief A kernel-allocated object used by processes to interact with the kernel API.

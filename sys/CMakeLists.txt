@@ -70,6 +70,7 @@ list(APPEND C_SOURCES
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/section.c
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/object.c
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/node.c
+     ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/thread.c
      ${CMAKE_CURRENT_SOURCE_DIR}/task/task.c
      ${CMAKE_CURRENT_SOURCE_DIR}/task/process.c
      ${CMAKE_CURRENT_SOURCE_DIR}/task/message.c

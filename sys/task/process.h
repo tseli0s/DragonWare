@@ -13,6 +13,12 @@
 #include "iomgr/object.h"
 #include "task.h"
 
+/** @brief Beginning of all kernel stacks in virtual memory. */
+#define KERNEL_STACK_BASE         (0xE0000000)
+
+/** @brief Last address we can map as a kernel stack for a process before panicking. */
+#define KERNEL_STACK_END          (0xEFFF0000)
+
 /** @brief Where the user stack will be placed for each process. A high address is chosen to allow
  * the stack to grow freely if necessary in the future. Reminder that the kernel is mapped to
  * 0xC0000000-0xFFFFFFFF. */
@@ -44,7 +50,6 @@ typedef enum _ProcessCapability {
 typedef struct _Process {
         Thread           *main_thread;
         u32               cr3;          /* WARNING: Physical address */
-        u32               kernel_stack; /* That one's virtual, use it with SelectKernelStack */
         ProcessID         pid;
         HandleTable       handles;
         u16               ioports[MAX_IO_PORTS_PER_PROCESS];
