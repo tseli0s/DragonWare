@@ -10,9 +10,10 @@
 #pragma once
 
 /* How many bytes of memory can a section occupy. This is to save memory on each section object,
- * because a section object internally also holds address to physical frames. So for 120 frames,
- * each object must hold 256 bytes of raw addresses. */
-#define MAX_SECTION_FRAMES (120)
+ * because a section object internally also holds address to physical frames. Unfortunately at the
+ * moment this limits the amount of memory that can be mapped by a single section object (FIXME:
+ * Address that) */
+#define MAX_SECTION_FRAMES (500)
 
 #include <ktypes.h>
 
@@ -32,6 +33,7 @@ typedef struct _Section {
         uintptr_t vmbase; /* Where the section starts in virtual memory, used to unmap it later. */
         uintptr_t physframes[MAX_SECTION_FRAMES]; /* Array of frame addresses that are mapped to the
                                                      section's virtual addresses. */
+        int       refcnt; /* Reference count when this section is used by multiple processes. */
 } Section;
 
 /** @brief Flags describing the permissions of a single section. */

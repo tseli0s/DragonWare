@@ -64,7 +64,7 @@ Status _DWIPCSend(int handle, Message *m, u32 message_size) {
         if (reply_from >= 0 && reply_from < MAX_OBJ_PER_PROCESS) {
                 Object *replyobj = curr_proc->handles.objlist[reply_from];
 
-                if (replyobj && replyobj->type == OBJ_PORT) {
+                if (replyobj) {
                         HandleTable *target_table = &port->owner->owner->handles;
                         int          new_hdl      = -1;
 

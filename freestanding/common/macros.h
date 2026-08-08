@@ -108,6 +108,31 @@
  */
 #define unreachable ((void)__builtin_unreachable())
 
+/*
+ * @brief Shorthand macro to dereference an object that supports reference counting.
+ * @param[in] obj The object to dereference.
+ * @param[in] __LAMBDA__ The function to run on @p obj if no other objects reference it.
+ * @since v0.0.2
+ */
+#define DEREF(obj, __LAMBDA__)           \
+        do {                             \
+                if ((obj)->refcnt > 1) { \
+                        (obj)->refcnt--; \
+                } else {                 \
+                        __LAMBDA__       \
+                }                        \
+                                         \
+        } while (0)
+
+/**
+ * @brief Shorthand macro to reference an object that supports reference counting.
+ * @details This macro is very simple to expand manually, however it forms a nice pair with @ref
+ * DEREF above. That is the only reason it is defined here.
+ * @param[in] obj The object to reference
+ * @since v0.0.2
+ */
+#define REFER(obj)       ((obj)->refcnt++)
+
 /**
  * @brief Preconfigured address of the global framebuffer, usually placed 8MBs before cutoff from
  * the address space.
