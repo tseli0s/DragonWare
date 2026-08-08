@@ -28,6 +28,12 @@ include(cmake/OSVersion.cmake)
 include(cmake/CompilerOverrides.cmake)
 
 add_compile_definitions(__DRAGONWARE__)
+
+if (NOT DEFINED CLOCK_TICK_HZ)
+	set(CLOCK_TICK_HZ 100 CACHE STRING "Clock ticks (In Hz). Higher values lead to more responsiveness but can cause instability. Default: 100Hz" FORCE)
+endif()
+add_compile_definitions(TARGET_HZ=${CLOCK_TICK_HZ})
+
 if (NOT DEFINED CMAKE_BUILD_TYPE)
 	message(STATUS "-- Note: CMAKE_BUILD_TYPE was not set in the options, setting it to debug.")
 	set(CMAKE_BUILD_TYPE "Debug")

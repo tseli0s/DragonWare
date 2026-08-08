@@ -22,7 +22,10 @@
 #include "sched/schedule.h"
 #include "task/task.h"
 
+#ifndef TARGET_HZ
 #define TARGET_HZ (100)
+#endif /* TARGET_HZ */
+
 static volatile u64 ticks = 0;
 
 extern volatile int NeedsResched;
@@ -46,7 +49,7 @@ static void PITCallback(InterruptStackFrame *r) {
 void StartSystemTimer(void) {
         PITInit(TARGET_HZ);
         RegisterIRQHandler(0, PITCallback);
-        LogMessage(LOG_DEBUG, "Starting hardware-based system timer");
+        LogMessage(LOG_DEBUG, "Starting hardware based system timer (Running at %u Hz)", (unsigned int)TARGET_HZ);
 
         AddDevice(NullPointer,
                   MakeDeviceNode("PIT Timer", P_USER | P_DIRECT_ACCESS, DEVCLASS_UNKNOWN));
