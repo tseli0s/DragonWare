@@ -241,6 +241,19 @@ Status _cdecl _DWIPCSend(int handle, Message *m, Size message_size);
 Status _cdecl _DWIPCReceive(int handle, Message *msave);
 
 /**
+ * @brief _DWGetTicksSinceBoot system call (#7) wrapper.
+ * @details This function will write in the memory address pointed to by @p store the amount of
+ * clock ticks since the system was booted. The clock is configured at build time to tick at 100Hz
+ * (see sys/time/timer.c, the define @ref TARGET_HZ)
+ * @note A negligible amount of inaccuracy exists - The kernel does not record ticks since it was
+ * first loaded into memory. This leads to a loss of a few ticks (depending on the speed of the
+ * central processing unit and kernel optimizations), usually but not definitively around 4-5 ticks.
+ * @param[in] store Where to store the tick value. Must point to an eight byte block of memory, writeable by the caller.
+ */
+[[gnu::nonnull]]
+void _cdecl _DWGetTicksSinceBoot(u64 *store);
+
+/**
  * @brief Create a new object and return a handle to it, under which handle further functionality
  * may be invoked. (System call #8)
  * @param[in] name The name of the object. If NullPointer, the object is considered private and may

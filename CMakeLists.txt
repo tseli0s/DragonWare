@@ -30,7 +30,7 @@ include(cmake/CompilerOverrides.cmake)
 add_compile_definitions(__DRAGONWARE__)
 
 if (NOT DEFINED CLOCK_TICK_HZ)
-	set(CLOCK_TICK_HZ 100 CACHE STRING "Clock ticks (In Hz). Higher values lead to more responsiveness but can cause instability. Default: 100Hz" FORCE)
+	set(CLOCK_TICK_HZ 100 CACHE STRING "Clock ticks (In Hz). Higher values lead to more responsiveness but can cause instability. Default: 100Hz")
 endif()
 add_compile_definitions(TARGET_HZ=${CLOCK_TICK_HZ})
 

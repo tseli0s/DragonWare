@@ -39,6 +39,10 @@ Status _cdecl _DWIPCReceive(int handle, Message *msave) {
         return (Status)__make_syscall_ia32_2param_reti32(SYSCALL_RECEIVE, handle, (u32)msave);
 }
 
+void _cdecl _DWGetTicksSinceBoot(u64 *store) {
+        __make_syscall_ia32_1param(SYSCALL_TICK_SINCE_BOOT, (uint32_t)store);
+}
+
 int _DWCreateObject(const char *name, ObjectType type, u32 permissions) {
         return (int)__make_syscall_ia32_3param_reti32(SYSCALL_CREATE_OBJECT, (u32)name, type,
                                                       permissions);
