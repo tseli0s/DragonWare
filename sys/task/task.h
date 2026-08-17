@@ -15,7 +15,7 @@
 #include "message.h"
 
 typedef u32  ThreadID;
-typedef void (*ThreadEntryPoint)(void);
+typedef void (*ThreadEntryPoint)(void *);
 
 typedef struct _MessageQueue {
         Message               m;
@@ -56,7 +56,7 @@ typedef enum _ThreadPriorityLevel : signed short {
 } ThreadPriorityLevel;
 
 typedef struct _Thread {
-        u32 esp;       /* The current stack pointer */
+        u32       esp;          /* The current stack pointer */
         uintptr_t kernel_stack; /* Only valid for unprivileged (non-kernel) threads. */
         u32 trapframe; /* Trap frame. Contains the frame required to return into userspace (iret
                           frame in other words) */
@@ -88,10 +88,14 @@ Thread *AllocateThread(ThreadEntryPoint entry, void *_unused);
  * CreateProcess
  * @param[in] kernel_stack The kernel stack loaded into the TSS, also used to store the thread
  * state.
+ * @param[in] extra_data Extra parameter to be passed when the thread is first entered into @p entry
+ * . The value is not inspected by this function, and is passed verbatim to the new thread's entry
+ * point.
  * @return A newly allocated unprivileged task to be scheduled. The thread is automatically added to
  * the scheduling list.
  */
-Thread *AllocateUserThread(ThreadEntryPoint entry, uintptr_t useresp, uintptr_t kernel_stack);
+Thread *AllocateUserThread(ThreadEntryPoint entry, uintptr_t useresp, uintptr_t kernel_stack,
+                           void *extra_data);
 
 /**
  * @brief Releases the CPU time of the current thread, allowing the scheduler to pick a new thread
