@@ -40,7 +40,7 @@ static uintptr_t GetNextKernelStackAddress(void) {
         return 0;
 }
 
-void *CreateThread(void (*entryaddr)(void), void *stack) {
+void *CreateThread(void (*entryaddr)(void*), void *stack, void *extra_data) {
         /* Declaring it on top otherwise the bitch called clangd says "Variable
          * 't' is used uninitialized whenever 'if' condition is true" in the checks below */
         Thread *t = NullPointer;
@@ -58,7 +58,7 @@ void *CreateThread(void (*entryaddr)(void), void *stack) {
             STATUS_OK)
                 goto bad;
 
-        t = AllocateUserThread(entryaddr, (uintptr_t)stack, stackaddr);
+        t = AllocateUserThread(entryaddr, (uintptr_t)stack, stackaddr, extra_data);
         if (!t) goto bad;
 
         t->owner = GetCurrentExecutionThread()->owner;
