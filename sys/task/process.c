@@ -185,7 +185,9 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
         MapSinglePage(phys_stack_1, kernel_stack_addr, PAGE_PRESENT | PAGE_RW);
         MapSinglePage(phys_stack_2, kernel_stack_addr + PAGE_SIZE, PAGE_PRESENT | PAGE_RW);
         Thread *main_thread = AllocateUserThread(FLAT_BINARY_DEFAULT_ENTRY, DEFAULT_USER_STACK_ADDR,
-                                                 kernel_stack_addr + (2 * FRAME_SIZE));
+                                                 kernel_stack_addr + (2 * FRAME_SIZE), NullPointer);
+        if (!main_thread) return NullPointer;
+
         Process *p          = kzalloc(sizeof(Process));
         if (!p) return NullPointer;
 

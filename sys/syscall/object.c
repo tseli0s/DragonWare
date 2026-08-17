@@ -236,7 +236,7 @@ static Status HandleThreadObjectRequest(int handle, Object *obj, ThreadObjectOp 
 
                         if (!data.stack || !data.entry) return STATUS_BAD_ARGUMENT;
                         
-                        obj->data = CreateThread((ThreadEntryPoint)data.entry, data.stack);
+                        obj->data = CreateThread(data.entry, data.stack, data.extra_data);
                         return (obj->data) ? STATUS_OK : STATUS_BAD;
                 }
                 case THREAD_RUN: {

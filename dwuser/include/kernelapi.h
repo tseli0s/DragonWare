@@ -86,7 +86,7 @@ typedef struct [[gnu::packed]] {
  * @since v0.0.2
  */
 typedef struct [[gnu::packed]] _UserThreadData {
-        void *entry;      /** << Entry point of a thread  */
+        void (*entry)(void*);      /** << Entry point of a thread  */
         void *stack;      /** << Stack memory for the thread*/
         void *extra_data; /** << Extra data that will be given to the thread upon execution.*/
 } UserThreadData;

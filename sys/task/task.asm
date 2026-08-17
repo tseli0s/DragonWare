@@ -26,12 +26,43 @@ _ThreadStartup:
         mov     eax,    [esp+4] ; Load the trap frame
         mov     esp,    eax
 
+        ; Besides the iret frame, we have also pushed the function argument in the kernel stack,
+        ; and it sits right below the iret frame.
+        mov     ebx,    [esp+12] ; useresp
+        mov     ecx,    [esp+20] ; extra_data (main function argument)
+
+        ; Because we haven't switched to the user stack yet (iret will do this for us),
+        ; we have to manually push the extra_data argument on the stack, along with a dummy
+        ; return address to pad it off.
+        sub     ebx,    4
+        mov     dword   [ebx],  ecx
+
+        ; This is just some technicality, the compiler expects the first argument at [esp+4]
+        ; so [esp] must technically point to the return address. If a thread 
+        sub     ebx,    4
+        mov     dword   [ebx],  0x00000000
+
+        ; Now overwrite the old useresp address with the new address (which is lower by eight bytes,
+        ; as we've pushed the function argument in there and a dummy return address).
+        mov     [esp+12],       ebx
+
+        ; Some register cleanup just to be on the safe side.
+        xor     dword   ebx,    ebx
+        xor     dword   ecx,    ecx
+        xor     dword   edx,    edx
+        xor     dword   ebp,    ebp
+        xor     dword   esi,    esi
+        xor     dword   edi,    edi
+
         ; Now prepare the segment selectors for the user process
         mov     ax,     USER_DATA_SEL
         mov     ds,     ax
         mov     es,     ax
         mov     fs,     ax
         mov     gs,     ax
+
+        ; More cleanup just to be sure :P
+        xor     eax,    eax
 
         ; And now we can jump into userspace with this thread
         iret
