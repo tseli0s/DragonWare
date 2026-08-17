@@ -83,11 +83,16 @@ Thread *AllocateThread(ThreadEntryPoint entry, void *_unused) {
         return t;
 }
 
-Thread *AllocateUserThread(ThreadEntryPoint entry, uintptr_t useresp, uintptr_t kernel_stack) {
+Thread *AllocateUserThread(ThreadEntryPoint entry, uintptr_t useresp, uintptr_t kernel_stack,
+                           void *extra_data) {
         Thread *t = kmalloc(sizeof(Thread));
         if (!t) return NullPointer;
 
         u32 *esp = (u32 *)kernel_stack;
+
+        /* This will be used by _ThreadStartup (see task.asm), because pushing directly on the user
+         * stack pointer is unsafe to do so. */
+        *(--esp) = (u32)extra_data;
 
         /* Thread stack frame. iret pops ss, useresp, eflags, cs, and eip when iret is called */
         *(--esp) = SEL_DATA_USER;  /* userss, simply the same as the rest */
