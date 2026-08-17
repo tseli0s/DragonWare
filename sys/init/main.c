@@ -38,7 +38,8 @@
 #include "wfi.h"
 
 [[noreturn]]
-static inline void __idle(void) {
+static inline void __idle(void* _unused) {
+        UnusedParameter(_unused);
         while (true) {
                 Thread* list = GetSchedulerThreadList();
                 if (list) {
