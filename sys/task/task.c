@@ -16,11 +16,25 @@
 #include <mmutils.h>
 
 #include "ddk/ia32/gdt.h"
+#include "ddk/ia32/vmm.h"
 #include "sched/schedule.h"
 
 #define DEFAULT_THREAD_STACK (1024)
 #define DEFAULT_EFLAGS \
         (0x202) /* Bits IF and reserved set. Perhaps this should be preserved, anyways. */
+
+/**
+ * @brief Trap frame used by the @b iret instruction.
+ * @since v0.0.2
+ * @sa _ThreadBootstrapRoutine
+ */
+typedef struct [[gnu::packed]] _TrapFrame {
+        uintptr_t eip;
+        u32       cs;
+        u32       eflags;
+        uintptr_t useresp;
+        u32       userss;
+} TrapFrame;
 
 /* Controls whether the scheduler will run when returning from an interrupt */
 extern volatile int NeedsResched;
@@ -40,13 +54,25 @@ static ThreadID next_id = 0;
 static void _ThreadBootstrapTrampoline(void) {
         /* If we have reached this function, then the scheduler already switched the current thread
          * it wants us to run, so we are not by accident using an old thread here. */
-        Thread *curr = GetCurrentExecutionThread();
+        Thread    *curr  = GetCurrentExecutionThread();
+        TrapFrame *frame = (TrapFrame *)curr->trapframe;
+
+        /* Because the kernel must write to useresp, we must validate that the stack is writeable in
+         * the first place and a valid stack as a whole. */
+        uintptr_t esp = frame->useresp;
+        if (esp >= KERNEL_VM_BASE) goto stop;
+        if (!ADDRESS_IS_MAPPED(esp) || !ADDRESS_IS_MAPPED(esp - 8)) goto stop;
+
         _ThreadStartup(curr->trapframe);
 
         /* We should NEVER reach this point, but if we do, idk bad things happen and a scary black
          * monster will kill us  */
-        while (1) {
-        }
+        unreachable;
+
+stop:
+        DeleteThread(curr);
+        YieldCurrentThread();
+        unreachable;
 }
 
 Thread *AllocateThread(ThreadEntryPoint entry, void *_unused) {
