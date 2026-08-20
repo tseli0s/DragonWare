@@ -34,3 +34,4 @@ add_user_program(fbsrv fbsrv/main.c fbsrv/console.c fbsrv/font/glyph.c fbsrv/fon
 add_user_program(ps2kbd ps2kbd/ps2kbd.c)
 add_user_program(vgacons vgacons/console.c vgacons/driver.c)
 add_user_program(dcp dcp/main.c dcp/command.c)
+add_user_program(idedrv idedrv/idedrv.c idedrv/identify.c)
