@@ -35,6 +35,36 @@ static void PrintWelcomeMessage(void) {
         puts("");
 }
 
+static void f(void *p) {
+        while (true) {
+                printf("pointer: %p\n", p);
+                _DWYield();
+        }
+}
+
+int num = 1;
+
+[[gnu::aligned(sizeof(uint32_t)), gnu::used]]
+uint32_t stack[1024] = { 0 };
+
+static void threadtest(void) {
+        Handle t = CreateObject(nullptr, OBJ_THREAD, 0);
+        if (t < 0) {
+                puts("no object");
+                return;
+        }
+
+        UserThreadData data = {
+                .entry = f,
+                .stack = (void*)0xD0000000,
+                .extra_data = (void*)0xdeadbeef
+        };
+        Status s = InvokeObject(t, THREAD_CREATE, &data);
+        if (s != STATUS_OK) { printf("tf\n"); }
+        Status s2 = InvokeObject(t, THREAD_RUN, nullptr);
+        if (s2 != STATUS_OK) { printf("tf2\n"); }
+}
+
 int main(void) {
         Handle consport            = CreateObject(NullPointer, OBJ_PORT, 0);
         Handle commport            = CreateObject(NullPointer, OBJ_PORT, 0);
@@ -55,6 +85,7 @@ int main(void) {
 
         Status accept_status = STATUS_BAD;
 
+        threadtest();
         /* spin until the console server is freed, as we need to have access to it */
         while (accept_status != STATUS_OK) {
                 Message reply;
