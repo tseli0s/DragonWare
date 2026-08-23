@@ -9,10 +9,6 @@
 
 #pragma once
 
-#ifndef DW_SPINLOCK_TIMEOUT
-#define DW_SPINLOCK_TIMEOUT (10000000ULL)
-#endif /* DW_SPINLOCK_TIMEOUT */
-
 #include <ktypes.h>
 #include <macros.h>
 
