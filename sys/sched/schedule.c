@@ -156,7 +156,8 @@ void ScheduleNext(void) {
 }
 
 void AddThreadToScheduler(Thread *thread) {
-        thread->next = NullPointer;
+        thread->state = THREAD_READY;
+        thread->next  = NullPointer;
         if (!thread_list) {
                 thread_list    = thread;
                 current_thread = thread;
@@ -215,6 +216,8 @@ Thread *GetSchedulerThreadList(void) { return thread_list; }
 
 void SwapSchedulerThreadState(Thread *new) {
         Thread *current = current_thread;
+        if (current->state == THREAD_RUNNING && new != current) current->state = THREAD_READY;
+
         if (new->owner != current->owner) SwapProcess(new->owner);
         new->quantum = CPUTimeFromThreadPriority(new->priority);
         new->state   = THREAD_RUNNING;
