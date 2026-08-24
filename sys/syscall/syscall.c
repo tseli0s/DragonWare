@@ -141,10 +141,3 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                         break;
         }
 }
-
-void POSIXSyscall(SystemCallFrame *regs) {
-        LogMessage(LOG_WARNING,
-                   "POSIX syscall invoked. POSIX compatibility has not been implemented "
-                   "yet.");
-        regs->eax = (u32)STATUS_BAD_SYSCALL;
-}

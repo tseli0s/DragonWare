@@ -124,8 +124,6 @@ static void InstallInterruptServiceRoutines(void) {
                 IDTAddGate(i, (u32)InterruptServiceFallbackHandler, SEL_CODE_KERNEL,
                            RING0_FLAG_EXCEPTION);
         IDTAddGate(SYSCALL_NO, (u32)InterruptServiceRoutine0x60, SEL_CODE_KERNEL, RING3_FLAG_TRAP);
-        IDTAddGate(SYSCALL_NO + 0x20, (u32)InterruptServiceRoutine0x80, SEL_CODE_KERNEL,
-                   RING3_FLAG_TRAP);
         IRQInstall();
 }
 
@@ -145,13 +143,6 @@ void InterruptServiceHandler(InterruptStackFrame *stack_frame) {
                 SystemCallFrame f;
                 SyscallFrameFromInterrupt(stack_frame, &f);
                 DragonWareSyscall(&f);
-                CopySyscallState(&f, stack_frame);
-                return;
-        }
-        if (stack_frame->int_no == SYSCALL_NO + 0x20) {
-                SystemCallFrame f;
-                SyscallFrameFromInterrupt(stack_frame, &f);
-                POSIXSyscall(&f);
                 CopySyscallState(&f, stack_frame);
                 return;
         }

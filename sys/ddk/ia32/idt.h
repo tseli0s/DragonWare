@@ -11,7 +11,8 @@
 
 #define IDT_ENTRIES (256)
 
-/* I would like to use 0x80 for some POSIX syscalls instead, just in case */
+/* 0x80 was supposed to be for POSIX system calls, but I want to have the microkernel pure off of
+ * POSIX and other compatibility stuff to make it smaller. */
 #define SYSCALL_NO  (0x60)
 
 #include <ktypes.h>

@@ -139,7 +139,5 @@ DECLARE_ISR_NOERR       45
 DECLARE_ISR_NOERR       46
 DECLARE_ISR_NOERR       47
 
-; And the DragonWare syscalls, when done using software interrupts
-; 0x60 is native syscalls - 0x80 will be reserved for some POSIX syscalls maybe
+; System call index.
 DECLARE_ISR_NOERR       0x60
-DECLARE_ISR_NOERR       0x80

@@ -58,7 +58,4 @@ static inline void SyscallFrameFromInterrupt(InterruptStackFrame *iframe, System
 /* Native DragonWare syscall, we implement our own APIs here */
 void DragonWareSyscall(SystemCallFrame *frame);
 
-/* POSIX syscall. We currently don't implement them, but may do so for compatibility in the future.
- * You know, porting stuff easier. */
-void POSIXSyscall(SystemCallFrame *frame);
 #endif /* __DRAGONWARE_SYS__ */
