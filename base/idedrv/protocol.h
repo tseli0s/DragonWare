@@ -18,8 +18,7 @@
  * Message header reply handle must point to a section object that will be shared between the caller
  * and this driver. Payload contents:
  * - Bytes 0-3: LBA number to read from
- * - Byte 4: 0 for primary bus, 1 for secondary bus, other values will be interpeted as primary.
- * - Byte 5: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
+ * - Byte 4: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
  */
 #define IDEDRV_READ_SECTOR (0x01)
 
@@ -30,8 +29,7 @@
  * and this driver. The section bytes 0-511 must contain the data that will be written. Payload contents:
  * - Bytes 0-3: LBA number to write to
  * - Bytes 4-11: Amount of bytes to write.
- * - Byte 12: 0 for primary bus, 1 for secondary bus, other values will be interpeted as primary.
- * - Byte 13: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
+ * - Byte 12: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
  */
 #define IDEDRV_WRITE_SECTOR (0x02)
 
