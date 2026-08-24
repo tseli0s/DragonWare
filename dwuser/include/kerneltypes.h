@@ -61,6 +61,9 @@ typedef u64 Quad;
 typedef bool Bool;
 typedef u32  Size;
 
+/* Process ID. Only available since v0.0.2 */
+typedef u32 ProcessID;
+
 #define BITS_BYTE  8
 #define BITS_WORD  16
 #define BITS_DWORD 32

@@ -16,6 +16,7 @@
 #include <log.h>
 #include <macros.h>
 #include <mmutils.h>
+
 #include "ddk/ia32/vmm.h"
 
 #ifdef __i386__
@@ -117,7 +118,7 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                         regs->eax = (u32)_DWIPCReceive((int)regs->ebx, (Message *)regs->esi);
                         break;
                 case SYSCALL_TICK_SINCE_BOOT: {
-                        _DWGetTicksSinceBoot((u64*)regs->ebx);
+                        _DWGetTicksSinceBoot((u64 *)regs->ebx);
                         break;
                 }
                 case SYSCALL_CREATE_OBJECT:
@@ -130,6 +131,10 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                         break;
                 case SYSCALL_DELETE_OBJECT:
                         _DWDeleteObject((int)regs->ebx);
+                        break;
+                case SYSCALL_TRANSLATE_HANDLE:
+                        regs->eax = (u32)_DWTranslateHandle((ProcessID)regs->ebx, (int)regs->esi,
+                                                            (int *)regs->edi);
                         break;
                 default:
                         regs->eax = (u32)STATUS_BAD_SYSCALL;

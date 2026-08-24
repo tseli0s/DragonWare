@@ -235,7 +235,7 @@ static Status HandleThreadObjectRequest(int handle, Object *obj, ThreadObjectOp 
                                 return STATUS_BAD_ARGUMENT;
 
                         if (!data.stack || !data.entry) return STATUS_BAD_ARGUMENT;
-                        
+
                         obj->data = CreateThread(data.entry, data.stack, data.extra_data);
                         return (obj->data) ? STATUS_OK : STATUS_BAD;
                 }
@@ -320,4 +320,58 @@ void _DWDeleteObject(int handle) {
 
         DeleteFromHandleTable(&current->handles, handle);
         DeleteObject(target);
+}
+
+Status _DWTranslateHandle(ProcessID of, int handle_of, int *save) {
+        if (!of) return STATUS_BAD_ARGUMENT;
+        if (handle_of >= MAX_OBJ_PER_PROCESS || handle_of < 0) return STATUS_BAD_ARGUMENT;
+
+        Process *origin = FindProcessByID(of);
+        Process *this   = GetCurrentExecutionThread()->owner;
+        if (origin == this) goto same;
+        if (!origin) return STATUS_NOT_FOUND;
+
+        Object *original = origin->handles.objlist[handle_of];
+
+        Status copy_status = STATUS_OK;
+        if (original) {
+                HandleTable *target_table = &this->handles;
+                int          new_hdl      = -1;
+
+                /* Check if the process already has a handle to this port to avoid
+                 * duplication. */
+                for (int i = 0; i < MAX_OBJ_PER_PROCESS; i++) {
+                        /* If the server already has a handle to this process, no need to
+                         * allocate a new one - Just reuse the existing one. */
+                        if ((target_table->valid_bitmap & (1 << i)) &&
+                            target_table->objlist[i] == original) {
+                                new_hdl = i;
+                                break;
+                        }
+                }
+
+                if (new_hdl == -1) {
+                        new_hdl = AppendToHandleTable(target_table, original);
+                        if (new_hdl < 0) return STATUS_OUT_OF_MEMORY;
+                        /* avoid a use after free if the original process tries to delete this
+                         * object*/
+                        else
+                                original->refcnt++;
+                }
+                copy_status = CopyToUser(save, &new_hdl, sizeof(int));
+                if (copy_status != STATUS_OK) {
+                        DeleteFromHandleTable(target_table, new_hdl);
+                        original->refcnt--; /* Safe to do so here, because we incremented this
+                                               above, and nothing interrupts us in between */
+                }
+        } else
+                return STATUS_NOT_FOUND;
+
+        return copy_status;
+
+same:
+        /* yes, I am intentionally not checking if the handle points to anything valid or
+         * not, because this is the concern of the caller, not the kernel. The kernel won't
+         * access any data. */
+        return CopyToUser(save, &handle_of, sizeof(int));
 }

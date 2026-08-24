@@ -10,19 +10,20 @@
 #pragma once
 
 #ifndef _KERNEL_API_H
-#define _KERNEL_API_H           1
+#define _KERNEL_API_H            1
 
-#define SYSCALL_IDENTIFY        (0)
-#define SYSCALL_EXIT            (1)
-#define SYSCALL_YIELD           (2)
-#define SYSCALL_KLOG            (3)
-#define SYSCALL_REQUEST_PORTS   (4)
-#define SYSCALL_SEND            (5)
-#define SYSCALL_RECEIVE         (6)
-#define SYSCALL_TICK_SINCE_BOOT (7)
-#define SYSCALL_CREATE_OBJECT   (8)
-#define SYSCALL_INVOKE_OBJECT   (9)
-#define SYSCALL_DELETE_OBJECT   (10)
+#define SYSCALL_IDENTIFY         (0)
+#define SYSCALL_EXIT             (1)
+#define SYSCALL_YIELD            (2)
+#define SYSCALL_KLOG             (3)
+#define SYSCALL_REQUEST_PORTS    (4)
+#define SYSCALL_SEND             (5)
+#define SYSCALL_RECEIVE          (6)
+#define SYSCALL_TICK_SINCE_BOOT  (7)
+#define SYSCALL_CREATE_OBJECT    (8)
+#define SYSCALL_INVOKE_OBJECT    (9)
+#define SYSCALL_DELETE_OBJECT    (10)
+#define SYSCALL_TRANSLATE_HANDLE (11)
 
 #include "cabi.h"
 #include "cppsupport.h"
@@ -86,9 +87,9 @@ typedef struct [[gnu::packed]] {
  * @since v0.0.2
  */
 typedef struct [[gnu::packed]] _UserThreadData {
-        void (*entry)(void*);      /** << Entry point of a thread  */
-        void *stack;      /** << Stack memory for the thread*/
-        void *extra_data; /** << Extra data that will be given to the thread upon execution.*/
+        void  (*entry)(void *); /** << Entry point of a thread  */
+        void *stack;            /** << Stack memory for the thread*/
+        void *extra_data;       /** << Extra data that will be given to the thread upon execution.*/
 } UserThreadData;
 
 /** @brief Flags describing the permissions of a single section. */
@@ -248,7 +249,8 @@ Status _cdecl _DWIPCReceive(int handle, Message *msave);
  * @note A negligible amount of inaccuracy exists - The kernel does not record ticks since it was
  * first loaded into memory. This leads to a loss of a few ticks (depending on the speed of the
  * central processing unit and kernel optimizations), usually but not definitively around 4-5 ticks.
- * @param[in] store Where to store the tick value. Must point to an eight byte block of memory, writeable by the caller.
+ * @param[in] store Where to store the tick value. Must point to an eight byte block of memory,
+ * writeable by the caller.
  */
 [[gnu::nonnull]]
 void _cdecl _DWGetTicksSinceBoot(u64 *store);
@@ -285,6 +287,22 @@ Status _DWInvokeObject(int handle, unsigned long op, void *argptr);
  * @param[in] handle Handle to the object that must be deleted.
  */
 void _DWDeleteObject(int handle);
+
+/**
+ * @brief Duplicates a handle of another process to the caller process. (System call #11)
+ * @details Given a handle @p handle belonging to a process by ID @p process_id, duplicate the handle
+ * and store it into @p save for the caller process.
+ * @param process_id The ID of the process that @p handle belongs to. 0 is invalid.
+ * @param handle The handle of the other process to translate into the current process.
+ * @param[out] save Where to store the resulting handle on success. This is a user pointer.
+ * @note The @p handle is translated and appended into the current process' handle table. The new
+ * handle stored in @p save may be different than the original @p handle
+ * @returns STATUS_OK if the handle was translated successfully. STATUS_NOT_FOUND if the handle does
+ * not point to anything valid or the process with ID @p process_id is not found.
+ * STATUS_BAD_ARGUMENT if one of the parameters is invalid. STATUS_OUT_OF_MEMORY if there are no
+ * free slots to store the handle to. STATUS_BAD if the copy to @p save failed.
+ */
+Status _DWTranslateHandle(ProcessID process_id, int handle, int *save);
 
 DW_END_DECLS
 
