@@ -188,7 +188,7 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
                                                  kernel_stack_addr + (2 * FRAME_SIZE), NullPointer);
         if (!main_thread) return NullPointer;
 
-        Process *p          = kzalloc(sizeof(Process));
+        Process *p = kzalloc(sizeof(Process));
         if (!p) return NullPointer;
 
         /* First, allocate the process' page directory. */
@@ -247,11 +247,11 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
          * typed in the source "recursive paging trick". */
         ((PageDirectory *)pdmap->virt)[MAX_PD_ENTRIES - 1] = pdmap->phys | PAGE_PRESENT | PAGE_RW;
 
-        p->cr3          = pdmap->phys;
-        p->main_thread  = main_thread;
-        p->pid          = process_id_counter++;
-        p->next         = NullPointer;
-        p->ports_used   = 0;
+        p->cr3         = pdmap->phys;
+        p->main_thread = main_thread;
+        p->pid         = process_id_counter++;
+        p->next        = NullPointer;
+        p->ports_used  = 0;
         ZeroMemory(p->ioports);
         kzeromem(&p->handles, sizeof(HandleTable));
 
@@ -336,3 +336,14 @@ Status DeleteProcess(Process *p) {
 }
 
 void SetProcessCapabilities(Process *process, u32 flags) { process->flags |= flags; }
+
+Process *FindProcessByID(ProcessID id) {
+        if (unlikely(!process_list)) return NullPointer;
+
+        Process *iter  = process_list;
+        while (iter) {
+                if (iter->pid == id) return iter;
+                iter = iter->next;
+        }
+        return NullPointer;
+}

@@ -88,3 +88,10 @@ Status DeleteProcess(Process *p);
  */
 [[gnu::nonnull(1)]]
 void SetProcessCapabilities(Process *process, u32 flags);
+
+/**
+ * @brief Attempt to find a process by its process ID and return a pointer to it.
+ * @param process The process ID to search for. 0 is considered invalid (Process 0 is the kernel itself)
+ * @returns The process with the given @p id on success, or @ref NullPointer on failure
+ */
+Process *FindProcessByID(ProcessID id);
