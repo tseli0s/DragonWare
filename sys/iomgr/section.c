@@ -116,9 +116,10 @@ void UnmapSection(Section *section, void *base) {
         DEREF(section, {
                 if (!section->n_pages) return; /* >> */
                 for (Size i = 0; i < section->n_pages; i++) {
-                        FreeFrame(section->physframes[i]);
                         uintptr_t addr = ((uintptr_t)base) + (i * PAGE_SIZE);
                         kzeromem((void *)addr, PAGE_SIZE);
+                        FreeFrame(section->physframes[i]);
+                        section->physframes[i] = 0;
                         UnmapSinglePage(addr);
                 }
         });
