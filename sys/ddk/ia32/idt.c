@@ -23,7 +23,7 @@
 
 #define RING0_FLAG_EXCEPTION (0x8E)
 #define RING0_FLAG_TRAP      (0x8F)
-#define RING3_FLAG_TRAP      (0xEE)
+#define RING3_FLAG_TRAP      (0xEF)
 
 extern void SyscallInterruptRoutine(void);
 
