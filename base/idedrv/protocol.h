@@ -9,29 +9,55 @@
 
 #pragma once
 
+#include <kerneltypes.h>
+#include <object.h>
+
 /* Protocol version 0 */
 #define IDEDRV_PROTOCOL_V0 ((u16)0x1DEA)
+
+/* Status codes returned by a request to idedrv. */
+typedef enum __IDEDRVStatusReply
+        : u32 { IDEDRV_SUCCESS = 0,      /* Everything went well */
+                IDEDRV_ACCESS_DENIED,    /* Access to this process was denied */
+                IDEDRV_HARDWARE_FAILURE, /* Hard drive is failing or bad sector request */
+                IDEDRV_INVALID_HANDLE,   /* Invalid handle given */
+                IDEDRV_BAD_PARAMETER,    /* Bad parameter in IPC message */
+                IDEDRV_OUT_OF_MEMORY,    /* Out of memory (Kernel can't share the memory between the
+                                            two processes) */
+                IDEDRV_LOCKED, /* Access to the drive is temporarily forbidden (eg contention )*/
+        } IDEDRVStatusReply;
+
+/* Simply memcpy() this struct into the message payload when sending it */
+typedef struct [[gnu::packed]] __IDEDRVRequest {
+        Handle shared_section; /* Handle to the section to be shared between caller and callee and
+                                  read/write the data from/to. */
+} IDEDRVRequest;
+
+typedef struct [[gnu::packed]] __IDEDRVReplyData {
+        IDEDRVStatusReply reply; /* Reply to the request given */
+} IDEDRVReplyData;
 
 /*
  * Message type: Read single sector into memory
  *
- * Message header reply handle must point to a section object that will be shared between the caller
- * and this driver. Payload contents:
+ * Message header reply handle must point to a port to send the status of this request.
  * - Bytes 0-3: LBA number to read from
  * - Byte 4: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
+ * - Bytes 5-8: Handle to the section object to be mapped by the callee and write the data to.
  */
-#define IDEDRV_READ_SECTOR (0x01)
+#define IDEDRV_READ_SECTOR      (0x01)
 
 /*
  * Message type: Write single sector to disk from memory
  *
- * Message header reply handle must point to a section object that will be shared between the caller
- * and this driver. The section bytes 0-511 must contain the data that will be written. Payload contents:
+ * Message header reply handle must point to a port to send the status of this request. The section
+ * bytes 0-511 must contain the data that will be written. Payload contents:
  * - Bytes 0-3: LBA number to write to
  * - Bytes 4-11: Amount of bytes to write.
  * - Byte 12: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
+ * - Bytes 13-16: Handle to the section object to be mapped by the callee and read the data from.
  */
-#define IDEDRV_WRITE_SECTOR (0x02)
+#define IDEDRV_WRITE_SECTOR     (0x02)
 
 /* RESERVED: DO NOT USE */
 #define IDEDRV_GET_DRIVE_PARAMS (0xFF)
