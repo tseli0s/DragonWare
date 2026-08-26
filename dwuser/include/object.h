@@ -52,3 +52,18 @@ Status InvokeObject(Handle handle, ObjectOperation op, void *args);
  * CreateObject.
  */
 void DeleteObject(Handle handle);
+
+/**
+ * @brief Given a handle @p handle belonging to a process by ID @p pid, duplicate the handle
+ * and store it into @p save for the caller process. Returns STATUS_OK on success, or another value
+ * (see @ref _DWTranslateHandle for more details) in other cases.
+ * @param pid PID of the original process to translate the handle from.
+ * @param handle The handle (In the @b ORIGINAL process) to translate into this process.
+ * @param[in] save Where to store the new handle. Cannot be @ref NullPointer.
+ * @returns STATUS_OK if the handle was translated successfully. STATUS_NOT_FOUND if the handle does
+ * not point to anything valid or the process with ID @p pid is not found.
+ * STATUS_BAD_ARGUMENT if one of the parameters is invalid. STATUS_OUT_OF_MEMORY if there are no
+ * free slots to store the handle to. STATUS_BAD if the copy to @p save failed.
+ */
+[[gnu::nonnull]]
+Status TranslateHandle(ProcessID pid, Handle handle, Handle *save);

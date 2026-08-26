@@ -8,7 +8,6 @@
  ***********************************************************************/
 
 #include "object.h"
-
 #include "kernelapi.h"
 
 Handle CreateObject(const char *name, ObjectType type, u32 permissions) {
@@ -20,3 +19,7 @@ Status InvokeObject(Handle handle, ObjectOperation op, void *args) {
 }
 
 void DeleteObject(Handle handle) { _DWDeleteObject(handle); }
+
+Status TranslateHandle(ProcessID pid, Handle handle, Handle *save) {
+        return _DWTranslateHandle(pid, handle, save);
+}

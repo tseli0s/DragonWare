@@ -55,3 +55,8 @@ Status _DWInvokeObject(int handle, unsigned long op, void *argptr) {
 }
 
 void _DWDeleteObject(int handle) { __make_syscall_ia32_1param(SYSCALL_DELETE_OBJECT, handle); }
+
+Status _DWTranslateHandle(ProcessID process_id, int handle, int *save) {
+        return __make_syscall_ia32_3param_reti32(SYSCALL_TRANSLATE_HANDLE, (uint32_t)process_id,
+                                                 (uint32_t)handle, (uint32_t)save);
+}
