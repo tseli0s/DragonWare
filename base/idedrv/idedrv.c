@@ -7,6 +7,7 @@
  * LICENSE: GPL-3.0-or-later (https://spdx.org/licenses/GPL-3.0-or-later.html)
  ***********************************************************************/
 
+#include <ipc86.h>
 #include <kernelapi.h>
 #include <kerneltypes.h>
 #include <message.h>
@@ -77,12 +78,53 @@ static void listener(void *data) {
 
                 if (m.header.protocol != IDEDRV_PROTOCOL_V0) continue;
                 switch (m.header.type) {
-                        /* TODO: Implement replying (and in this case say I'm working on this). */
-                        case IDEDRV_READ_SECTOR:
-                        case IDEDRV_WRITE_SECTOR:
-                        default:
+                        case IDEDRV_READ_SECTOR: {
+                                /* ignoring request as we have no way to report back status */
+                                if (m.header.reply_handle < 0) continue;
+
+                                IDEDRVRequest   req;
+                                IDEDRVReplyData reply_data = {
+                                        IDEDRV_SUCCESS,
+                                };
+                                memcpy(&req, m.payload.raw, sizeof(IDEDRVRequest));
+                                if (_DWTranslateHandle(m.header.sender, req.shared_section,
+                                                       &req.shared_section) != STATUS_OK) {
+                                        reply_data.reply = IDEDRV_INVALID_HANDLE;
+                                        goto sendmsg;
+                                }
+
+                                uintptr_t base;
+                                if (InvokeObject(req.shared_section, SECTION_MAP, &base) !=
+                                    STATUS_OK) {
+                                        reply_data.reply = IDEDRV_OUT_OF_MEMORY;
+                                        goto sendmsg;
+                                }
+
+                                /* this is where we should perform the disk read but its 2am also
+                                 * the router shat the bed again so till next time i guess. I wanna
+                                 * checkout to master so I gotta commit it for now (no i dont wanna
+                                 * stash) */
+                                __asm__ volatile("nop");
+
+                                DeleteObject(req.shared_section);
+                                m.header.payload_length = sizeof(IDEDRVReplyData);
+                                memcpy(m.payload.raw, &reply_data, sizeof(IDEDRVReplyData));
+
+                        sendmsg:
+                                if (SendMessage(m.header.reply_handle, &m,
+                                                sizeof(MessageHeader) + sizeof(IDEDRVReplyData)) !=
+                                    STATUS_OK) {
+                                        puts("idedrv: unable to send message reply");
+                                        continue;
+                                }
                                 _DWYield();
-                                continue;
+                                break;
+                        }
+                        case IDEDRV_WRITE_SECTOR:
+                        default: {
+                                _DWYield();
+                                break;
+                        }
                 }
         }
 fail:
