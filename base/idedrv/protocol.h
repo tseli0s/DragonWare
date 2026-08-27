@@ -12,6 +12,9 @@
 #include <kerneltypes.h>
 #include <object.h>
 
+/* LBA type definition */
+typedef u64 LBA;
+
 /* Protocol version 0 */
 #define IDEDRV_PROTOCOL_V0 ((u16)0x1DEA)
 
@@ -29,8 +32,11 @@ typedef enum __IDEDRVStatusReply
 
 /* Simply memcpy() this struct into the message payload when sending it */
 typedef struct [[gnu::packed]] __IDEDRVRequest {
+        LBA lba; /* LBA number to perform the request to */
         Handle shared_section; /* Handle to the section to be shared between caller and callee and
                                   read/write the data from/to. */
+        int master; /* 0 for the master drive on the bus, 1 for the slave drive */
+        int __reserved; /* Never used for now */
 } IDEDRVRequest;
 
 typedef struct [[gnu::packed]] __IDEDRVReplyData {
@@ -39,11 +45,7 @@ typedef struct [[gnu::packed]] __IDEDRVReplyData {
 
 /*
  * Message type: Read single sector into memory
- *
  * Message header reply handle must point to a port to send the status of this request.
- * - Bytes 0-3: LBA number to read from
- * - Byte 4: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
- * - Bytes 5-8: Handle to the section object to be mapped by the callee and write the data to.
  */
 #define IDEDRV_READ_SECTOR      (0x01)
 
@@ -52,10 +54,7 @@ typedef struct [[gnu::packed]] __IDEDRVReplyData {
  *
  * Message header reply handle must point to a port to send the status of this request. The section
  * bytes 0-511 must contain the data that will be written. Payload contents:
- * - Bytes 0-3: LBA number to write to
- * - Bytes 4-11: Amount of bytes to write.
- * - Byte 12: 0 for master drive, 1 for slave drive,  other values will be interpeted as master.
- * - Bytes 13-16: Handle to the section object to be mapped by the callee and read the data from.
+ * - Bytes 0-7: Amount of bytes to write.
  */
 #define IDEDRV_WRITE_SECTOR     (0x02)
 
