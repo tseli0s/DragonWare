@@ -14,6 +14,18 @@
 #include "portdef.h"
 
 /**
+ * @brief Creates a 400ns delay to allow the drive to set up data.
+ * @param bus Which bus is currently being used.
+ */
+static inline void Wait400ns(int bus) {
+        u16 port = (bus == 0) ? ATA_ALTSTATUS_PRIMARY : ATA_ALTSTATUS_SECONDARY;
+        inb(port);
+        inb(port);
+        inb(port);
+        inb(port);
+}
+
+/**
  * @brief Disables interrupts coming from the IDE bus @p bus
  * @param bus Bus to disable interrupts to (0 for primary, 1 for secondary bus).
  */
