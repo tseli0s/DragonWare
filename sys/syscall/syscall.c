@@ -21,6 +21,7 @@
 
 #ifdef __i386__
 #include "ddk/ia32/tss.h"
+#include "ddk/ia32/vmm.h"
 #endif /* __i386__ */
 
 #include "identify.h"
