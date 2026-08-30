@@ -59,7 +59,8 @@ static Status HandleDeviceObjectRequest(Object *obj, DeviceObjectOp op, void *ar
                         char       *path_real = kmalloc(pathsize);
                         if (!path_real) return STATUS_OUT_OF_MEMORY;
 
-                        CopyFromUser(path_real, path, pathsize);
+                        if (CopyFromUser(path_real, path, pathsize) != STATUS_OK)
+                                return STATUS_BAD_ARGUMENT;
                         path_real[pathsize - 1] = '\0';
 
                         obj->data = GetDeviceFromPath(path_real);

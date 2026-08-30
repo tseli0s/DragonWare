@@ -20,7 +20,7 @@
  * @param[in] n_bytes Amount of bytes to copy.
  * @return @ref STATUS_OK if the copy succeeded, @ref STATUS_BAD if the pointers cannot be trusted.
  */
-[[gnu::nonnull(1, 2)]]
+[[gnu::nonnull, nodiscard("Return value of copying from userspace should often be inspected for security reasons.")]]
 Status CopyFromUser(void *restrict dest, const void *restrict src, Size n_bytes);
 
 /**
@@ -31,5 +31,5 @@ Status CopyFromUser(void *restrict dest, const void *restrict src, Size n_bytes)
  * @param[in] n_bytes Amount of bytes to copy.
  * @returns @ref STATUS_OK if the copy succeeded, @ref STATUS_BAD if the pointers cannot be trusted.
  */
-[[gnu::nonnull(1, 2)]]
+[[gnu::nonnull, nodiscard("Return value of copying to userspace should possibly be inspected, for security reasons.")]]
 Status CopyToUser(void *restrict dest, const void *restrict src, Size n_bytes);
