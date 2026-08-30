@@ -32,6 +32,22 @@
 #include "ddk/ia32/interrupts.h"
 
 /**
+ * @brief Call into @p __syscall and store the return value of this call into @p __frame which will
+ * then be received back from the userland
+ * @param[in] __frame The @ref SystemCallFrame to return the value to. The return value of @p
+ * __syscall will be returned there and read from userland.
+ * @param[in] __syscall Function pointer to the system call to perform and return the value of.
+ * @note Arguments to @p __syscall are passed through macro variadic arguments (__VA_ARGS__). System
+ * calls that do not return any value should not use this macro.
+ * @since v0.0.2
+ * @sa SystemCallFrame
+ */
+#define ReturnFromSystemCall(__frame, __syscall, ...)           \
+        do {                                                    \
+                (__frame)->eax = (u32)(__syscall)(__VA_ARGS__); \
+        } while (0)
+
+/**
  * @brief Registers passed in every system call to be modified.
  * These registers are used to pass arguments in the kernel and store the
  * return value.

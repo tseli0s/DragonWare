@@ -17,7 +17,7 @@
 #include <macros.h>
 #include <mmutils.h>
 
-#include "ddk/ia32/vmm.h"
+#include "sysquery.h"
 
 #ifdef __i386__
 #include "ddk/ia32/tss.h"
@@ -108,34 +108,39 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                         _DWklog((int)regs->ebx, (const char *)regs->esi);
                         break;
                 case SYSCALL_REQUEST_PORTS: {
-                        regs->eax = (u32)_DWRequestPorts((u16 *)regs->ebx, (Size)regs->esi);
+                        ReturnFromSystemCall(regs, _DWRequestPorts, (u16 *)regs->ebx, (Size)regs->esi);
                         break;
                 }
                 case SYSCALL_SEND:
-                        regs->eax =
-                                (u32)_DWIPCSend((int)regs->ebx, (Message *)regs->esi, regs->edi);
+                        ReturnFromSystemCall(regs, _DWIPCSend, (int)regs->ebx, (Message *)regs->esi,
+                                             regs->edi);
                         break;
                 case SYSCALL_RECEIVE:
-                        regs->eax = (u32)_DWIPCReceive((int)regs->ebx, (Message *)regs->esi);
+                        ReturnFromSystemCall(regs, _DWIPCReceive, (int)regs->ebx,
+                                             (Message *)regs->esi);
                         break;
                 case SYSCALL_TICK_SINCE_BOOT: {
                         _DWGetTicksSinceBoot((u64 *)regs->ebx);
                         break;
                 }
                 case SYSCALL_CREATE_OBJECT:
-                        regs->eax = (u32)_DWCreateObject((const char *)regs->ebx,
-                                                         (ObjectType)regs->esi, regs->edi);
+                        ReturnFromSystemCall(regs, _DWCreateObject, (const char *)regs->ebx,
+                                             (ObjectType)regs->esi, regs->edi);
                         break;
                 case SYSCALL_INVOKE_OBJECT:
-                        regs->eax =
-                                (u32)_DWInvokeObject((int)regs->ebx, regs->esi, (void *)regs->edi);
+                        ReturnFromSystemCall(regs, _DWInvokeObject, (int)regs->ebx, regs->esi,
+                                             (void *)regs->edi);
                         break;
                 case SYSCALL_DELETE_OBJECT:
                         _DWDeleteObject((int)regs->ebx);
                         break;
                 case SYSCALL_TRANSLATE_HANDLE:
-                        regs->eax = (u32)_DWTranslateHandle((ProcessID)regs->ebx, (int)regs->esi,
-                                                            (int *)regs->edi);
+                        ReturnFromSystemCall(regs, _DWTranslateHandle, (ProcessID)regs->ebx,
+                                             (int)regs->esi, (int *)regs->edi);
+                        break;
+                case SYSCALL_SYSTEM_QUERY:
+                        ReturnFromSystemCall(regs, _DWSystemQuery, (SystemQuery)regs->ebx,
+                                             (void *)regs->esi);
                         break;
                 default:
                         regs->eax = (u32)STATUS_BAD_SYSCALL;
