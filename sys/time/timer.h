@@ -9,6 +9,10 @@
 
 #pragma once
 
+#ifndef TARGET_HZ
+#define TARGET_HZ (100)
+#endif /* TARGET_HZ */
+
 #include <ktypes.h>
 /**
  * @brief I/O port address for PIT channel 0 data register.

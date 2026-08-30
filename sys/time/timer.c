@@ -22,10 +22,6 @@
 #include "sched/schedule.h"
 #include "task/task.h"
 
-#ifndef TARGET_HZ
-#define TARGET_HZ (100)
-#endif /* TARGET_HZ */
-
 static volatile u64 ticks = 0;
 
 extern volatile int NeedsResched;
