@@ -24,6 +24,7 @@
 #define SYSCALL_INVOKE_OBJECT    (9)
 #define SYSCALL_DELETE_OBJECT    (10)
 #define SYSCALL_TRANSLATE_HANDLE (11)
+#define SYSCALL_SYSTEM_QUERY          (12)
 
 #include "cabi.h"
 #include "cppsupport.h"
@@ -155,6 +156,21 @@ typedef enum _ThreadObjectOp : unsigned long {
         THREAD_CREATE, /** << Create a new thread */
         THREAD_RUN,    /** << Enlist the thread in the scheduler */
 } ThreadObjectOp;
+
+/**
+ * @brief A system value used by the kernel. Usually referring to constants like page size, amount
+ * of CPUs that can be used, and others.
+ * @since v0.0.2
+ */
+typedef enum _SystemQuery : u32 {
+        SQ_NONE                  = 0,
+        SQ_N_OBJECTS_PER_PROCESS = 1, /** << Amount of objects per process  */
+        SQ_PAGE_SIZE = 2, /** << Page size used by the kernel's virtual memory manager */
+        SQ_N_CPUS    = 3, /** << Reserved  */
+        SQ_TIMER_HZ =
+                4, /** << Clock rate of the timer used by the kernel to perform quantum tracking */
+        SQ_DEBUG_BUILD = 5, /** Whether this is a debug build or not  */
+} SystemQuery;
 
 /**
  * @brief _DWSystemIdentify system call (#0) wrapper
@@ -290,8 +306,8 @@ void _DWDeleteObject(int handle);
 
 /**
  * @brief Duplicates a handle of another process to the caller process. (System call #11)
- * @details Given a handle @p handle belonging to a process by ID @p process_id, duplicate the handle
- * and store it into @p save for the caller process.
+ * @details Given a handle @p handle belonging to a process by ID @p process_id, duplicate the
+ * handle and store it into @p save for the caller process.
  * @param process_id The ID of the process that @p handle belongs to. 0 is invalid.
  * @param handle The handle of the other process to translate into the current process.
  * @param[out] save Where to store the resulting handle on success. This is a user pointer.
@@ -303,6 +319,17 @@ void _DWDeleteObject(int handle);
  * free slots to store the handle to. STATUS_BAD if the copy to @p save failed.
  */
 Status _DWTranslateHandle(ProcessID process_id, int handle, int *save);
+
+/**
+ * @brief Queries a system value @p key and returns the kernel-configured value for it. If extra
+ * data needs to be copied, it is copied to the memory address pointed to by @p store (Currently
+ * unused as of v0.0.2)
+ * @param key The system value to query. See @ref SystemQuery
+ * @param[out] store Pointer to memory where extra data will be copied, if needed, otherwise
+ * ignored.
+ * @returns The value of @p key as a system value upon the time of the call.
+ */
+int _DWSystemQuery(SystemQuery key, void *store);
 
 DW_END_DECLS
 

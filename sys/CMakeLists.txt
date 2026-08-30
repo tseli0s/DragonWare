@@ -59,6 +59,7 @@ list(APPEND C_SOURCES
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/stackprot.c
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/sanitize.c
      ${CMAKE_CURRENT_SOURCE_DIR}/syscall/syscall.c
+     ${CMAKE_CURRENT_SOURCE_DIR}/syscall/sysquery.c
      ${CMAKE_CURRENT_SOURCE_DIR}/syscall/ipc.c
      ${CMAKE_CURRENT_SOURCE_DIR}/syscall/object.c
      ${CMAKE_CURRENT_SOURCE_DIR}/syscall/usercopy.c

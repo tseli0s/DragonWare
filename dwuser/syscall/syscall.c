@@ -60,3 +60,8 @@ Status _DWTranslateHandle(ProcessID process_id, int handle, int *save) {
         return __make_syscall_ia32_3param_reti32(SYSCALL_TRANSLATE_HANDLE, (uint32_t)process_id,
                                                  (uint32_t)handle, (uint32_t)save);
 }
+
+int _DWSystemQuery(SystemQuery key, void *store) {
+        return (int)__make_syscall_ia32_2param_reti32(SYSCALL_SYSTEM_QUERY, (uint32_t)key,
+                                                      (uint32_t)store);
+}
