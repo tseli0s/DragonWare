@@ -19,10 +19,10 @@
  */
 static inline void Wait400ns(int bus) {
         u16 port = (bus == 0) ? ATA_ALTSTATUS_PRIMARY : ATA_ALTSTATUS_SECONDARY;
-        inb(port);
-        inb(port);
-        inb(port);
-        inb(port);
+        (void) inb(port);
+        (void) inb(port);
+        (void) inb(port);
+        (void) inb(port);
 }
 
 /**
