@@ -97,8 +97,12 @@ typedef enum _Status {
  * @brief Logging severity levels reexported from the kernel for the _DWklog system call (#3)
  * @details Used to classify log output by importance. Higher values indicate
  * more severe conditions.
+ * @deprecated The _DWklog system call is being deprecated as of v0.0.2 and this enum will be
+ * dropped alongside with it.
  */
-typedef enum {
+typedef enum [[deprecated(
+        "The _DWklog system call is being removed from DragonWare as of v0.0.2, and this type will "
+        "cease to be useful.")]] {
         LOG_DEBUG   = 0, /**< Debug-level messages (verbose, for development). */
         LOG_INFO    = 1, /**< Informational messages. */
         LOG_WARNING = 2, /**< Warning messages (non-fatal issues). */

@@ -55,6 +55,7 @@ static void SystemIdentifySyscall(SystemIdentify *save) {
         (void)CopyToUser(save, &data, sizeof(SystemIdentify));
 }
 
+[[deprecated("_DWklog has been removed from the kernel in version v0.0.2")]]
 static void _DWklog(int level, const char *msg) {
         char buf[LOG_MAXBUF];
         ZeroMemory(buf);

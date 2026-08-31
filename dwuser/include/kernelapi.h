@@ -213,7 +213,8 @@ void _cdecl _DWYield(void);
  * @param msg The message to write to the kernel logs. Must not be NULL.
  * @sa LogLevel
  */
-[[gnu::nonnull]]
+[[gnu::nonnull, deprecated("_DWklog is no longer available as a system call as the task of logging "
+                           "messages is left up to userland")]]
 void _cdecl _DWklog(LogLevel level, const char *msg);
 
 /**
