@@ -31,6 +31,7 @@ SECTIONS {
                 *(.bss*)
                 *(COMMON)
                 __bss_end = .;
+                LONG(0xFEEDBEEF);
         }
         /DISCARD/ : {
 			*(.note .note.*)
