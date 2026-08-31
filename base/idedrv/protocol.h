@@ -27,16 +27,17 @@ typedef enum __IDEDRVStatusReply
                 IDEDRV_BAD_PARAMETER,    /* Bad parameter in IPC message */
                 IDEDRV_OUT_OF_MEMORY,    /* Out of memory (Kernel can't share the memory between the
                                             two processes) */
-                IDEDRV_LOCKED, /* Access to the drive is temporarily forbidden (eg contention )*/
+                IDEDRV_LOCKED,    /* Access to the drive is temporarily forbidden (eg contention )*/
+                IDEDRV_BUG_CHECK, /* Internal driver bug */
         } IDEDRVStatusReply;
 
 /* Simply memcpy() this struct into the message payload when sending it */
 typedef struct [[gnu::packed]] __IDEDRVRequest {
-        LBA lba; /* LBA number to perform the request to */
+        LBA    lba;            /* LBA number to perform the request to */
         Handle shared_section; /* Handle to the section to be shared between caller and callee and
                                   read/write the data from/to. */
-        int master; /* 0 for the master drive on the bus, 1 for the slave drive */
-        int __reserved; /* Never used for now */
+        int    master;         /* 0 for the master drive on the bus, 1 for the slave drive */
+        int    __reserved;     /* Never used for now */
 } IDEDRVRequest;
 
 typedef struct [[gnu::packed]] __IDEDRVReplyData {
