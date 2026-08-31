@@ -16,7 +16,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "idedrv/ctrl.h"
 #include "idedrv/protocol.h"
+#include "idedrv/rw.h"
 #include "identify.h"
 #include "portdef.h"
 
@@ -70,7 +72,8 @@ static void listener(void *data) {
         if (InvokeObject(irq, PORT_BIND_IRQ, &irq_descr) != STATUS_OK) {
                 printf("error: Cannot bind to IRQ %d", irq_descr.irq_no);
                 goto fail;
-        }
+        } else
+                EnableINTRQ(whoami);
 
         Message m;
         while (true) {
