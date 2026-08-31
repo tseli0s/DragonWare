@@ -106,7 +106,7 @@
  * terminated.
  * @since v0.0.2
  */
-#define unreachable ((void)__builtin_unreachable())
+#define unreachable              ((void)__builtin_unreachable())
 
 /*
  * @brief Shorthand macro to dereference an object that supports reference counting.

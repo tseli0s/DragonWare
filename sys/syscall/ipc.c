@@ -35,7 +35,7 @@ Status _DWIPCSend(int handle, Message *m, u32 message_size) {
         if (message_size > sizeof(Message)) message_size = sizeof(Message);
         /* Refuse to send the message if it doesn't include the header. */
         if (message_size < sizeof(MessageHeader)) return STATUS_BAD_ARGUMENT;
-        
+
         if (handle < 0 || handle >= MAX_OBJ_PER_PROCESS) return STATUS_OUT_OF_BOUNDS;
 
         Process *curr_proc = GetCurrentExecutionThread()->owner;

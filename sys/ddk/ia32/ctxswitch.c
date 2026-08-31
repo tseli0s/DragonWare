@@ -8,10 +8,9 @@
  ***********************************************************************/
 
 #include "ctxswitch.h"
+
 #include <log.h>
 
 #include "vmm.h"
 
-void SwapProcess(Process *new) {
-        SetPageDirectory(new->cr3);
-}
+void SwapProcess(Process *new) { SetPageDirectory(new->cr3); }

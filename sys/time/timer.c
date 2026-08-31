@@ -45,7 +45,8 @@ static void PITCallback(InterruptStackFrame *r) {
 void StartSystemTimer(void) {
         PITInit(TARGET_HZ);
         RegisterIRQHandler(0, PITCallback);
-        LogMessage(LOG_DEBUG, "Starting hardware based system timer (Running at %u Hz)", (unsigned int)TARGET_HZ);
+        LogMessage(LOG_DEBUG, "Starting hardware based system timer (Running at %u Hz)",
+                   (unsigned int)TARGET_HZ);
 
         AddDevice(NullPointer,
                   MakeDeviceNode("PIT Timer", P_USER | P_DIRECT_ACCESS, DEVCLASS_UNKNOWN));

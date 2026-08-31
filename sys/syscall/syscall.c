@@ -52,7 +52,7 @@ static void SystemIdentifySyscall(SystemIdentify *save) {
         data.patch    = DRAGONWARE_VERSION_PATCH;
         data.build_id = __KERNEL_BUILDID__;
 
-        (void) CopyToUser(save, &data, sizeof(SystemIdentify));
+        (void)CopyToUser(save, &data, sizeof(SystemIdentify));
 }
 
 static void _DWklog(int level, const char *msg) {
@@ -84,7 +84,7 @@ static Status _DWRequestPorts(const u16 *port_list, Size list_size) {
 static inline void _DWGetTicksSinceBoot(u64 *store) {
         if (!ADDRESS_IS_MAPPED(store)) return;
         u64 ticks = GetTicksSinceBoot();
-        (void) CopyToUser(store, &ticks, sizeof(u64));
+        (void)CopyToUser(store, &ticks, sizeof(u64));
 }
 
 void DragonWareSyscall(SystemCallFrame *regs) {
@@ -108,7 +108,8 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                         _DWklog((int)regs->ebx, (const char *)regs->esi);
                         break;
                 case SYSCALL_REQUEST_PORTS: {
-                        ReturnFromSystemCall(regs, _DWRequestPorts, (u16 *)regs->ebx, (Size)regs->esi);
+                        ReturnFromSystemCall(regs, _DWRequestPorts, (u16 *)regs->ebx,
+                                             (Size)regs->esi);
                         break;
                 }
                 case SYSCALL_SEND:

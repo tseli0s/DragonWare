@@ -40,7 +40,7 @@ static uintptr_t GetNextKernelStackAddress(void) {
         return 0;
 }
 
-void *CreateThread(void (*entryaddr)(void*), void *stack, void *extra_data) {
+void *CreateThread(void (*entryaddr)(void *), void *stack, void *extra_data) {
         /* Declaring it on top otherwise the bitch called clangd says "Variable
          * 't' is used uninitialized whenever 'if' condition is true" in the checks below */
         Thread *t = NullPointer;
@@ -49,8 +49,8 @@ void *CreateThread(void (*entryaddr)(void*), void *stack, void *extra_data) {
         uintptr_t phys_stack_2 = AllocateFrame();
         uintptr_t stackaddr    = GetNextKernelStackAddress();
         if (!stackaddr) return NullPointer;
-        
-        stackaddr +=  + (2 * PAGE_SIZE);
+
+        stackaddr += +(2 * PAGE_SIZE);
         if (!phys_stack_1 || !phys_stack_2) goto bad;
         if (MapSinglePage(phys_stack_2, stackaddr - PAGE_SIZE, PAGE_PRESENT | PAGE_RW) != STATUS_OK)
                 goto bad;

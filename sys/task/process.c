@@ -340,7 +340,7 @@ void SetProcessCapabilities(Process *process, u32 flags) { process->flags |= fla
 Process *FindProcessByID(ProcessID id) {
         if (unlikely(!process_list)) return NullPointer;
 
-        Process *iter  = process_list;
+        Process *iter = process_list;
         while (iter) {
                 if (iter->pid == id) return iter;
                 iter = iter->next;

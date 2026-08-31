@@ -40,7 +40,8 @@ static inline void AcquireSpinlock(Spinlock *s) {
 }
 
 /**
- * @brief Attempt to acquire (lock) the spinlock @p s given and busywait until it becomes available (ie. No longer held by any other procedure)
+ * @brief Attempt to acquire (lock) the spinlock @p s given and busywait until it becomes available
+ * (ie. No longer held by any other procedure)
  * @param[in] s The spinlock to acquire, must not be a @ref NullPointer
  * @since v0.0.2
  * @sa AcquireSpinlock

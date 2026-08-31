@@ -14,10 +14,10 @@
 #include "task.h"
 
 /** @brief Beginning of all kernel stacks in virtual memory. */
-#define KERNEL_STACK_BASE         (0xE0000000)
+#define KERNEL_STACK_BASE        (0xE0000000)
 
 /** @brief Last address we can map as a kernel stack for a process before panicking. */
-#define KERNEL_STACK_END          (0xEFFF0000)
+#define KERNEL_STACK_END         (0xEFFF0000)
 
 /** @brief Where the user stack will be placed for each process. A high address is chosen to allow
  * the stack to grow freely if necessary in the future. Reminder that the kernel is mapped to
@@ -49,7 +49,7 @@ typedef enum _ProcessCapability {
 
 typedef struct _Process {
         Thread           *main_thread;
-        u32               cr3;          /* WARNING: Physical address */
+        u32               cr3; /* WARNING: Physical address */
         ProcessID         pid;
         HandleTable       handles;
         u16               ioports[MAX_IO_PORTS_PER_PROCESS];
@@ -91,7 +91,8 @@ void SetProcessCapabilities(Process *process, u32 flags);
 
 /**
  * @brief Attempt to find a process by its process ID and return a pointer to it.
- * @param process The process ID to search for. 0 is considered invalid (Process 0 is the kernel itself)
+ * @param process The process ID to search for. 0 is considered invalid (Process 0 is the kernel
+ * itself)
  * @returns The process with the given @p id on success, or @ref NullPointer on failure
  */
 Process *FindProcessByID(ProcessID id);

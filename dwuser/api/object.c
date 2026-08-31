@@ -8,6 +8,7 @@
  ***********************************************************************/
 
 #include "object.h"
+
 #include "kernelapi.h"
 
 Handle CreateObject(const char *name, ObjectType type, u32 permissions) {

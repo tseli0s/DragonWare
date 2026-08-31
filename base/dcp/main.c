@@ -30,8 +30,10 @@ static void PrintWelcomeMessage(void) {
         puts("* Source Code: https://github.com/tseli0s/DragonWare");
         puts("* Bug Tracker: https://github.com/tseli0s/DragonWare/issues");
         puts("");
-        puts("To show version and build information, use the 'identify' command. You must supply version information during every bug report.");
-        puts("Type 'help' to get more information about available built in commands to this shell.");
+        puts("To show version and build information, use the 'identify' command. You must supply "
+             "version information during every bug report.");
+        puts("Type 'help' to get more information about available built in commands to this "
+             "shell.");
         puts("");
 }
 
