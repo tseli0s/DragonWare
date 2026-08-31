@@ -77,31 +77,6 @@ static inline u16 VGAGetCharacterWithColor(char uc, Byte color) {
         return (u16)uc | (u16)((u16)color << 8);
 }
 
-static VGAColor VGAMatchColorToKernel(PixelColor p) {
-        switch (p) {
-                case WhitePixel:
-                        return VGATEXT_COLOR_LIGHT_GREY;
-                case RedPixel:
-                        return VGATEXT_COLOR_RED;
-                case OrangePixel:
-                        return VGATEXT_COLOR_LIGHT_BROWN; /* There's no orange */
-                case GreenPixel:
-                        return VGATEXT_COLOR_GREEN;
-                case PrussianPixel:
-                case BluePixel:
-                        return VGATEXT_COLOR_BLUE;
-                case LightGrayPixel:
-                        return VGATEXT_COLOR_LIGHT_GREY;
-                case CyanPixel:
-                        return VGATEXT_COLOR_CYAN;
-                case MagentaPixel:
-                        return VGATEXT_COLOR_LIGHT_MAGENTA;
-                case BlackPixel:
-                default:
-                        return VGATEXT_COLOR_BLACK;
-        }
-}
-
 void VGASetCursorPosition(unsigned int x, unsigned int y) {
         u16 pos = (u16)(((u16)x) * VGA_WIDTH + y);
         outb(0x3D4, (Byte)0x0E);
@@ -176,12 +151,6 @@ static void VGAClearAllText(void *private_state) {
         state->column = 0;
 }
 
-static void VGASetColorMode(void *private_state, PixelColor bg, PixelColor fg) {
-        VGATextModeState *state = private_state;
-        state->colorattr =
-                VGAGetColorAttribute(VGAMatchColorToKernel(fg), VGAMatchColorToKernel(bg));
-}
-
 static void VGADeleteSingleCharacter(void *privatedata) {
         VGATextModeState *state = privatedata;
         VGAPrintCharacterAt(privatedata, state->column, state->row, ' ');
@@ -238,10 +207,9 @@ Status VGATextInit(void) {
         state->row        = 0;
         state->init       = true;
 
-        ConsoleDeviceOps console_operations = {.WriteSingleChar   = VGAPrintCharacter,
-                                               .ResetConsole      = VGAClearAllText,
-                                               .DeleteSingleChar  = VGADeleteSingleCharacter,
-                                               .SetTextAttributes = VGASetColorMode};
+        ConsoleDeviceOps console_operations = {.WriteSingleChar  = VGAPrintCharacter,
+                                               .ResetConsole     = VGAClearAllText,
+                                               .DeleteSingleChar = VGADeleteSingleCharacter};
         vganode->devtable.ddo->console      = console_operations;
         vganode->private_state              = state;
         vganode->attr.kernel_mapped_addr    = FRAMEBUFFER_ADDR;

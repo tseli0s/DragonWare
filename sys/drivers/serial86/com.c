@@ -17,7 +17,6 @@
 #include "iomgr/devmgr.h"
 #include "iomgr/node.h"
 #include "log.h"
-#include "video/pixels.h"
 
 #define COM1_PORT (0x3F8)
 
@@ -41,15 +40,6 @@ static inline void WriteToSerialPort(char c) {
 }
 
 #endif /* __K_DISABLE_SERIAL_OUTPUT */
-
-/* We can't control the colors of a serial port, so just have a dummy function that's like "yeah bro
- * totally I'm gonna show the text in red from the other side of the world. Rainbow gradient,
- * even..."*/
-static void _SetTextAttributes(void *private, PixelColor bg, PixelColor fg) {
-        UnusedParameter(private);
-        UnusedParameter(fg);
-        UnusedParameter(bg);
-}
 
 [[gnu::hot]]
 static void WriteSerialChar(void *private, char c) {
@@ -100,13 +90,10 @@ Status Serial86Init(void) {
                 return STATUS_OUT_OF_MEMORY;
         }
 
-        ConsoleDeviceOps console_ops = {.WriteSingleChar   = WriteSerialChar,
-                                        .SetTextAttributes = _SetTextAttributes,
-                                        .ResetConsole      = ResetSerialConsole,
-                                        .DeleteSingleChar  = NullPointer};
-        UARTDeviceOps    uart_ops    = {
-                      .WriteSingleChar = WriteSerialChar, .ReceiveByteFromSerial = NullPointer /* TODO */
-        };
+        ConsoleDeviceOps console_ops = {.WriteSingleChar  = WriteSerialChar,
+                                        .ResetConsole     = ResetSerialConsole,
+                                        .DeleteSingleChar = NullPointer};
+        UARTDeviceOps    uart_ops    = {.WriteSingleChar = WriteSerialChar};
 
         state->com1_enabled         = true;
         node->devtable.ddo->uart    = uart_ops;

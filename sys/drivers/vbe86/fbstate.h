@@ -11,13 +11,10 @@
 
 #include <ktypes.h>
 
-#include "video/pixels.h"
-
 typedef struct _FramebufferState {
-        Size       column, row, pixels_per_char;
-        Size       width, height, pitch;
-        Byte       bpp;
-        Bool       text_mode;
-        PixelColor fg, bg;
-        void      *addr;
+        Size  column, row, pixels_per_char;
+        Size  width, height, pitch;
+        Byte  bpp;
+        Bool  text_mode;
+        void *addr;
 } FramebufferState;
