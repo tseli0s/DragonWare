@@ -9,6 +9,10 @@
 
 #pragma once
 
+#define ATA_SECTOR_SIZE         (512)
+#define ATA_CMD_IDENTIFY        (0xEC)
+#define ATA_CMD_READ            (0x20)
+
 #define ATA_PRIMARY_BASE        (0x1F0)
 #define ATA_SECONDARY_BASE      (0x170)
 #define ATA_CTRL_PRIMARY        (0x3F6)
