@@ -12,30 +12,8 @@
 #include <io.h>
 #include <kerneltypes.h>
 
+#include "idedrv/ctrl.h"
 #include "portdef.h"
-
-#define ATA_STATUS_ERR     (0x01)
-#define ATA_STATUS_IDX     (0x02)
-#define ATA_STATUS_CORR    (0x04)
-#define ATA_STATUS_DRQ     (0x08)
-#define ATA_STATUS_DSC     (0x10)
-#define ATA_STATUS_DF      (0x20)
-#define ATA_STATUS_DRDY    (0x40)
-#define ATA_STATUS_BSY     (0x80)
-
-#define ATA_LBA28_MASK     (0x0FFFFFFF)
-#define ATA_CMD_IDENTIFY   (0xEC)
-#define ATA_CMD_READ       (0x20)
-
-#define ATAPI_CMD_IDENTIFY (0xA1)
-#define ATAPI_CMD_PACKET   (0xA0)
-
-#define SECTOR_SIZE        (512)
-#define CD_SECTOR_SIZE     (2048)
-#define WORD_SIZE          (sizeof(u16))
-#define ATA_READ_BUFSIZE   (SECTOR_SIZE / WORD_SIZE)
-
-#define TO_LBA28(value)    ((value) &= (ATA_LBA28_MASK))
 
 typedef struct _ATAPortList {
         u16 data;
@@ -49,15 +27,6 @@ typedef struct _ATAPortList {
         u16 command;
         u16 alt_status;
 } ATAPortList;
-
-static void ATASoftResetDelay(u16 status_port) {
-        inb(status_port);
-        inb(status_port);
-        inb(status_port);
-        inb(status_port);
-        inb(status_port);
-        inb(status_port);
-}
 
 static void ATASelectDevicePorts(int bus, ATAPortList *list) {
         if (bus == 0) {
@@ -96,8 +65,14 @@ Status IdentifyDrive(int primary, int master) {
 
         while (inb(list.status) & ATA_STATUS_BSY);
 
+        /* There's a bug (due to how IDE and the microkernel works): If interrupts are enabled, an
+         * interrupt will arrive at IRQ14, except we didn't create a listener port at this point, so
+         * there's nothing to catch it and pull the INTRQ line down again (or whatever needs to
+         * happen, sorry, not an electrical engineer). And no more interrupts will arrive.
+         */
+        DisableINTRQ(primary);
         outb(list.hddevsel, hddev);
-        ATASoftResetDelay(list.status);
+        Wait400ns(primary);
 
         /* Zero registers as required by spec */
         outb(list.seccount, 0);
@@ -106,10 +81,10 @@ Status IdentifyDrive(int primary, int master) {
         outb(list.lba2, 0);
 
         outb(list.command, ATA_CMD_IDENTIFY);
-        ATASoftResetDelay(list.status);
+        Wait400ns(primary);
 
         Byte status = inb(list.status);
-        ATASoftResetDelay(list.status);
+        Wait400ns(primary);
         if (!status) return STATUS_NOT_FOUND;
 
         /* Wait for BSY clear */
@@ -118,13 +93,20 @@ Status IdentifyDrive(int primary, int master) {
         /* Check if not ATA (probably ATAPI) */
         Byte lba1 = inb(list.lba1);
         Byte lba2 = inb(list.lba2);
-
-        /* ATAPI drive. Not supported by this driver yet... */
-        if (lba1 == 0x14 && lba2 == 0xEB) return STATUS_UNSUPPORTED;
+        if (lba1 == 0x14 && lba2 == 0xEB) {
+                /* ATAPI drive, unsupported */
+                return STATUS_UNSUPPORTED;
+        }
 
         status = inb(list.status);
-        while (!(status & ATA_STATUS_DRQ) && !(status & ATA_STATUS_ERR)) status = inb(list.status);
-        if (status & ATA_STATUS_ERR) return STATUS_BAD;
+        while (!(status & ATA_STATUS_DRQ) && !(status & ATA_STATUS_ERROR))
+                status = inb(list.status);
+        if (status & ATA_STATUS_ERROR) return STATUS_BAD;
 
+        /* Apparently, we need to drain the IDENTIFY data as well, otherwise the drive won't
+         * raise more interrupts. Seems to be emulator dependent (QEMU won't issue subsequent
+         * interrupts, Bochs doesn't care). Nonetheless, we need to drain the sink.
+         */
+        for (Size i = 0; i < 256; i++) (void)inw(list.data);
         return STATUS_OK;
 }
