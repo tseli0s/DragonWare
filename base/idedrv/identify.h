@@ -16,6 +16,8 @@
  * configuration. Returns a status code depending on the result.
  * @param primary 0 for the primary bus, 1 for the secondary bus.
  * @param master 0 for the master drive, 1 for the slave drive.
+ * @warning This function disables INTRQ for the given bus @p primary (See @ref EnableINTRQ to
+ * reenable them, which is important to do once there's a listener for IRQ 14)
  * @returns STATUS_OK if there's a drive connected in that (master, bus) configuration. STATUS_BAD
  * if a hardware error occured, STATUS_NOT_FOUND if a drive is not detected in that slot.
  * @since v0.0.2
