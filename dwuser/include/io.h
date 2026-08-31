@@ -16,7 +16,7 @@ static inline void outb(u16 port, Byte val) {
         __asm__ volatile("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
-[[gnu::always_inline]]
+[[gnu::always_inline, nodiscard("Data returned from inb should not be discarded")]]
 static inline Byte inb(u16 port) {
         Byte ret;
         __asm__ volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
@@ -28,7 +28,7 @@ static inline void outw(u16 port, u16 val) {
         __asm__ volatile("outw %0, %1" : : "a"(val), "Nd"(port));
 }
 
-[[gnu::always_inline]]
+[[gnu::always_inline, nodiscard("Data returned from inw should not be discarded")]]
 static inline u16 inw(u16 port) {
         u16 ret;
         __asm__ volatile("inw %1, %0" : "=a"(ret) : "Nd"(port));
@@ -40,7 +40,7 @@ static inline void outl(u16 port, u32 val) {
         __asm__ volatile("outl %0, %1" : : "a"(val), "Nd"(port));
 }
 
-[[gnu::always_inline]]
+[[gnu::always_inline, nodiscard("Data returned from inl should not be discarded")]]
 static inline u32 inl(u16 port) {
         u32 ret;
         __asm__ volatile("inl %1, %0" : "=a"(ret) : "Nd"(port));
