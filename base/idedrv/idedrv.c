@@ -183,8 +183,10 @@ int main(void) {
                         die("Cannot map new thread stack");
 
                 UserThreadData descr = {
-                        .entry = listener,
-                        .stack = (void *)(stackaddr + (2 * 0x1000)), /* FIXME: Magic number here */
+                        .entry      = listener,
+                        .stack      = (void *)(stackaddr +
+                                          (sectreq.needed_pages *
+                                           (Size)_DWSystemQuery(SQ_PAGE_SIZE, NullPointer))),
                         .extra_data = &thread_data[n_thread_data]};
                 if (InvokeObject(t, THREAD_CREATE, &descr) != STATUS_OK)
                         die("can't create new thread");
