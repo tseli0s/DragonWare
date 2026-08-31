@@ -52,7 +52,7 @@ static void listener(void *data) {
                 printf("warning: cannot create IRQ dispatch port for %s bus, "
                        "disabling access to bus",
                        busstr);
-                return;
+                goto fail;
         }
 
         if (InvokeObject(h, PORT_CREATE, NullPointer) != STATUS_OK) {
@@ -143,6 +143,22 @@ int main(void) {
         if (_DWRequestPorts(ata_ports, sizeof(ata_ports) / sizeof(ata_ports[0])) != STATUS_OK)
                 die("Cannot access ATA/IDE I/O ports, permission denied from the kernel.");
 
+        int n = 0;
+        for (int bus = 0; bus <= 1; bus++) {
+                for (int master = 0; master <= 1; master++) {
+                        if (IdentifyDrive(bus, master) != STATUS_OK)
+                                continue;
+                        else {
+                                printf("idedrv: Detected connected ATA/IDE compatible medium on "
+                                       "bus %d "
+                                       "drive %d\n",
+                                       bus, master);
+                                n++;
+                        }
+                }
+        }
+        if (!n) die("No connected ATA/IDE drives, unloading idedrv driver");
+
         Handle t1 = CreateObject(NullPointer, OBJ_THREAD, 0);
         Handle t2 = CreateObject(NullPointer, OBJ_THREAD, 0);
         if (t1 < 0 || t2 < 0) die("Cannot allocate objects for IRQ14/15 rerouting");
@@ -150,6 +166,7 @@ int main(void) {
         /* yes. i REALLY need to implement malloc here. */
         thread_data[0] = (struct __data){.whoami = 0};
         thread_data[1] = (struct __data){.whoami = 1};
+
         for (int i = 0; i <= 1; i++) {
                 Handle                t       = (!i) ? t1 : t2;
                 Handle                section = CreateObject(NullPointer, OBJ_SECTION, 0);
@@ -172,21 +189,6 @@ int main(void) {
                         die("can't run new thread");
                 n_thread_data++;
         }
-
-        int n = 0;
-        for (int bus = 0; bus <= 1; bus++) {
-                for (int master = 0; master <= 1; master++) {
-                        if (IdentifyDrive(bus, master) != STATUS_OK)
-                                continue;
-                        else {
-                                printf("Detected connected ATA/IDE compatible medium on bus %d "
-                                       "drive %d\n",
-                                       bus, master);
-                                n++;
-                        }
-                }
-        }
-        if (!n) die("No connected ATA/IDE drives, unloading idedrv driver");
 
         /* The other listener threads do the rest of the job, technically we should block entirely
          * here, but I don't have a function for this yet. */
