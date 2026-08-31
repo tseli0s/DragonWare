@@ -51,7 +51,7 @@ static inline Status WaitForInputBuffer(void) {
 
 /** @brief Flushes the contents of the controller port down the drain */
 static inline void FlushControllerData(void) {
-        while (inb(PS2_PORT_STATUS) & 0x01) inb(PS2_PORT_DATA);
+        while (inb(PS2_PORT_STATUS) & 0x01) (void) inb(PS2_PORT_DATA);
 }
 
 /**
