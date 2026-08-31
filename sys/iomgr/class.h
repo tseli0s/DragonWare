@@ -11,8 +11,6 @@
 
 #include <ktypes.h>
 
-#include "video/pixels.h"
-
 /* Remember: A device may be able to do more than one thing. For example, the GPU is able to blit on
  * the screen as well as run custom code. So I've went with bitfields using  */
 
@@ -42,23 +40,18 @@ typedef struct _FramebufferInformation {
 } FramebufferInformation;
 
 typedef struct _FramebufferDeviceOps {
-        void (*WriteSinglePixel)(void *privatedata, Size x, Size y, PixelColor color);
-        void (*BlitRectangle)(void *privatedata, Size startx, Size starty, Size width, Size height,
-                              PixelColor color);
-        void (*Flush)(void *privatedata);
-        void (*SetCurrentOutputColors)(void *privatedata, PixelColor fg, PixelColor bg);
-        void (*ClearScreen)(void *privatedata);
+        void                   (*WriteSinglePixel)(void *privatedata, Size x, Size y, int bw);
+        void                   (*Flush)(void *privatedata);
+        void                   (*ClearScreen)(void *privatedata);
         FramebufferInformation (*GetFramebufferInformation)(void *privatedata);
 } FramebufferDeviceOps;
 
 typedef struct _ConsoleDeviceOps {
         void (*WriteSingleChar)(void *privatedata, char c);
-        void (*SetTextAttributes)(void *privatedata, PixelColor background, PixelColor foreground);
         void (*ResetConsole)(void *privatedata);
         void (*DeleteSingleChar)(void *privatedata);
 } ConsoleDeviceOps;
 
 typedef struct _UARTDeviceOps {
         void (*WriteSingleChar)(void *privatedata, char c);
-        Byte (*ReceiveByteFromSerial)(void *privatedata);
 } UARTDeviceOps;
