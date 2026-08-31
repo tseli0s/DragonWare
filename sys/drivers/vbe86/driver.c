@@ -56,25 +56,23 @@ static inline void *SegmentedToLinearPointer(void *seg) {
 }
 
 [[gnu::hot]]
-static void WriteSinglePixel(void *privatedata, Size x, Size y, PixelColor color) {
+static void WriteSinglePixel(void *privatedata, Size x, Size y, int bw) {
+        u32               color = bw ? 0xEAEAEAEA : 0x00000000;
         FramebufferState *state = privatedata;
         switch (state->bpp) {
                 case 32: {
-                        u32 colorbytes = ColorToBytes32(color);
-
-                        PutPixel32(state->addr, state->width, x, y, colorbytes);
+                        PutPixel32(state->addr, state->width, x, y, color);
                         break;
                 }
                 case 24: {
-                        u32 colorbytes = ColorToBytes24(color);
-                        PutPixel24(state->addr, state->pitch, x, y, colorbytes);
+                        PutPixel24(state->addr, state->pitch, x, y, color);
                         break;
                 }
 
                 default:
                         LogMessage(LOG_WARNING,
                                    "Unknown framebuffer format. Assuming 32 bits per pixel.");
-                        PutPixel32(state->addr, state->width, x, y, ColorToBytes32(color));
+                        PutPixel32(state->addr, state->width, x, y, color);
                         break;
         }
 }
@@ -92,21 +90,9 @@ static void RenderGlyph(FramebufferState *state, Size x, Size y, Glyph *g) {
 
                         if (unlikely(px >= state->width || py >= state->height)) continue;
 
-                        PixelColor color = (bits & (0x80 >> col)) ? state->fg : state->bg;
-                        WriteSinglePixel(state, px, py, color);
-                }
-        }
-}
-static void DrawRectangle(void *privatedata, Size x, Size y, Size w, Size h, PixelColor color) {
-        FramebufferState *state = privatedata;
-        for (Size sx = x; sx < w; sx++) {
-                for (Size sy = y; sy < h; sy++) {
-                        if (state->bpp == 32)
-                                PutPixel32(state->addr, state->width, sx, sy,
-                                           ColorToBytes32(color));
-                        else if (state->bpp == 24)
-                                PutPixel24(state->addr, state->pitch, sx, sy,
-                                           ColorToBytes24(color));
+                        /* if this is nonzero, paint the font, otherwise paint the background*/
+                        int colored = (bits & (0x80 >> col));
+                        WriteSinglePixel(state, px, py, colored);
                 }
         }
 }
@@ -167,7 +153,7 @@ FramebufferInformation GetFramebufferInfo(void *privatedata) {
                  .height = state->height,
                  .bpp    = state->bpp,
                  .stride = state->pitch /* i believe stride and pitch are the same i dont remember
-                                      honestly */
+                                    honestly */
         };
         return info;
 }
@@ -178,30 +164,22 @@ static void DeleteSingleCharacter(void *privatedata) {
         WriteSingleCharacterAt(state, state->column, state->row, ' ');
 }
 
-static inline void SetColors(void *privatedata, PixelColor fg, PixelColor bg) {
-        FramebufferState *state = privatedata;
-        state->fg               = fg;
-        state->bg               = bg;
-}
-
 static void ClearFramebuffer(void *privatedata) {
         FramebufferState *state = privatedata;
         state->column           = 0;
         state->row              = 0;
         switch (state->bpp) {
                 case 32: {
-                        u32 color = ColorToBytes32(state->bg);
                         for (Size y = 0; y < state->height; y++) {
                                 for (Size x = 0; x < state->width; x++)
-                                        PutPixel32(state->addr, state->width, x, y, color);
+                                        PutPixel32(state->addr, state->width, x, y, 0);
                         }
                         break;
                 }
                 case 24: {
-                        u32 color = ColorToBytes24(state->bg);
                         for (Size y = 0; y < state->height; y++) {
                                 for (Size x = 0; x < state->width; x++)
-                                        PutPixel24(state->addr, state->pitch, x, y, color);
+                                        PutPixel24(state->addr, state->pitch, x, y, 0);
                         }
                         break;
                 }
@@ -216,10 +194,6 @@ static void ResetFramebufferConsole(void *privatedata) {
         state->row              = 0;
         state->column           = 0;
         ClearFramebuffer(privatedata);
-}
-
-static void SetConsoleColorAttributes(void *privatedata, PixelColor bg, PixelColor fg) {
-        SetColors(privatedata, fg, bg);
 }
 
 /* TODO: Mode information storing too */
@@ -318,17 +292,14 @@ Status VBE86DriverInit(void) {
 
         FramebufferDeviceOps fbddo = {
                 .WriteSinglePixel          = WriteSinglePixel,
-                .BlitRectangle             = DrawRectangle,
-                .SetCurrentOutputColors    = SetColors,
                 .ClearScreen               = ClearFramebuffer,
                 .Flush                     = FlushFramebuffer,
                 .GetFramebufferInformation = GetFramebufferInfo,
         };
 
-        ConsoleDeviceOps conddo       = {.WriteSingleChar   = WriteSingleCharacter,
-                                         .DeleteSingleChar  = DeleteSingleCharacter,
-                                         .ResetConsole      = ResetFramebufferConsole,
-                                         .SetTextAttributes = SetConsoleColorAttributes};
+        ConsoleDeviceOps conddo       = {.WriteSingleChar  = WriteSingleCharacter,
+                                         .DeleteSingleChar = DeleteSingleCharacter,
+                                         .ResetConsole     = ResetFramebufferConsole};
         fb->devtable.ddo->framebuffer = fbddo;
         fb->devtable.ddo->console     = conddo;
 
@@ -361,8 +332,6 @@ Status VBE86DriverInit(void) {
         /* Easier than just casting every time */
         FramebufferState *state = fb->private_state;
         state->addr             = (void *)FRAMEBUFFER_ADDR;
-        state->bg               = BlackPixel;
-        state->fg               = WhitePixel;
         state->bpp              = bootinfo->bpp;
         state->width            = bootinfo->fbwidth;
         state->height           = bootinfo->fbheight;
