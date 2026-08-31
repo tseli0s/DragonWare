@@ -3,7 +3,7 @@ set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "")
 include_directories(${CMAKE_SOURCE_DIR}/libc/include)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(DW_USER_SRC syscall/syscall.c api/object.c api/message.c)
+set(DW_USER_SRC syscall/syscall.c api/object.c api/message.c api/status.c)
 add_library(dwuser STATIC ${DW_USER_SRC})
 target_compile_options(
         dwuser

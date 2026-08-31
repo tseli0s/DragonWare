@@ -331,6 +331,17 @@ Status _DWTranslateHandle(ProcessID process_id, int handle, int *save);
  */
 int _DWSystemQuery(SystemQuery key, void *store);
 
+/**
+ * @brief Returns a string describing the meaning of @p status_code
+ * @param status_code The status code to describe.
+ * @returns A human readable string describing in English the meaning of @p status_code
+ * @warning The returned pointer is read only. Modifying it can cause undefined behaviour.
+ * @sa @ref Status
+ * @since v0.0.2
+ */
+[[gnu::returns_nonnull]]
+const char *StringifyStatus(Status status_code);
+
 DW_END_DECLS
 
 #endif /* _KERNEL_API_H */
