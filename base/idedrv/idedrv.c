@@ -100,11 +100,8 @@ static void listener(void *data) {
                                         goto sendmsg;
                                 }
 
-                                /* this is where we should perform the disk read but its 2am also
-                                 * the router shat the bed again so till next time i guess. I wanna
-                                 * checkout to master so I gotta commit it for now (no i dont wanna
-                                 * stash) */
-                                __asm__ volatile("nop");
+                                reply_data.reply = ReadFromDisk(irq, irq_descr, whoami, req.master,
+                                                                (u32)req.lba, ((void *)base));
 
                                 DeleteObject(req.shared_section);
                                 m.header.payload_length = sizeof(IDEDRVReplyData);
