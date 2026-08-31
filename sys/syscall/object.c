@@ -173,7 +173,8 @@ static Status HandlePortObjectRequest(int handle, Object *obj, PortObjectOp op, 
                         break;
                 }
                 case PORT_ACK_IRQ: {
-                        if (!(current->owner->flags & PROC_C_SERVER)) return STATUS_UNSUPPORTED;
+                        if (!(current->owner->flags & (PROC_C_SERVER | PROC_C_IRQ_DISPATCH)))
+                                return STATUS_UNSUPPORTED;
                         IRQBindingDescriptor descr;
                         if (CopyFromUser(&descr, arg, sizeof(IRQBindingDescriptor)) != STATUS_OK)
                                 return STATUS_BAD_ARGUMENT;
