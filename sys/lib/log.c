@@ -39,8 +39,6 @@ static void PrintToOutputs(const char *msg) {
 #else
         OutputNode *out = GetPrimaryOutputDevice();
         if (!out) return; /* No output to print on, wait for devices to come online*/
-        DeviceManagerNode *dev = out->node;
-        dev->devtable.ddo->console.SetTextAttributes(dev->private_state, bg, fg);
         for (Size i = 0; i < len; i++)
                 out->node->devtable.ddo->console.WriteSingleChar(out->node->private_state, msg[i]);
 #endif /* DRAGONWARE_DEBUG_MODE */
