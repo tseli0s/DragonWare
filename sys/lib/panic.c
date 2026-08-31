@@ -18,7 +18,6 @@
 #include "ddk/ia32/interrupts.h"
 #include "iomgr/node.h"
 #include "video/output.h"
-#include "video/pixels.h"
 
 #define NUMBUF_REG (32)
 
@@ -162,12 +161,8 @@ void FatalError(const char *fmt, ...) {
         if (!panicking) {
                 panicking = true;
                 ForEachConsoleDevice({
-                        DeviceManagerNode *out = curr->node;
-                        void               (*SetTextAttributes)(void *, PixelColor, PixelColor) =
-                                out->devtable.ddo->console.SetTextAttributes;
+                        DeviceManagerNode *out       = curr->node;
                         void (*ResetConsole)(void *) = out->devtable.ddo->console.ResetConsole;
-                        if (SetTextAttributes)
-                                SetTextAttributes(out->private_state, RedPixel, WhitePixel);
                         if (ResetConsole) ResetConsole(out->private_state);
                 });
                 PrintStringToAllOutputs("\n");
@@ -299,12 +294,8 @@ void FatalErrorWithStackFrame(InterruptStackFrame *stack_frame, const char *msg,
         if (!panicking) {
                 panicking = true;
                 ForEachConsoleDevice({
-                        DeviceManagerNode *out = curr->node;
-                        void               (*SetTextAttributes)(void *, PixelColor, PixelColor) =
-                                out->devtable.ddo->console.SetTextAttributes;
+                        DeviceManagerNode *out       = curr->node;
                         void (*ResetConsole)(void *) = out->devtable.ddo->console.ResetConsole;
-                        if (SetTextAttributes)
-                                SetTextAttributes(out->private_state, RedPixel, WhitePixel);
                         if (ResetConsole) ResetConsole(out->private_state);
                 });
                 PrintStringToAllOutputs("\n");

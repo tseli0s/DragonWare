@@ -17,9 +17,7 @@
 #include "iomgr/class.h"
 #include "iomgr/node.h"
 #include "video/output.h"
-#include "video/pixels.h"
 
-#define BUFSIZE 32
 #ifndef LOG_BUFSIZE
 #define LOG_BUFSIZE (64)
 #endif
@@ -29,17 +27,14 @@ static LogMessage logbuffer[LOG_BUFSIZE] = {0};
 static Size       logbuf_idx             = 0;
 static Bool       logs_flushed           = false;
 
-static void PrintToOutputs(const char *msg, PixelColor bg, PixelColor fg) {
+static void PrintToOutputs(const char *msg) {
         Size len = strlen(msg);
 #ifdef DRAGONWARE_DEBUG_MODE
         ForEachConsoleDevice({
                 DeviceManagerNode *out = curr->node; /* curr given by the macro */
-                out->devtable.ddo->console.SetTextAttributes(out->private_state, bg, fg);
                 for (Size i = 0; i < len; i++) {
                         out->devtable.ddo->console.WriteSingleChar(out->private_state, msg[i]);
                 }
-                out->devtable.ddo->console.SetTextAttributes(out->private_state, BlackPixel,
-                                                             WhitePixel);
         });
 #else
         OutputNode *out = GetPrimaryOutputDevice();
@@ -52,35 +47,28 @@ static void PrintToOutputs(const char *msg, PixelColor bg, PixelColor fg) {
 }
 
 static void PrintPrefixFor(LogLevel level) {
-        char      *prefix = "????? ";
-        PixelColor fg     = WhitePixel;
+        char *prefix = "????? ";
         switch (level) {
                 case LOG_DEBUG: {
                         prefix = "* DEBUG   ";
-                        fg     = CyanPixel;
                         break;
                 }
                 case LOG_INFO: {
                         prefix = "* INFO    ";
-                        fg     = GreenPixel;
                         break;
                 }
                 case LOG_WARNING: {
                         prefix = "* WARNING ";
-                        fg     = OrangePixel;
                         break;
                 }
                 case LOG_ERROR: {
                         prefix = "* ERROR   ";
-                        fg     = RedPixel;
                         break;
                 }
-                default: {
-                        fg = LightGrayPixel;
+                default:
                         break;
-                }
         }
-        PrintToOutputs(prefix, BlackPixel, fg);
+        PrintToOutputs(prefix);
 }
 
 void LogInit(void) {
@@ -100,8 +88,8 @@ void klog(LogLevel level, const char *fmt, ...) {
          * checking if the logs were flushed before. If so, we can now start printing. */
         if (logs_flushed) {
                 PrintPrefixFor(level);
-                PrintToOutputs(buf, BlackPixel, WhitePixel);
-                PrintToOutputs("\n", BlackPixel, WhitePixel);
+                PrintToOutputs(buf);
+                PrintToOutputs("\n");
         }
 
         if ((logbuf_idx + 1) >= arraysize(logbuffer)) return;
@@ -117,8 +105,8 @@ void FlushAllLogs(void) {
 
         for (Size i = 0; i < logbuf_idx; i++) {
                 PrintPrefixFor(logbuffer[i].code);
-                PrintToOutputs(logbuffer[i].buffer, BlackPixel, WhitePixel);
-                PrintToOutputs("\n", BlackPixel, WhitePixel);
+                PrintToOutputs(logbuffer[i].buffer);
+                PrintToOutputs("\n");
         }
         logs_flushed = true;
 }
