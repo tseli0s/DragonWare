@@ -22,10 +22,6 @@ void _cdecl noreturn _DWExit(void) {
 
 void _cdecl _DWYield(void) { __make_syscall_ia32_0param(SYSCALL_YIELD); }
 
-void _cdecl _DWklog(LogLevel level, const char *msg) {
-        __make_syscall_ia32_2param(SYSCALL_KLOG, (u32)level, (u32)msg);
-}
-
 Status _cdecl _DWRequestPorts(const u16 *port_list, Size port_list_size) {
         return (Status)__make_syscall_ia32_2param_reti32(SYSCALL_REQUEST_PORTS, (uint32_t)port_list,
                                                          (uint32_t)port_list_size);

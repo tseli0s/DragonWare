@@ -15,7 +15,6 @@
 #define SYSCALL_IDENTIFY         (0)
 #define SYSCALL_EXIT             (1)
 #define SYSCALL_YIELD            (2)
-#define SYSCALL_KLOG             (3)
 #define SYSCALL_REQUEST_PORTS    (4)
 #define SYSCALL_SEND             (5)
 #define SYSCALL_RECEIVE          (6)
@@ -203,19 +202,6 @@ void _cdecl noreturn _DWExit(void);
  * kernel is going to preemptively block the process and let a new one run.
  */
 void _cdecl _DWYield(void);
-
-/**
- * @brief _DWklog system call (#3) wrapper.
- * @details This will copy @p msg into the kernel log buffer, classifying it by @p level. Only
- * processes with the C_PROC_KLOG capability are allowed to use this system call. Processes not
- * assigned this capability can consider this system call a NOOP one.
- * @param level Severity of the log message, see @ref LogLevel for more details.
- * @param msg The message to write to the kernel logs. Must not be NULL.
- * @sa LogLevel
- */
-[[gnu::nonnull, deprecated("_DWklog is no longer available as a system call as the task of logging "
-                           "messages is left up to userland")]]
-void _cdecl _DWklog(LogLevel level, const char *msg);
 
 /**
  * @brief _DWRequestPorts system call (#4) wrapper.
