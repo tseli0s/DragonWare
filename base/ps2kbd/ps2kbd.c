@@ -103,12 +103,8 @@ static Status Perform8042SelfTest(void) {
         Byte result = i8042Read();
 
         /* Only 0x55 is considered a pass value, any other value is an error */
-        if (result != 0x55) {
-#ifdef DRAGONWARE_DEBUG_MODE
-                _DWklog(LOG_ERROR, "i8042 controller self test failed (result != 0x55)!");
-#endif /* DRAGONWARE_DEBUG_MODE */
+        if (result != 0x55)
                 return STATUS_BAD;
-        }
         return STATUS_OK;
 }
 
@@ -116,7 +112,6 @@ static Status Perform8042SelfTest(void) {
  * @brief Attempts to detect the presence of an i8042 controller in the system.
  * @returns STATUS_OK if the controller is present, STATUS_BAD if it could not be detected or/and is
  * faulty.
- * @note This also logs messages in the kernel log buffer.
  */
 static Status Probe8042Controller(void) {
         /* DragonWare doesn't support ACPI, so we'll have to test the old fashioned way. */
@@ -160,18 +155,12 @@ static Status Probe8042Controller(void) {
          * configuration we just did */
         i8042WriteData(PS2_RESET_EVERYTHING);
         Byte response = i8042Read();
-        if (response != 0xFA) {
-                _DWklog(LOG_DEBUG, "Keyboard did not ACK reset request");
+        if (response != 0xFA)
                 return STATUS_BAD;
-        }
 
         Byte pass = i8042Read();
-        if (pass != 0xAA) {
-#ifdef DRAGONWARE_DEBUG_MODE
-                _DWklog(LOG_ERROR, "Keyboard failed reset self-test.");
-#endif
+        if (pass != 0xAA)
                 return STATUS_BAD;
-        }
 
         return STATUS_OK;
 }
@@ -183,10 +172,8 @@ int main(void) {
         u16 ports_needed[] = {PS2_PORT_STATUS, PS2_PORT_DATA};
         if (_DWRequestPorts(ports_needed, 2) != STATUS_OK) return -1;
 
-        if (Probe8042Controller() != STATUS_OK) {
-                _DWklog(LOG_ERROR, "Unable to probe i8042 controller. Keyboard will be disabled.");
+        if (Probe8042Controller() != STATUS_OK)
                 return -0xDD;
-        }
 
         i8042WriteData(PS2_ENABLE_SCANNING);
 

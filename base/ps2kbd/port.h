@@ -59,13 +59,8 @@ static inline void FlushControllerData(void) {
  * cleared. A shortcut for WaitForInputBuffer and outb() synchronization.
  */
 static inline void i8042Write(Byte value) {
-        if (WaitForInputBuffer() != STATUS_OK) {
-#ifdef DRAGONWARE_DEBUG_MODE
-                _DWklog(LOG_ERROR,
-                        "i8042 input buffer timeout during i8042Write(), not submitting write.");
-#endif /* DRAGONWARE_DEBUG_MODE */
+        if (WaitForInputBuffer() != STATUS_OK)
                 return;
-        }
         outb(PS2_PORT_COMMAND, value);
 }
 
@@ -74,14 +69,8 @@ static inline void i8042Write(Byte value) {
  * Same as @ref i8042Write but uses a different port.
  */
 static inline void i8042WriteData(Byte value) {
-        if (WaitForInputBuffer() != STATUS_OK) {
-#ifdef DRAGONWARE_DEBUG_MODE
-                _DWklog(LOG_ERROR,
-                        "i8042 input buffer timeout during i8042WriteData(), not submitting "
-                        "write.");
-#endif /* DRAGONWARE_DEBUG_MODE */
+        if (WaitForInputBuffer() != STATUS_OK)
                 return;
-        }
         outb(PS2_PORT_DATA, value);
 }
 
@@ -90,12 +79,7 @@ static inline void i8042WriteData(Byte value) {
  * the controller verifies that the output buffer is full.
  */
 static inline Byte i8042Read(void) {
-        if (WaitForOutputBuffer() != STATUS_OK) {
-#ifdef DRAGONWARE_DEBUG_MODE
-                _DWklog(LOG_ERROR,
-                        "i8042 output buffer timeout during i8042Write(), returning 0x00.");
-#endif /* DRAGONWARE_DEBUG_MODE */
+        if (WaitForOutputBuffer() != STATUS_OK)
                 return 0x00;
-        }
         return inb(PS2_PORT_DATA);
 }
