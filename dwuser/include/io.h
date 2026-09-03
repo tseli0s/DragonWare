@@ -46,3 +46,18 @@ static inline u32 inl(u16 port) {
         __asm__ volatile("inl %1, %0" : "=a"(ret) : "Nd"(port));
         return ret;
 }
+
+[[gnu::always_inline]]
+static inline void insb(u16 port, Byte *out) {
+        __asm__ volatile("insb" : "+D"(out) : "d"(port) : "memory");
+}
+
+[[gnu::always_inline]]
+static inline void insw(u16 port, Word *out) {
+        __asm__ volatile("insw" : "+D"(out) : "d"(port) : "memory");
+}
+
+[[gnu::always_inline]]
+static inline void insl(u16 port, DoubleWord *out) {
+        __asm__ volatile("insl" : "+D"(out) : "d"(port) : "memory");
+}
