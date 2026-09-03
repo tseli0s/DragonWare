@@ -93,18 +93,6 @@ typedef enum _Status {
 #define KSUCCESS(s) ((Status)(s) == STATUS_OK)
 #define KFAILED(s)  ((Status)(s) != STATUS_OK)
 
-/**
- * @brief Logging severity levels reexported from the kernel for the _DWklog system call (#3)
- * @details Used to classify log output by importance. Higher values indicate
- * more severe conditions.
- */
-typedef enum {
-        LOG_DEBUG   = 0, /**< Debug-level messages (verbose, for development). */
-        LOG_INFO    = 1, /**< Informational messages. */
-        LOG_WARNING = 2, /**< Warning messages (non-fatal issues). */
-        LOG_ERROR   = 3, /**< Error messages (fatal or critical issues). */
-} LogLevel;
-
 DW_END_DECLS
 
 #endif /* _KERNEL_TYPES_H */

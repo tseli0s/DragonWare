@@ -55,13 +55,6 @@ static void SystemIdentifySyscall(SystemIdentify *save) {
         (void)CopyToUser(save, &data, sizeof(SystemIdentify));
 }
 
-static void _DWklog(int level, const char *msg) {
-        char buf[LOG_MAXBUF];
-        ZeroMemory(buf);
-        if (CopyFromUser(buf, msg, strnlen(msg, LOG_MAXBUF)) != 0) return;
-        klog((LogLevel)level, "%s", buf);
-}
-
 static Status _DWRequestPorts(const u16 *port_list, Size list_size) {
         Process *current = GetCurrentExecutionThread()->owner;
         if (!(current->flags & PROC_C_IOPL))
@@ -104,8 +97,9 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                 case SYSCALL_YIELD:
                         YieldCurrentThread();
                         break;
-                case SYSCALL_KLOG:
-                        _DWklog((int)regs->ebx, (const char *)regs->esi);
+                case SYSCALL_SYSTEM_QUERY:
+                        ReturnFromSystemCall(regs, _DWSystemQuery, (SystemQuery)regs->ebx,
+                                             (void *)regs->esi);
                         break;
                 case SYSCALL_REQUEST_PORTS: {
                         ReturnFromSystemCall(regs, _DWRequestPorts, (u16 *)regs->ebx,
@@ -138,10 +132,6 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                 case SYSCALL_TRANSLATE_HANDLE:
                         ReturnFromSystemCall(regs, _DWTranslateHandle, (ProcessID)regs->ebx,
                                              (int)regs->esi, (int *)regs->edi);
-                        break;
-                case SYSCALL_SYSTEM_QUERY:
-                        ReturnFromSystemCall(regs, _DWSystemQuery, (SystemQuery)regs->ebx,
-                                             (void *)regs->esi);
                         break;
                 default:
                         regs->eax = (u32)STATUS_BAD_SYSCALL;

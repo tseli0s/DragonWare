@@ -14,7 +14,7 @@
 #define SYSCALL_IDENTIFY         (0)
 #define SYSCALL_EXIT             (1)
 #define SYSCALL_YIELD            (2)
-#define SYSCALL_KLOG             (3)
+#define SYSCALL_SYSTEM_QUERY     (3)
 #define SYSCALL_REQUEST_PORTS    (4) /* Replaced the old _DWRaiseIOPL syscall */
 #define SYSCALL_SEND             (5)
 #define SYSCALL_RECEIVE          (6)
@@ -23,7 +23,6 @@
 #define SYSCALL_INVOKE_OBJECT    (9)
 #define SYSCALL_DELETE_OBJECT    (10)
 #define SYSCALL_TRANSLATE_HANDLE (11)
-#define SYSCALL_SYSTEM_QUERY     (12)
 
 /* Only define those for the DragonWare kernel */
 #if __DRAGONWARE_SYS__

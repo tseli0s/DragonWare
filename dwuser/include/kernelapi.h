@@ -15,7 +15,7 @@
 #define SYSCALL_IDENTIFY         (0)
 #define SYSCALL_EXIT             (1)
 #define SYSCALL_YIELD            (2)
-#define SYSCALL_KLOG             (3)
+#define SYSCALL_SYSTEM_QUERY     (3)
 #define SYSCALL_REQUEST_PORTS    (4)
 #define SYSCALL_SEND             (5)
 #define SYSCALL_RECEIVE          (6)
@@ -24,7 +24,6 @@
 #define SYSCALL_INVOKE_OBJECT    (9)
 #define SYSCALL_DELETE_OBJECT    (10)
 #define SYSCALL_TRANSLATE_HANDLE (11)
-#define SYSCALL_SYSTEM_QUERY     (12)
 
 #include "cabi.h"
 #include "cppsupport.h"
@@ -205,16 +204,16 @@ void _cdecl noreturn _DWExit(void);
 void _cdecl _DWYield(void);
 
 /**
- * @brief _DWklog system call (#3) wrapper.
- * @details This will copy @p msg into the kernel log buffer, classifying it by @p level. Only
- * processes with the C_PROC_KLOG capability are allowed to use this system call. Processes not
- * assigned this capability can consider this system call a NOOP one.
- * @param level Severity of the log message, see @ref LogLevel for more details.
- * @param msg The message to write to the kernel logs. Must not be NULL.
- * @sa LogLevel
+ * @brief Queries a system value @p key and returns the kernel-configured value for it. If extra
+ * data needs to be copied, it is copied to the memory address pointed to by @p store (Currently
+ * unused as of v0.0.2). (System call #3)
+ * @param key The system value to query. See @ref SystemQuery
+ * @param[out] store Pointer to memory where extra data will be copied, if needed, otherwise
+ * ignored.
+ * @returns The value of @p key as a system value upon the time of the call.
+ * @since v0.0.2
  */
-[[gnu::nonnull]]
-void _cdecl _DWklog(LogLevel level, const char *msg);
+int _cdecl _DWSystemQuery(SystemQuery key, void *store);
 
 /**
  * @brief _DWRequestPorts system call (#4) wrapper.
@@ -319,17 +318,6 @@ void _DWDeleteObject(int handle);
  * free slots to store the handle to. STATUS_BAD if the copy to @p save failed.
  */
 Status _DWTranslateHandle(ProcessID process_id, int handle, int *save);
-
-/**
- * @brief Queries a system value @p key and returns the kernel-configured value for it. If extra
- * data needs to be copied, it is copied to the memory address pointed to by @p store (Currently
- * unused as of v0.0.2)
- * @param key The system value to query. See @ref SystemQuery
- * @param[out] store Pointer to memory where extra data will be copied, if needed, otherwise
- * ignored.
- * @returns The value of @p key as a system value upon the time of the call.
- */
-int _DWSystemQuery(SystemQuery key, void *store);
 
 /**
  * @brief Returns a string describing the meaning of @p status_code
