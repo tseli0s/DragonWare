@@ -22,6 +22,11 @@ void _cdecl noreturn _DWExit(void) {
 
 void _cdecl _DWYield(void) { __make_syscall_ia32_0param(SYSCALL_YIELD); }
 
+int _cdecl _DWSystemQuery(SystemQuery key, void *store) {
+        return (int)__make_syscall_ia32_2param_reti32(SYSCALL_SYSTEM_QUERY, (uint32_t)key,
+                                                      (uint32_t)store);
+}
+
 Status _cdecl _DWRequestPorts(const u16 *port_list, Size port_list_size) {
         return (Status)__make_syscall_ia32_2param_reti32(SYSCALL_REQUEST_PORTS, (uint32_t)port_list,
                                                          (uint32_t)port_list_size);
@@ -55,9 +60,4 @@ void _DWDeleteObject(int handle) { __make_syscall_ia32_1param(SYSCALL_DELETE_OBJ
 Status _DWTranslateHandle(ProcessID process_id, int handle, int *save) {
         return __make_syscall_ia32_3param_reti32(SYSCALL_TRANSLATE_HANDLE, (uint32_t)process_id,
                                                  (uint32_t)handle, (uint32_t)save);
-}
-
-int _DWSystemQuery(SystemQuery key, void *store) {
-        return (int)__make_syscall_ia32_2param_reti32(SYSCALL_SYSTEM_QUERY, (uint32_t)key,
-                                                      (uint32_t)store);
 }

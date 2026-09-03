@@ -97,6 +97,10 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                 case SYSCALL_YIELD:
                         YieldCurrentThread();
                         break;
+                case SYSCALL_SYSTEM_QUERY:
+                        ReturnFromSystemCall(regs, _DWSystemQuery, (SystemQuery)regs->ebx,
+                                             (void *)regs->esi);
+                        break;
                 case SYSCALL_REQUEST_PORTS: {
                         ReturnFromSystemCall(regs, _DWRequestPorts, (u16 *)regs->ebx,
                                              (Size)regs->esi);
@@ -128,10 +132,6 @@ void DragonWareSyscall(SystemCallFrame *regs) {
                 case SYSCALL_TRANSLATE_HANDLE:
                         ReturnFromSystemCall(regs, _DWTranslateHandle, (ProcessID)regs->ebx,
                                              (int)regs->esi, (int *)regs->edi);
-                        break;
-                case SYSCALL_SYSTEM_QUERY:
-                        ReturnFromSystemCall(regs, _DWSystemQuery, (SystemQuery)regs->ebx,
-                                             (void *)regs->esi);
                         break;
                 default:
                         regs->eax = (u32)STATUS_BAD_SYSCALL;
