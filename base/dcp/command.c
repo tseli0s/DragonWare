@@ -17,8 +17,6 @@
 /* Helper only because I am too lazy */
 #define STREQUAL(_a, _b) (strcmp(_a, _b) == 0)
 
-static inline Bool hasspace(const char *str) { return (strchr(str, ' ') != NullPointer); }
-
 static void PrintHelp(void) {
         puts("List of builtin commands:");
         puts("* 'help' - Prints this helper");
