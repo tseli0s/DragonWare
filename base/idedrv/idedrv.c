@@ -78,13 +78,13 @@ static void listener(void *data) {
         Message m;
         while (true) {
                 if (ReceiveMessage(h, &m) != STATUS_OK) continue;
-
                 if (m.header.protocol != IDEDRV_PROTOCOL_V0) continue;
+
+                /* ignoring request as we have no way to report back status */
+                if (m.header.reply_handle < 0) continue;
+
                 switch (m.header.type) {
                         case IDEDRV_READ_SECTOR: {
-                                /* ignoring request as we have no way to report back status */
-                                if (m.header.reply_handle < 0) continue;
-
                                 IDEDRVRequest   req;
                                 IDEDRVReplyData reply_data = {
                                         IDEDRV_SUCCESS,
@@ -107,10 +107,10 @@ static void listener(void *data) {
                                                                 (u32)req.lba, ((void *)base));
 
                                 DeleteObject(req.shared_section);
-                                m.header.payload_length = sizeof(IDEDRVReplyData);
-                                memcpy(m.payload.raw, &reply_data, sizeof(IDEDRVReplyData));
-
                         sendmsg:
+                                memcpy(m.payload.raw, &reply_data, sizeof(IDEDRVReplyData));
+                                m.header.payload_length = sizeof(IDEDRVReplyData);
+
                                 if (SendMessage(m.header.reply_handle, &m,
                                                 sizeof(MessageHeader) + sizeof(IDEDRVReplyData)) !=
                                     STATUS_OK) {
@@ -120,11 +120,45 @@ static void listener(void *data) {
                                 _DWYield();
                                 break;
                         }
-                        case IDEDRV_WRITE_SECTOR:
-                        default: {
+                        case IDEDRV_WRITE_SECTOR: {
+                                IDEDRVRequest   req;
+                                IDEDRVReplyData reply_data = {
+                                        IDEDRV_SUCCESS,
+                                };
+                                memcpy(&req, m.payload.raw, sizeof(IDEDRVRequest));
+                                if (_DWTranslateHandle(m.header.sender, req.shared_section,
+                                                       &req.shared_section) != STATUS_OK) {
+                                        reply_data.reply = IDEDRV_INVALID_HANDLE;
+                                        goto sendmsg2;
+                                }
+
+                                uintptr_t base = 0;
+                                if (InvokeObject(req.shared_section, SECTION_MAP, &base) !=
+                                    STATUS_OK) {
+                                        reply_data.reply = IDEDRV_OUT_OF_MEMORY;
+                                        goto sendmsg2;
+                                }
+
+                                reply_data.reply = WriteToDisk(irq, irq_descr, whoami, req.master,
+                                                                (u32)req.lba, ((void *)base));
+
+                                DeleteObject(req.shared_section);
+                        sendmsg2:
+                                memcpy(m.payload.raw, &reply_data, sizeof(IDEDRVReplyData));
+                                m.header.payload_length = sizeof(IDEDRVReplyData);
+
+                                if (SendMessage(m.header.reply_handle, &m,
+                                                sizeof(MessageHeader) + sizeof(IDEDRVReplyData)) !=
+                                    STATUS_OK) {
+                                        puts("idedrv: unable to send message reply");
+                                        continue;
+                                }
                                 _DWYield();
                                 break;
                         }
+                        default:
+                                _DWYield();
+                                break;
                 }
         }
 fail:
