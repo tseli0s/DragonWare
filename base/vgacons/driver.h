@@ -23,8 +23,8 @@
 
 /** @brief Helper to write a single message about the console status. */
 #define LogStatus(msg)                          \
-        VGAPrintString("[ CONSOLE ] " msg "\n", \
-                       VGAGetColorAttribute(VGATEXT_COLOR_WHITE, VGATEXT_COLOR_BLACK));
+        VGAPrintString("console: " msg "\n", \
+                       VGAGetColorAttribute(VGATEXT_COLOR_LIGHT_GREY, VGATEXT_COLOR_BLACK));
 
 #include <io.h>
 #include <kerneltypes.h>
