@@ -15,6 +15,7 @@
 #include <kerneltypes.h>
 #include <message.h>
 #include <object.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #include "ctrl.h"
@@ -63,8 +64,18 @@ static inline void RequestRead(int bus) {
         outb(port, ATA_CMD_READ);
 }
 
-IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
-                               int master, u32 lba, void *buf) {
+static inline void RequestWrite(int bus) {
+        u16 port = (bus == 0) ? ATA_COMMAND_PRIMARY : ATA_COMMAND_SECONDARY;
+        outb(port, ATA_CMD_WRITE);
+}
+
+static inline void FlushWriteCache(int bus) {
+        u16 port = (bus == 0) ? ATA_COMMAND_PRIMARY : ATA_COMMAND_SECONDARY;
+        outb(port, ATA_CMD_CACHE_FLUSH);
+}
+
+/* Apparently, reading and writing to an ATA drive is very similar code wise... */
+static void PrepareDriveForRW(int bus, int master, u32 lba) {
         lba &= 0x0FFFFFFF;
 
         /*
@@ -79,36 +90,71 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr
 
         SendSectorCount(bus);
         SubmitLBA(bus, lba);
+}
 
+IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
+                               int master, u32 lba, void *buf) {
+        PrepareDriveForRW(bus, master, lba);
         RequestRead(bus);
 
         Bool    anything_our_way = false;
         Message m;
         while (!anything_our_way) {
                 if (ReceiveMessage(irq_handle, &m) != STATUS_OK) continue;
-        
+
                 if (m.header.sender != KERNEL_SENDER) {
-                        puts("idedrv: received message on IRQ bound port but sender is not KERNEL_SENDER, ignoring");
+                        puts("idedrv: received message on IRQ bound port but sender is not "
+                             "KERNEL_SENDER, ignoring");
                         _DWYield();
                         continue;
                 }
-        
+
                 anything_our_way = true;
                 InvokeObject(irq_handle, PORT_ACK_IRQ, &irq_descr);
-        
+
                 if (CheckForError(bus)) {
                         printf("idedrv: drive error after READ command\n");
                         return IDEDRV_BUG_CHECK;
                 }
-        
                 u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
                 u16 *out  = buf;
-                for (int i = 0; i < 256; i++) {
-                        out[i] = inw(port);
-                }
+                for (int i = 0; i < 256; i++) out[i] = inw(port);
         }
 
         Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the next
                            command */
+        return IDEDRV_SUCCESS;
+}
+
+/*
+ * FIXME: This is a pure polling driver. I tried doing it using interrupts like ReadFromDisk()
+ * above, but it blocked and no interrupts came. So for now, polling and wasting CPU cycles it is,
+ * until I grab a copy of the specification and read what happens.
+ */
+IDEDRVStatusReply WriteToDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
+                              int master, u32 lba, void *buf) {
+        UNUSED(irq_handle);
+        UNUSED(irq_descr);
+
+        WaitBSYClear(bus);
+        PrepareDriveForRW(bus, master, lba);
+        RequestWrite(bus);
+
+        u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
+        u16 *src  = buf;
+        for (int i = 0; i < 256; i++) {
+                outsw(port, src[i]);
+                /* "There must be a tiny delay between each OUTSW output uint16_t. A jmp $+2 size of
+                 * delay.". -- https://wiki.osdev.org/ATA_PIO_Mode
+                 *
+                 * Um, I hope this is good enough :P
+                 */
+                __asm__ volatile(
+                        "jmp 1f\n"
+                        "1: nop\n");
+        }
+        Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the
+                           next command */
+        FlushWriteCache(bus);
         return IDEDRV_SUCCESS;
 }
