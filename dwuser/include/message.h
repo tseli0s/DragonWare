@@ -14,6 +14,14 @@
 #include "object.h"
 
 /**
+ * @brief Calculates the size of a single IPC message by adding together the message header size and the payload size specified.
+ * @param[in] m The message to calculate the size of.
+ * @note @p m must not be a pointer to a message, but the message itself.
+ * @since v0.0.2
+ */
+#define SIZE_OF_MESSAGE(m) ((sizeof((m).header)) + (m).header.payload_length)
+
+/**
  * @brief _DWIPCSend system call (#5) wrapper
  * @details This routine is going to store a message and wake the owner of the target handle to
  * handle it. It is explicitly asynchronous and does not guarantee that the message will be
