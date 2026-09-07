@@ -12,6 +12,8 @@
 #define ATA_SECTOR_SIZE         (512)
 #define ATA_CMD_IDENTIFY        (0xEC)
 #define ATA_CMD_READ            (0x20)
+#define ATA_CMD_WRITE           (0x30)
+#define ATA_CMD_CACHE_FLUSH     (0xE7)
 
 #define ATA_PRIMARY_BASE        (0x1F0)
 #define ATA_SECONDARY_BASE      (0x170)
