@@ -49,7 +49,6 @@ typedef enum _DeviceObjectOp : unsigned long {
 typedef enum _PortObjectOp : unsigned long {
         PORT_CREATE,   /** << Create a new port */
         PORT_OPEN,     /** << Open an existing global port */
-        PORT_WAIT_AT,  /** << Wait for messages to arrive to this port  */
         PORT_BIND_IRQ, /** << Wait for hardware events (IRQs) at this port */
         PORT_ACK_IRQ,  /** << Acknowledge an IRQ that was previously fired */
 } PortObjectOp;
@@ -58,7 +57,6 @@ typedef enum _PortObjectOp : unsigned long {
 typedef enum _SectionObjectOp : unsigned long {
         SECTION_REQUEST, /** << Request the creation of a new section */
         SECTION_MAP,     /** << Map the section in the address space */
-        SECTION_SHARE,   /** << Share the section's memory with another process */
         SECTION_UNMAP,   /** << Unmap the section pointed to, from the current address space  */
 } SectionObjectOp;
 

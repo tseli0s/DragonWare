@@ -159,10 +159,6 @@ static Status HandlePortObjectRequest(int handle, Object *obj, PortObjectOp op, 
                         obj->refcnt++;
                         break;
                 }
-                case PORT_WAIT_AT: {
-                        /* TODO */
-                        break;
-                }
                 case PORT_BIND_IRQ: {
                         if (!(current->owner->flags & PROC_C_SERVER)) return STATUS_UNSUPPORTED;
                         IRQBindingDescriptor descr;
@@ -218,8 +214,6 @@ static Status HandleSectionObjectRequest(int handle, Object *obj, SectionObjectO
                         if (!base) return STATUS_BAD;
                         *(uintptr_t *)arg = base;
                         return STATUS_OK;
-                case SECTION_SHARE:
-                        return STATUS_UNSUPPORTED; /* TODO */
                 default:
                         return STATUS_BAD_ARGUMENT;
         }
