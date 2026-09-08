@@ -12,6 +12,7 @@
 #include <kerneltypes.h>
 #include <message.h>
 #include <object.h>
+#include <object/thread_object.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +27,6 @@
 static struct __data {
         int whoami;
 } thread_data[2];
-static int n_thread_data = 0;
 
 static inline void die(const char *msg) {
         printf("idedrv: fatal error: %s\n", msg);
@@ -140,7 +140,7 @@ static void listener(void *data) {
                                 }
 
                                 reply_data.reply = WriteToDisk(irq, irq_descr, whoami, req.master,
-                                                                (u32)req.lba, ((void *)base));
+                                                               (u32)req.lba, ((void *)base));
 
                                 DeleteObject(req.shared_section);
                         sendmsg2:
@@ -180,7 +180,7 @@ int main(void) {
         if (_DWRequestPorts(ata_ports, sizeof(ata_ports) / sizeof(ata_ports[0])) != STATUS_OK)
                 die("Cannot access ATA/IDE I/O ports, permission denied from the kernel.");
 
-        int n = 0;
+        int n        = 0;
         for (int bus = 0; bus <= 1; bus++) {
                 for (int master = 0; master <= 1; master++) {
                         if (IdentifyDrive(bus, master) != STATUS_OK)
@@ -196,37 +196,15 @@ int main(void) {
         }
         if (!n) die("No connected ATA/IDE drives, unloading idedrv driver");
 
-        Handle t1 = CreateObject(NullPointer, OBJ_THREAD, 0);
-        Handle t2 = CreateObject(NullPointer, OBJ_THREAD, 0);
-        if (t1 < 0 || t2 < 0) die("Cannot allocate objects for IRQ14/15 rerouting");
-
         /* yes. i REALLY need to implement malloc here. */
-        thread_data[0] = (struct __data){.whoami = 0};
-        thread_data[1] = (struct __data){.whoami = 1};
-
         for (int i = 0; i <= 1; i++) {
-                Handle                t       = (!i) ? t1 : t2;
-                Handle                section = CreateObject(NullPointer, OBJ_SECTION, 0);
-                UserSectionDescriptor sectreq = {.needed_pages = 4,
-                                                 .perms = SECTION_CACHEABLE | SECTION_WRITEABLE};
-                uintptr_t             stackaddr;
-                if (section < 0) die("Cannot allocate thread stack");
-                if (InvokeObject(section, SECTION_REQUEST, &sectreq) != STATUS_OK)
-                        die("Kernel refused section request");
-                if (InvokeObject(section, SECTION_MAP, &stackaddr) != STATUS_OK)
-                        die("Cannot map new thread stack");
-
-                UserThreadData descr = {
-                        .entry      = listener,
-                        .stack      = (void *)(stackaddr +
-                                          (sectreq.needed_pages *
-                                           (Size)_DWSystemQuery(SQ_PAGE_SIZE, NullPointer))),
-                        .extra_data = &thread_data[n_thread_data]};
-                if (InvokeObject(t, THREAD_CREATE, &descr) != STATUS_OK)
-                        die("can't create new thread");
-                if (InvokeObject(t, THREAD_RUN, NullPointer) != STATUS_OK)
-                        die("can't run new thread");
-                n_thread_data++;
+                thread_data[i] = (struct __data){.whoami = i};
+                Status s = SpawnThread(listener, &thread_data[i]);
+                if (s != STATUS_OK) {
+                        printf("idedrv: Failed to spawn listener thread for bus %d: Error reported "
+                               "from SpawnThread() is \"%s\"\n",
+                               StringifyStatus(s));
+                }
         }
 
         /* The other listener threads do the rest of the job, technically we should block entirely
