@@ -11,10 +11,12 @@
 #include <kerneltypes.h>
 #include <object.h>
 #include <object/section_object.h>
+#include <stdint.h>
 
 #define STACK_PAGES_NEEDED (4)
 
 Status SpawnThread(void (*__fn)(void*), void *data) {
+        const int pagesize = _DWSystemQuery(SQ_PAGE_SIZE, NullPointer);
         void *stack;
         Handle stackobj = RequestMemorySection(STACK_PAGES_NEEDED, SECTION_WRITEABLE | SECTION_SHAREABLE);
         Handle thread = -1;
@@ -24,7 +26,7 @@ Status SpawnThread(void (*__fn)(void*), void *data) {
 
         UserThreadData thread_data = {
                 .entry = __fn,
-                .stack = stack,
+                .stack = (void*)(((uintptr_t)stack) + (pagesize * STACK_PAGES_NEEDED)),
                 .extra_data = data
         };
 
