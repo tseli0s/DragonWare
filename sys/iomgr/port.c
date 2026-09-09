@@ -32,6 +32,11 @@ Status CreatePort(const char *name, Thread *owner, Port **portsave) {
         Bool is_global_port = true;
         if (!name) is_global_port = false;
 
+        /* Quick and dirty way to avoid duplicates, but because a linked list traversal takes time,
+         * this has the disadvantage of slowing down the system a little bit more every time a new
+         * global port is added. */
+        if (is_global_port && FindPortByName(name) != NullPointer) return STATUS_UNSUPPORTED;
+
         Port *port = kmalloc(sizeof(Port));
         if (!port) return STATUS_OUT_OF_MEMORY;
 
