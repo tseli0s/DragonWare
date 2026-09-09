@@ -18,8 +18,11 @@
 #include <mmutils.h>
 #include <panic.h>
 
+#ifdef __i386__
+#include "ddk/ia32/irq.h"
 #include "ddk/ia32/paging.h"
 #include "ddk/ia32/vmm.h"
+#endif /* __i386__ */
 #include "iomgr/object.h"
 #include "mem/frame.h"
 #include "sched/schedule.h"
@@ -277,7 +280,8 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
 }
 
 Status DeleteProcess(Process *p) {
-        /* Unlink the node */
+        DeleteProcessFromIRQRelay(p);
+
         if (p->prev)
                 p->prev->next = p->next;
         else
