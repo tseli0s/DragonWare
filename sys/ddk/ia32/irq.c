@@ -20,6 +20,7 @@
 #include "pic.h"
 #include "sched/schedule.h"
 #include "task/message.h"
+#include "task/process.h"
 #include "task/task.h"
 
 /**
@@ -135,4 +136,13 @@ void IRQInit(void) {
         ZeroMemory(IRQRelayCallback);
         for (int i = 0; i < MAX_IRQ; i++) IRQHandlerCallbacks[i] = NullPointer;
         InitializePIC();
+}
+
+void DeleteProcessFromIRQRelay(Process* p) {
+        for (Size i = 0; i < arraysize(IRQRelayCallback); i++) {
+                IRQRelayHandler handler = IRQRelayCallback[i];
+                if (!handler.is_active) continue;
+                if (handler.handler->owner == p)
+                        kzeromem(&IRQRelayCallback[i], sizeof(IRQRelayHandler));
+        }
 }

@@ -76,3 +76,12 @@ void IRQInit(void);
 
 /** @brief Invoked whenever an IRQ fires to choose the correct handler and send an EOI signal. */
 void IRQHandlerCallback(InterruptStackFrame* r);
+
+/**
+ * @brief Remove a process from any IRQs it may be handling and free up the IRQs (eg. Because that
+ * process exited)
+ * @param[in] p Process to remove. Must not be @ref NullPointer.
+ * @since v0.0.2
+ */
+[[gnu::nonnull]]
+void DeleteProcessFromIRQRelay(Process* p);
