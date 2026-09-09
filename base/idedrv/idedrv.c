@@ -180,7 +180,7 @@ int main(void) {
         if (_DWRequestPorts(ata_ports, sizeof(ata_ports) / sizeof(ata_ports[0])) != STATUS_OK)
                 die("Cannot access ATA/IDE I/O ports, permission denied from the kernel.");
 
-        int n        = 0;
+        int n = 0;
         for (int bus = 0; bus <= 1; bus++) {
                 for (int master = 0; master <= 1; master++) {
                         if (IdentifyDrive(bus, master) != STATUS_OK)
@@ -199,7 +199,7 @@ int main(void) {
         /* yes. i REALLY need to implement malloc here. */
         for (int i = 0; i <= 1; i++) {
                 thread_data[i] = (struct __data){.whoami = i};
-                Status s = SpawnThread(listener, &thread_data[i]);
+                Status s       = SpawnThread(listener, &thread_data[i]);
                 if (s != STATUS_OK) {
                         printf("idedrv: Failed to spawn listener thread for bus %d: Error reported "
                                "from SpawnThread() is \"%s\"\n",
