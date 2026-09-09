@@ -116,6 +116,13 @@ _SystemBootstrapRoutine:
         or      eax, 0x80010020 ; PG | PE | WP | NE
         mov     cr0, eax
 
+        ; Workaround for Ventoy: CR4 is set to 0x688 when DragonWare is loaded (maybe Ventoy needs some other
+        ; bits in CR4 to be set), but we don't want to turn on any bits in CR4 until we do a feature detection
+        ; later on. So explicitly clear all bits to avoid enabling features we don't know if they're supported.
+        ; I will also submit a patch upstream and see if it is accepted.
+        xor     eax,    eax
+        mov     cr4,    eax
+
         lea     ecx, [_PrepareKernelEntry]
         jmp     ecx
 
