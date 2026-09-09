@@ -26,6 +26,7 @@
 
 #include <kernelapi.h>
 #include <kerneltypes.h>
+#include <macros.h>
 #include <message.h>
 #include <object.h>
 #include <string.h>
@@ -170,10 +171,8 @@ int main(void) {
          * PS2_PORT_COMMAND is the same as PS2_PORT_STATUS in this case so no reason to also specify
          * it */
         u16 ports_needed[] = {PS2_PORT_STATUS, PS2_PORT_DATA};
-        if (_DWRequestPorts(ports_needed, 2) != STATUS_OK) return -1;
-
-        if (Probe8042Controller() != STATUS_OK)
-                return -0xDD;
+        if (_DWRequestPorts(ports_needed, arraysize(ports_needed)) != STATUS_OK) return -1;
+        if (Probe8042Controller() != STATUS_OK) return -0xDD;
 
         i8042WriteData(PS2_ENABLE_SCANNING);
 
