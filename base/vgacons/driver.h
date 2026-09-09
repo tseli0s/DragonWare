@@ -22,7 +22,7 @@
 #define VGA_CONSOLE_VIRTUAL_ADDR ((void *)(0xA0000000))
 
 /** @brief Helper to write a single message about the console status. */
-#define LogStatus(msg)                          \
+#define LogStatus(msg)                       \
         VGAPrintString("console: " msg "\n", \
                        VGAGetColorAttribute(VGATEXT_COLOR_LIGHT_GREY, VGATEXT_COLOR_BLACK));
 
