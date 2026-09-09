@@ -29,6 +29,7 @@
 #include <macros.h>
 #include <message.h>
 #include <object.h>
+#include <object/port_object.h>
 #include <string.h>
 
 #include "io.h"
@@ -180,24 +181,14 @@ int main(void) {
         FlushControllerData();
 
         /* Only one keyboard is supported per session for now */
-        Handle irqline = CreateObject("KEYBOARD", OBJ_PORT, 0);
-
-        /* IRQ 1 is the PS/2 keyboard in PCs */
-        IRQBindingDescriptor bind_descriptor = {
-                .irq_no   = 1,
-                .reserved = 0,
-        };
-
-        if (InvokeObject(irqline, PORT_CREATE, NullPointer) != STATUS_OK) return -1;
-        if (InvokeObject(irqline, PORT_BIND_IRQ, &bind_descriptor)) return -1;
+        Handle irqline = CreatePort("KEYBOARD");
+        BindIRQ(irqline, 1);
 
         while (true) {
                 Message m;
                 ReceiveMessage(irqline, &m);
                 /* IRQ fired, we need to handle it. */
                 if (m.header.sender == KERNEL_SENDER) {
-                        if (InvokeObject(irqline, PORT_ACK_IRQ, &bind_descriptor) != STATUS_OK)
-                                continue;
                         u8   scancode = 0;
                         char c        = 0;
 
@@ -227,7 +218,7 @@ int main(void) {
                                 SendMessage(listener_handle, &keymsg,
                                             sizeof(keymsg.header) + keymsg.header.payload_length);
                         }
-
+                        AcknowledgeIRQ(irqline, 1);
                 } else {
                         if (m.header.protocol != KBD_PROTOCOL_V0) continue;
                         switch (m.header.type) {
