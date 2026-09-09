@@ -52,6 +52,7 @@ EnableSysenter:
 ; } SystemCallFrame;
 ; We construct it upon entry and then call the system call handler to handle the actual userland system call.
 _SysenterEntry:
+        pushf           ; Make sure userland doesn't have any important flags modified
         push    ecx     ; useresp
         push    edx     ; usereip (return address)
 
@@ -63,6 +64,7 @@ _SysenterEntry:
         push    esi
         push    ebx
 
+        cld                             ; Maybe the caller used the std instruction?
         push    esp                     ; Push the stack as the SystemCallFrame
         call    DragonWareSyscall       ; Call the system call handler
         add     esp,    4               ; Now discard the argument we pushed
@@ -99,5 +101,6 @@ _SysenterEntry:
 
         pop     edx                     ; Return address to drop back to
         pop     ecx                     ; User stack to switch to upon return
+        popf                            ; Restore userland eflags to make the transition seamless
         sti
         sysexit
