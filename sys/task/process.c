@@ -62,6 +62,7 @@ typedef struct _VirtualMap {
 static ProcessID process_id_counter = 1;
 static Process  *process_list       = NullPointer;
 
+[[gnu::pure]]
 static int FindFreeTmpMapSlot(void) {
         for (Size w = 0; w < TMPMAP_BITMAP_WORDS; ++w) {
                 if (tmpmap_bitmap[w] != 0xFFFFFFFF) {
@@ -83,11 +84,13 @@ static inline void MarkTmpMapFree(Size idx) {
         tmpmap_bitmap[idx / 32] &= ~(1u << (idx % 32));
 }
 
+[[gnu::pure]]
 static inline int TmpMapUsed(Size idx) {
         if (idx >= TMPMAP_MAX_PAGES) FatalError("index out of range");
         return (tmpmap_bitmap[idx / 32] & (1u << (idx % 32))) != 0;
 }
 
+[[gnu::const]]
 static inline uintptr_t TmpMapAddrFromIndex(Size idx) {
         return TEMPORARY_VIRT_MAPADDR - (idx * PAGE_SIZE);
 }
@@ -337,6 +340,7 @@ Status DeleteProcess(Process *p) {
 
 void SetProcessCapabilities(Process *process, u32 flags) { process->flags |= flags; }
 
+[[gnu::pure]]
 Process *FindProcessByID(ProcessID id) {
         if (unlikely(!process_list)) return NullPointer;
 
