@@ -15,20 +15,20 @@
 
 #define STACK_PAGES_NEEDED (4)
 
-Status SpawnThread(void (*__fn)(void*), void *data) {
+Status SpawnThread(void (*__fn)(void *), void *data) {
         const int pagesize = _DWSystemQuery(SQ_PAGE_SIZE, NullPointer);
-        void *stack;
-        Handle stackobj = RequestMemorySection(STACK_PAGES_NEEDED, SECTION_WRITEABLE | SECTION_SHAREABLE);
+        void     *stack;
+        Handle    stackobj =
+                RequestMemorySection(STACK_PAGES_NEEDED, SECTION_WRITEABLE | SECTION_SHAREABLE);
         Handle thread = -1;
         if (stackobj < 0) return STATUS_OUT_OF_MEMORY;
 
         if (MapMemorySection(stackobj, &stack) != STATUS_OK) goto bad_oom;
 
         UserThreadData thread_data = {
-                .entry = __fn,
-                .stack = (void*)(((uintptr_t)stack) + (pagesize * STACK_PAGES_NEEDED)),
-                .extra_data = data
-        };
+                .entry      = __fn,
+                .stack      = (void *)(((uintptr_t)stack) + (pagesize * STACK_PAGES_NEEDED)),
+                .extra_data = data};
 
         thread = CreateObject(NullPointer, OBJ_THREAD, 0);
         if (thread < 0) goto bad_oom;
@@ -36,7 +36,7 @@ Status SpawnThread(void (*__fn)(void*), void *data) {
         if (InvokeObject(thread, THREAD_CREATE, &thread_data) != STATUS_OK) goto bad_oom;
         if (InvokeObject(thread, THREAD_RUN, NullPointer) != STATUS_OK) goto bad_sched;
         return STATUS_OK;
-        
+
 bad_oom:
         if (thread >= 0) DeleteObject(thread);
         if (stackobj >= 0) DeleteObject(stackobj);

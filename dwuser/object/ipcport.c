@@ -14,9 +14,9 @@
 [[nodiscard(
         "Returned handle is a handle that references the port object and must not be discarded.")]]
 Handle CreatePort(const char *name) {
-        Handle port = CreateObject(NullPointer, OBJ_PORT, 0);
+        Handle port = CreateObject(name, OBJ_PORT, 0);
         if (port >= 0) {
-                if (InvokeObject(port, PORT_CREATE, (void *)name) != STATUS_OK)
+                if (InvokeObject(port, PORT_CREATE, NullPointer) != STATUS_OK)
                         goto bad;
                 else
                         return port;
@@ -31,13 +31,12 @@ Handle OpenPort(const char *name) {
         Handle port = CreateObject(NullPointer, OBJ_PORT, 0);
         if (port < 0) goto bad;
 
-        if (InvokeObject(port, PORT_OPEN, (void*)name) != STATUS_OK) goto bad;
+        if (InvokeObject(port, PORT_OPEN, (void *)name) != STATUS_OK) goto bad;
         return port;
 bad:
         if (port >= 0) DeleteObject(port);
         return -1;
 }
-
 
 Status IPCCall(Message *msgbuf, Handle send, Handle recv) {
         Status s1 = SendMessage(send, msgbuf, SIZE_OF_MESSAGE(*msgbuf));

@@ -16,11 +16,8 @@ Handle RequestMemorySection(u32 n_pages, SectionPermissions permissions) {
         Handle section_object = CreateObject(NullPointer, OBJ_SECTION, 0);
         if (section_object < 0) return section_object;
 
-        UserSectionDescriptor descriptor = {
-                .needed_pages = n_pages,
-                .perms = permissions
-        };
-        Status s = InvokeObject(section_object, SECTION_REQUEST, &descriptor);
+        UserSectionDescriptor descriptor = {.needed_pages = n_pages, .perms = permissions};
+        Status                s = InvokeObject(section_object, SECTION_REQUEST, &descriptor);
         if (s != STATUS_OK) goto bad;
         return section_object;
 bad:
@@ -30,7 +27,7 @@ bad:
 
 Status MapMemorySection(Handle section, void **base) {
         uintptr_t baseaddr;
-        Status s = InvokeObject(section, SECTION_MAP, &baseaddr);
-        if (s == STATUS_OK) *base = (void*)baseaddr;
+        Status    s = InvokeObject(section, SECTION_MAP, &baseaddr);
+        if (s == STATUS_OK) *base = (void *)baseaddr;
         return s;
 }
