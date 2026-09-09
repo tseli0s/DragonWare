@@ -105,8 +105,7 @@ static Status Perform8042SelfTest(void) {
         Byte result = i8042Read();
 
         /* Only 0x55 is considered a pass value, any other value is an error */
-        if (result != 0x55)
-                return STATUS_BAD;
+        if (result != 0x55) return STATUS_BAD;
         return STATUS_OK;
 }
 
@@ -157,12 +156,10 @@ static Status Probe8042Controller(void) {
          * configuration we just did */
         i8042WriteData(PS2_RESET_EVERYTHING);
         Byte response = i8042Read();
-        if (response != 0xFA)
-                return STATUS_BAD;
+        if (response != 0xFA) return STATUS_BAD;
 
         Byte pass = i8042Read();
-        if (pass != 0xAA)
-                return STATUS_BAD;
+        if (pass != 0xAA) return STATUS_BAD;
 
         return STATUS_OK;
 }
