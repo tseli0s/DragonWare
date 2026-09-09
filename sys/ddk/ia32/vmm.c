@@ -44,7 +44,7 @@ static inline void EnablePGEControlBit(void) {
                         : "eax", "memory");
 }
 
-[[gnu::hot]]
+[[gnu::hot, gnu::const]]
 static inline PageTableEntry *GetPageTableAt(u32 index) {
         if (unlikely(index >= MAX_PT_ENTRIES)) return NullPointer;
         return (PageTableEntry *)(((uintptr_t)PAGE_TABLE_BASE) + (index * PAGE_SIZE));
