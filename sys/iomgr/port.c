@@ -67,6 +67,7 @@ Status CreatePort(const char *name, Thread *owner, Port **portsave) {
         return STATUS_OK;
 }
 
+[[gnu::pure]]
 Port *FindPortByName(const char *name) {
         PortNode *current = port_list_head;
         while (current) {
