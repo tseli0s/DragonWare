@@ -13,18 +13,88 @@
 #include <ipc86.h>
 #include <kernelapi.h>
 #include <kerneltypes.h>
+#include <macros.h>
 #include <message.h>
 #include <object.h>
+#include <spinlock.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ctrl.h"
 #include "idedrv/protocol.h"
 #include "portdef.h"
 
-/* TODO: Synchronization and lock-free mechanisms here (the whole file), because apparently some
- * old drives can lock up if we do multiple things without synchronization and submit unrelated data
- * each time. Not a problem for the short term future, but we should address it. */
+typedef struct _CachedSector {
+        int  valid;
+        int  bus, master;
+        LBA  lba;
+        Byte data[512]; /* FIXME: Magic number here, have SECTOR_SIZE somewhere */
+} CachedSector;
+
+static Spinlock     cache_spinlock;
+static CachedSector cache[16]      = {0};
+static int          n_cache_stored = 0;
+
+/* Um maybe have a better name here idk */
+#define CACHE_ACCESSING_CODE(__spinlock, __LAMBDA__) \
+        do {                                         \
+                AcquireSpinlock(&(__spinlock));      \
+                __LAMBDA__                           \
+                ReleaseSpinlock(&(__spinlock));      \
+        } while (0)
+
+[[gnu::hot]]
+static void LoadCache(int bus, int master, LBA lba, Byte *data) {
+        CACHE_ACCESSING_CODE(cache_spinlock, {
+                cache[n_cache_stored].valid  = 1;
+                cache[n_cache_stored].bus    = bus;
+                cache[n_cache_stored].master = master;
+                cache[n_cache_stored].lba    = lba;
+                memcpy(cache[n_cache_stored].data, data, 512);
+
+                n_cache_stored++;
+                if ((unsigned)n_cache_stored >= arraysize(cache)) n_cache_stored = 0;
+        });
+}
+
+[[gnu::nonnull]]
+static Bool CheckCacheForSector(int bus, int master, LBA sector, int *pos) {
+        *pos       = -1;
+        Bool found = false;
+        CACHE_ACCESSING_CODE(cache_spinlock, {
+                for (int i = 0; i < (int)arraysize(cache); i++)
+                        if (cache[i].lba == sector && cache[i].bus == bus &&
+                            cache[i].master == master && cache[i].valid != 0) {
+                                *pos  = i;
+                                found = true;
+                                break;
+                        }
+        });
+        return found;
+}
+
+static void ReadFromCache(int index, void *buf) {
+        if (index < 0) return;
+        CACHE_ACCESSING_CODE(cache_spinlock, {
+                if (cache[index].valid) memcpy(buf, cache[index].data, 512);
+        });
+}
+
+static inline void InvalidateCache(int bus, int master, LBA sector) {
+        CACHE_ACCESSING_CODE(cache_spinlock, {
+                for (Size i = 0; i < arraysize(cache); i++)
+                        if (cache[i].lba == sector && cache[i].bus == bus &&
+                            cache[i].master == master) {
+                                memset(&cache[i], 0, sizeof(CachedSector));
+                        }
+        });
+}
+
+/* TODO: Synchronization and lock-free mechanisms here (the whole file), because apparently
+ * some old drives can lock up if we do multiple things without synchronization and submit
+ * unrelated data each time. Not a problem for the short term future, but we should address
+ * it. */
 
 static inline Bool CheckForError(int bus) {
         u16  port   = (bus == 0) ? ATA_STATUS_PRIMARY : ATA_STATUS_SECONDARY;
@@ -94,6 +164,13 @@ static void PrepareDriveForRW(int bus, int master, u32 lba) {
 
 IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
                                int master, u32 lba, void *buf) {
+        int pos;
+        CheckCacheForSector(bus, master, lba, &pos);
+        if (pos >= 0) {
+                ReadFromCache(pos, buf);
+                return IDEDRV_SUCCESS;
+        }
+
         PrepareDriveForRW(bus, master, lba);
         RequestRead(bus);
 
@@ -121,6 +198,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr
                 for (int i = 0; i < 256; i++) out[i] = inw(port);
         }
 
+        LoadCache(bus, master, lba, buf);
         Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the next
                            command */
         return IDEDRV_SUCCESS;
@@ -136,6 +214,7 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, IRQBindingDescriptor irq_descr,
         UNUSED(irq_handle);
         UNUSED(irq_descr);
 
+        DisableINTRQ(bus);
         WaitBSYClear(bus);
         PrepareDriveForRW(bus, master, lba);
         RequestWrite(bus);
@@ -143,7 +222,7 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, IRQBindingDescriptor irq_descr,
         u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
         u16 *src  = buf;
         for (int i = 0; i < 256; i++) {
-                outsw(port, src[i]);
+                outw(port, src[i]);
                 /* "There must be a tiny delay between each OUTSW output uint16_t. A jmp $+2 size of
                  * delay.". -- https://wiki.osdev.org/ATA_PIO_Mode
                  *
@@ -156,5 +235,10 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, IRQBindingDescriptor irq_descr,
         Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the
                            next command */
         FlushWriteCache(bus);
+        WaitBSYClear(bus);
+
+        EnableINTRQ(bus);
+
+        InvalidateCache(bus, master, lba);
         return IDEDRV_SUCCESS;
 }
