@@ -195,11 +195,9 @@ int main(void) {
                         while (inb(PS2_PORT_STATUS) & 0x01) {
                                 scancode = inb(PS2_PORT_DATA);
                                 c        = ScancodeToCharacter(ascii_table, scancode);
-                        }
+                                if (!c) continue;
+                                if (!listener || listener_handle < 0) continue;
 
-                        if (!listener || listener_handle < 0) continue;
-
-                        if (c) {
                                 Message keymsg;
                                 /* Bytes 2-3 should be zeroed out according to protocol, see
                                  * protocol.h */
