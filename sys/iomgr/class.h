@@ -32,7 +32,6 @@ typedef struct _FramebufferInformation {
 
 typedef struct _FramebufferDeviceOps {
         void                   (*WriteSinglePixel)(void *privatedata, Size x, Size y, int bw);
-        void                   (*Flush)(void *privatedata);
         void                   (*ClearScreen)(void *privatedata);
         FramebufferInformation (*GetFramebufferInformation)(void *privatedata);
 } FramebufferDeviceOps;

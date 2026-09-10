@@ -97,9 +97,6 @@ static void RenderGlyph(FramebufferState *state, Size x, Size y, Glyph *g) {
         }
 }
 
-/* In linear framebuffers with direct pixel plotting, we don't need that. */
-static void FlushFramebuffer(void *privatedata) { UnusedParameter(privatedata); }
-
 [[gnu::hot]]
 static inline void WriteSingleCharacterAt(FramebufferState *state, Size x, Size y, char c) {
         const Glyph g = GetGlyphFromDefaultFont(c);
@@ -293,7 +290,6 @@ Status VBE86DriverInit(void) {
         FramebufferDeviceOps fbddo = {
                 .WriteSinglePixel          = WriteSinglePixel,
                 .ClearScreen               = ClearFramebuffer,
-                .Flush                     = FlushFramebuffer,
                 .GetFramebufferInformation = GetFramebufferInfo,
         };
 
