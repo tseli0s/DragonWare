@@ -107,6 +107,11 @@ static inline void WaitBSYClear(int bus) {
         while (inb(port) & ATA_STATUS_BSY);
 }
 
+static inline void WaitForDRQ(int bus) {
+        u16 port = (bus == 0) ? ATA_STATUS_PRIMARY : ATA_STATUS_SECONDARY;
+        while (!(inb(port) & ATA_STATUS_DRQ));
+}
+
 static inline void SelectDevice(u32 lba, int bus, int master) {
         u16 port = (bus == 0) ? ATA_HDDEVSEL_PRIMARY : ATA_HDDEVSEL_SECONDARY;
         outb(port, (Byte)((u32)0xE0 | ((unsigned)master << 4ULL) | ((lba >> 24) & 0x0F)));
@@ -218,6 +223,7 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, IRQBindingDescriptor irq_descr,
         WaitBSYClear(bus);
         PrepareDriveForRW(bus, master, lba);
         RequestWrite(bus);
+        WaitForDRQ(bus);
 
         u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
         u16 *src  = buf;
