@@ -16,9 +16,6 @@
 
 #include "ddk/ia32/interrupts.h"
 #include "ddk/ia32/irq.h"
-#include "iomgr/class.h"
-#include "iomgr/devmgr.h"
-#include "iomgr/node.h"
 #include "sched/schedule.h"
 #include "task/task.h"
 
