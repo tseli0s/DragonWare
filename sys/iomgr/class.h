@@ -11,9 +11,6 @@
 
 #include <ktypes.h>
 
-/* Remember: A device may be able to do more than one thing. For example, the GPU is able to blit on
- * the screen as well as run custom code. So I've went with bitfields using  */
-
 /**
  * @brief Returns whether a device supports a given operation based on its internal devtable class
  * flags
