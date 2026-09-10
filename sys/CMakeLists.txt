@@ -63,7 +63,6 @@ list(APPEND C_SOURCES
      ${CMAKE_CURRENT_SOURCE_DIR}/syscall/ipc.c
      ${CMAKE_CURRENT_SOURCE_DIR}/syscall/object.c
      ${CMAKE_CURRENT_SOURCE_DIR}/syscall/usercopy.c
-     ${CMAKE_CURRENT_SOURCE_DIR}/time/systime.c
      ${CMAKE_CURRENT_SOURCE_DIR}/time/timer.c
      ${CMAKE_CURRENT_SOURCE_DIR}/video/output.c
      ${CMAKE_CURRENT_SOURCE_DIR}/iomgr/devmgr.c

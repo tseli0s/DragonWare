@@ -34,7 +34,6 @@
 #include "iomgr/devmgr.h"
 #include "mem/frame.h"
 #include "mem/mm.h"
-#include "time/systime.h"
 #include "wfi.h"
 
 [[noreturn]]
@@ -89,9 +88,6 @@ void SystemKernelInit(uintptr_t multiboot_addr_phys) {
                 FatalError("Cannot bring up the virtual memory manager");
 
         StartSystemTimer();
-        SystemTime boottime = GetSystemTime();
-        LogMessage(LOG_INFO, "Boot time: %d/%d/%d %d:%d:%d", boottime.day, boottime.month,
-                   boottime.year, boottime.hour, boottime.minutes, boottime.seconds);
 
         /* Has to be brought up as soon as possible. */
         if (InitDeviceManager() != STATUS_OK)
