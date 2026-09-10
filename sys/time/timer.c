@@ -47,14 +47,6 @@ void StartSystemTimer(void) {
         RegisterIRQHandler(0, PITCallback);
         LogMessage(LOG_DEBUG, "Starting hardware based system timer (Running at %u Hz)",
                    (unsigned int)TARGET_HZ);
-
-        AddDevice(NullPointer,
-                  MakeDeviceNode("PIT Timer", P_USER | P_DIRECT_ACCESS, DEVCLASS_UNKNOWN));
-}
-
-void Sleep(u32 seconds) {
-        u64 target = ticks + ((u64)seconds * TARGET_HZ);
-        while (ticks < target) __asm__ volatile("pause");
 }
 
 u64 GetTicksSinceBoot(void) { return ticks; }

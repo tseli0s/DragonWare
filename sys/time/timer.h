@@ -44,13 +44,6 @@
 void StartSystemTimer(void);
 
 /**
- * @brief Suspend execution for a given number of seconds.
- * @param seconds Number of seconds to sleep.
- * @note This function uses the system timer (PIT) and blocks the current thread of execution.
- */
-void Sleep(u32 seconds);
-
-/**
  * @brief Get the amount of clock ticks since boot.
  * @note The clock is usually configured at 1000Hz.
  * @warning A few ticks are lost during early bootstrap, when the system timer is not active yet.
