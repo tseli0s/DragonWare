@@ -15,7 +15,7 @@
  * @brief Returns whether a device supports a given operation based on its internal devtable class
  * flags
  */
-#define SupportsClass(_dev, _class) (_dev->devtable.class & _class)
+#define SupportsClass(_dev, _class) ((_dev)->devtable.class & (_class))
 
 /* We can't use an enum; Their size is not guaranteed nor portable. Since we need 64 bits anyways,
  * let's typedef a u64 instead. That gives us 64 different capabilities per device (One bit per
