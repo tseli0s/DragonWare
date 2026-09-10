@@ -11,7 +11,6 @@
 #include <vendor/multiboot.h>
 
 #include "assert.h"
-#include "ddk/ia32/idt.h"
 #include "iomgr/port.h"
 #include "sched/schedule.h"
 #include "task/process.h"
@@ -19,6 +18,7 @@
 #include "time/timer.h"
 #ifdef __i386__
 #include "ddk/ia32/cpu.h"
+#include "ddk/ia32/idt.h"
 #include "ddk/ia32/paging.h"
 #include "ddk/ia32/smbios.h"
 #include "ddk/ia32/vmm.h"
