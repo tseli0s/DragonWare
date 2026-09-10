@@ -17,17 +17,11 @@
  */
 #define SupportsClass(_dev, _class) ((_dev)->devtable.class & (_class))
 
-/* We can't use an enum; Their size is not guaranteed nor portable. Since we need 64 bits anyways,
- * let's typedef a u64 instead. That gives us 64 different capabilities per device (One bit per
- * capability)*/
-typedef u64 DeviceClass;
-
-#define DEVCLASS_UNKNOWN     (0x0)
-#define DEVCLASS_FRAMEBUFFER (1ULL << 0)
-#define DEVCLASS_CONSOLE     (1ULL << 1)
-#define DEVCLASS_UART        (1ULL << 2)
-#define DEVCLASS_CLOCK       (1ULL << 3)
-#define DEVCLASS_IOMEDIA     (1ULL << 4)
+typedef enum _DeviceClass
+        : u64 { DEVCLASS_UNKNOWN     = 0x0,
+                DEVCLASS_FRAMEBUFFER = 0x1,
+                DEVCLASS_CONSOLE     = 0x2,
+                DEVCLASS_UART        = 0x4 } DeviceClass;
 
 typedef struct _FramebufferInformation {
         u32 width;
