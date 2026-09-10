@@ -29,7 +29,6 @@ extern FatalError
 %define N_REGISTERS                     2
 
 extern SystemKernelInit
-extern default_state
 
 section .bss
 align 16
@@ -129,8 +128,6 @@ _SystemBootstrapRoutine:
 _PrepareKernelEntry:
         mov     esp, stack + STACK_SIZE 
         mov     ebp, esp ; I don't think that's necessary but whatever
-
-        call    default_state
     
         mov     eax, [BootRegisters]
         mov     ebx, [BootRegisters + 4]

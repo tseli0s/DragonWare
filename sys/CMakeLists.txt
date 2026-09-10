@@ -49,7 +49,6 @@ list(APPEND C_SOURCES
      ${CMAKE_CURRENT_SOURCE_DIR}/init/main.c
      ${CMAKE_CURRENT_SOURCE_DIR}/init/bootinfo.c
      ${CMAKE_CURRENT_SOURCE_DIR}/init/wfi.c
-     ${CMAKE_CURRENT_SOURCE_DIR}/init/state.c
      ${CMAKE_CURRENT_SOURCE_DIR}/mem/frame.c
      ${CMAKE_CURRENT_SOURCE_DIR}/mem/mm.c
      ${CMAKE_CURRENT_SOURCE_DIR}/lib/log.c
