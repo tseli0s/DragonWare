@@ -30,7 +30,7 @@ typedef struct _CachedSector {
         int  valid;
         int  bus, master;
         LBA  lba;
-        Byte data[512]; /* FIXME: Magic number here, have SECTOR_SIZE somewhere */
+        Byte data[ATA_SECTOR_SIZE];
 } CachedSector;
 
 static Spinlock     cache_spinlock;
@@ -52,7 +52,7 @@ static void LoadCache(int bus, int master, LBA lba, Byte *data) {
                 cache[n_cache_stored].bus    = bus;
                 cache[n_cache_stored].master = master;
                 cache[n_cache_stored].lba    = lba;
-                memcpy(cache[n_cache_stored].data, data, 512);
+                memcpy(cache[n_cache_stored].data, data, ATA_SECTOR_SIZE);
 
                 n_cache_stored++;
                 if ((unsigned)n_cache_stored >= arraysize(cache)) n_cache_stored = 0;
@@ -78,7 +78,7 @@ static Bool CheckCacheForSector(int bus, int master, LBA sector, int *pos) {
 static void ReadFromCache(int index, void *buf) {
         if (index < 0) return;
         CACHE_ACCESSING_CODE(cache_spinlock, {
-                if (cache[index].valid) memcpy(buf, cache[index].data, 512);
+                if (cache[index].valid) memcpy(buf, cache[index].data, ATA_SECTOR_SIZE);
         });
 }
 
