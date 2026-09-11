@@ -16,6 +16,7 @@
 #include <macros.h>
 #include <message.h>
 #include <object.h>
+#include <object/port_object.h>
 #include <spinlock.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -167,7 +168,7 @@ static void PrepareDriveForRW(int bus, int master, u32 lba) {
         SubmitLBA(bus, lba);
 }
 
-IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
+IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
                                int master, u32 lba, void *buf) {
         int pos;
         CheckCacheForSector(bus, master, lba, &pos);
@@ -192,7 +193,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr
                 }
 
                 anything_our_way = true;
-                InvokeObject(irq_handle, PORT_ACK_IRQ, &irq_descr);
+                AcknowledgeIRQ(irq_handle, (bus == 0) ? 14 : 15);
 
                 if (CheckForError(bus)) {
                         printf("idedrv: drive error after READ command\n");
@@ -214,10 +215,9 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr
  * above, but it blocked and no interrupts came. So for now, polling and wasting CPU cycles it is,
  * until I grab a copy of the specification and read what happens.
  */
-IDEDRVStatusReply WriteToDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
+IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus,
                               int master, u32 lba, void *buf) {
         UNUSED(irq_handle);
-        UNUSED(irq_descr);
 
         DisableINTRQ(bus);
         WaitBSYClear(bus);

@@ -103,7 +103,7 @@ static void listener(void *data) {
                                         goto sendmsg;
                                 }
 
-                                reply_data.reply = ReadFromDisk(irq, irq_descr, whoami, req.master,
+                                reply_data.reply = ReadFromDisk(irq, whoami, req.master,
                                                                 (u32)req.lba, ((void *)base));
 
                                 DeleteObject(req.shared_section);
@@ -139,7 +139,7 @@ static void listener(void *data) {
                                         goto sendmsg2;
                                 }
 
-                                reply_data.reply = WriteToDisk(irq, irq_descr, whoami, req.master,
+                                reply_data.reply = WriteToDisk(irq, whoami, req.master,
                                                                (u32)req.lba, ((void *)base));
 
                                 DeleteObject(req.shared_section);

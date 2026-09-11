@@ -20,7 +20,6 @@
  * @brief Read a single 512-byte sized sector into @p buf
  * @param irq_handle Handle to the IRQ dispatch port where the kernel will notify of IRQ14/15
  * arriving
- * @param irq_descr The @ref IRQBindingDescriptor associated with @p handle to ACK the IRQ
  * @param bus 0 for primary bus, 1 for secondary bus.
  * @param master 0 for master drive, 1 for slave drive.
  * @param lba LBA to read from. Must be a 28-bit integer. High four bits are ignored.
@@ -28,7 +27,7 @@
  * @returns An appropriate @ref IDEDRVStatusReply code for the operation.
  */
 [[gnu::nonnull]]
-IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
+IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
                                int master, u32 lba, void *buf);
 
 /**
@@ -36,7 +35,6 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr
  * @p bus.
  * @param irq_handle Handle to the IRQ dispatch port where the kernel will notify of IRQ14/15
  * arriving.
- * @param irq_descr The @ref IRQBindingDescriptor associated with @p handle to ACK the IRQ
  * @param bus 0 for primary bus, 1 for secondary bus.
  * @param master 0 for master drive, 1 for slave drive.
  * @param lba LBA to write the data to. High four bits are ignored.
@@ -49,5 +47,5 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, IRQBindingDescriptor irq_descr
  * @returns An appropriate @ref IDEDRVStatusReply code for the operation.
  */
 [[gnu::nonnull]]
-IDEDRVStatusReply WriteToDisk(Handle irq_handle, IRQBindingDescriptor irq_descr, int bus,
+IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus,
                               int master, u32 lba, void *buf);
