@@ -176,6 +176,7 @@ static void LoadAndBootKernel(const char *volume, Bool fbmode) {
         const char *modules_needed[] = {
                 "ps2kbd.run",
                 "vgacons.run",
+                "idedrv.run",
                 "dcp.run",
         };
         off_t multiboot_addr = FindMultibootHeader(buffer);
