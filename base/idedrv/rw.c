@@ -216,8 +216,9 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, v
         WaitBSYClear(bus);
         PrepareDriveForRW(bus, master, lba);
         RequestWrite(bus);
-        WaitForDRQ(bus);
+        if (CheckForError(bus)) goto bugcheck;
 
+        WaitForDRQ(bus);
         u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
         u16 *src  = buf;
         for (int i = 0; i < 256; i++) {
@@ -234,10 +235,17 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, v
         Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the
                            next command */
         FlushWriteCache(bus);
+        if (CheckForError(bus)) goto hwerr;
         WaitBSYClear(bus);
 
         EnableINTRQ(bus);
 
         InvalidateCache(bus, master, lba);
         return IDEDRV_SUCCESS;
+bugcheck:
+        EnableINTRQ(bus);
+        return IDEDRV_BUG_CHECK;
+hwerr:
+        EnableINTRQ(bus);
+        return IDEDRV_HARDWARE_FAILURE;
 }
