@@ -92,11 +92,6 @@ static inline void InvalidateCache(int bus, int master, LBA sector) {
         });
 }
 
-/* TODO: Synchronization and lock-free mechanisms here (the whole file), because apparently
- * some old drives can lock up if we do multiple things without synchronization and submit
- * unrelated data each time. Not a problem for the short term future, but we should address
- * it. */
-
 static inline Bool CheckForError(int bus) {
         u16  port   = (bus == 0) ? ATA_STATUS_PRIMARY : ATA_STATUS_SECONDARY;
         Byte status = inb(port);
