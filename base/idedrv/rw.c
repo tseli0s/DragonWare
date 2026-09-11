@@ -33,6 +33,10 @@ typedef struct _CachedSector {
         Byte data[ATA_SECTOR_SIZE];
 } CachedSector;
 
+/* pb = Primary bus, sb = secondary bus */
+static Spinlock pb_spinlock;
+static Spinlock sb_spinlock;
+
 static Spinlock     cache_spinlock;
 static CachedSector cache[16]      = {0};
 static int          n_cache_stored = 0;
@@ -91,11 +95,6 @@ static inline void InvalidateCache(int bus, int master, LBA sector) {
                         }
         });
 }
-
-/* TODO: Synchronization and lock-free mechanisms here (the whole file), because apparently
- * some old drives can lock up if we do multiple things without synchronization and submit
- * unrelated data each time. Not a problem for the short term future, but we should address
- * it. */
 
 static inline Bool CheckForError(int bus) {
         u16  port   = (bus == 0) ? ATA_STATUS_PRIMARY : ATA_STATUS_SECONDARY;
@@ -168,14 +167,16 @@ static void PrepareDriveForRW(int bus, int master, u32 lba) {
         SubmitLBA(bus, lba);
 }
 
-IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
-                               int master, u32 lba, void *buf) {
+IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf) {
         int pos;
         CheckCacheForSector(bus, master, lba, &pos);
         if (pos >= 0) {
                 ReadFromCache(pos, buf);
                 return IDEDRV_SUCCESS;
         }
+
+        Spinlock *to_acquire = (bus == 0) ? &pb_spinlock : &sb_spinlock;
+        AcquireSpinlock(to_acquire);
 
         PrepareDriveForRW(bus, master, lba);
         RequestRead(bus);
@@ -197,6 +198,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
 
                 if (CheckForError(bus)) {
                         printf("idedrv: drive error after READ command\n");
+                        ReleaseSpinlock(to_acquire);
                         return IDEDRV_BUG_CHECK;
                 }
                 u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
@@ -204,6 +206,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
                 for (int i = 0; i < 256; i++) out[i] = inw(port);
         }
 
+        ReleaseSpinlock(to_acquire);
         LoadCache(bus, master, lba, buf);
         Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the next
                            command */
@@ -215,14 +218,21 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
  * above, but it blocked and no interrupts came. So for now, polling and wasting CPU cycles it is,
  * until I grab a copy of the specification and read what happens.
  */
-IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus,
-                              int master, u32 lba, void *buf) {
+IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf) {
         UNUSED(irq_handle);
+
+        Spinlock *to_acquire = (bus == 0) ? &pb_spinlock : &sb_spinlock;
+        AcquireSpinlock(to_acquire);
 
         DisableINTRQ(bus);
         WaitBSYClear(bus);
         PrepareDriveForRW(bus, master, lba);
         RequestWrite(bus);
+
+        if (CheckForError(bus)) {
+                ReleaseSpinlock(to_acquire);
+                return IDEDRV_BUG_CHECK;
+        }
         WaitForDRQ(bus);
 
         u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
@@ -241,10 +251,15 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus,
         Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the
                            next command */
         FlushWriteCache(bus);
-        WaitBSYClear(bus);
+        if (CheckForError(bus)) {
+                ReleaseSpinlock(to_acquire);
+                return IDEDRV_HARDWARE_FAILURE;
+        }
 
+        WaitBSYClear(bus);
         EnableINTRQ(bus);
 
+        ReleaseSpinlock(to_acquire);
         InvalidateCache(bus, master, lba);
         return IDEDRV_SUCCESS;
 }
