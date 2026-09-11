@@ -99,6 +99,7 @@ static void listener(void *data) {
                                 uintptr_t base;
                                 if (InvokeObject(req.shared_section, SECTION_MAP, &base) !=
                                     STATUS_OK) {
+                                        DeleteObject(req.shared_section);
                                         reply_data.reply = IDEDRV_OUT_OF_MEMORY;
                                         goto sendmsg;
                                 }
