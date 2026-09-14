@@ -43,9 +43,9 @@ static void listener(void *data) {
         char        fmtbuf[6] = {0};
         snprintf(fmtbuf, sizeof(fmtbuf), "HD%d", whoami);
 
-        Handle h   = CreatePort(fmtbuf);
-        Handle irq = CreatePort(NullPointer);
-        int irqn = (whoami == 0) ? 14 : 15;
+        Handle h    = CreatePort(fmtbuf);
+        Handle irq  = CreatePort(NullPointer);
+        u32    irqn = (whoami == 0) ? 14 : 15;
 
         if (h < 0) {
                 printf("warning: Cannot create listener port for %s bus, disabling access", busstr);
@@ -60,7 +60,7 @@ static void listener(void *data) {
                 goto fail;
         }
 
-        if (BindIRQ(irq, irqn != STATUS_OK)) {
+        if (BindIRQ(irq, irqn) != STATUS_OK) {
                 printf("error: Cannot bind to IRQ %d", irqn);
                 goto fail;
         }
