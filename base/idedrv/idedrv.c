@@ -12,6 +12,8 @@
 #include <kerneltypes.h>
 #include <message.h>
 #include <object.h>
+#include <object/port_object.h>
+#include <object/section_object.h>
 #include <object/thread_object.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,8 +43,9 @@ static void listener(void *data) {
         char        fmtbuf[6] = {0};
         snprintf(fmtbuf, sizeof(fmtbuf), "HD%d", whoami);
 
-        Handle h   = CreateObject(fmtbuf, OBJ_PORT, 0);
-        Handle irq = CreateObject(NullPointer, OBJ_PORT, 0);
+        Handle h   = CreatePort(fmtbuf);
+        Handle irq = CreatePort(NullPointer);
+        int irqn = (whoami == 0) ? 14 : 15;
 
         if (h < 0) {
                 printf("warning: Cannot create listener port for %s bus, disabling access", busstr);
@@ -57,23 +60,11 @@ static void listener(void *data) {
                 goto fail;
         }
 
-        if (InvokeObject(h, PORT_CREATE, NullPointer) != STATUS_OK) {
-                printf("warning: Cannot expose communication port"
-                       "for %s bus, disabling access",
-                       busstr);
+        if (BindIRQ(irq, irqn != STATUS_OK)) {
+                printf("error: Cannot bind to IRQ %d", irqn);
                 goto fail;
         }
-        if (InvokeObject(irq, PORT_CREATE, NullPointer) != STATUS_OK) {
-                printf("warning: Cannot create IRQ dispatch port for %s bus", busstr);
-                goto fail;
-        }
-
-        IRQBindingDescriptor irq_descr = {.irq_no = (whoami == 0) ? 14 : 15, .reserved = 0};
-        if (InvokeObject(irq, PORT_BIND_IRQ, &irq_descr) != STATUS_OK) {
-                printf("error: Cannot bind to IRQ %d", irq_descr.irq_no);
-                goto fail;
-        } else
-                EnableINTRQ(whoami);
+        EnableINTRQ(whoami);
 
         Message m;
         while (true) {
@@ -89,25 +80,25 @@ static void listener(void *data) {
                                 IDEDRVReplyData reply_data = {
                                         IDEDRV_SUCCESS,
                                 };
+                                Handle shmem;
                                 memcpy(&req, m.payload.raw, sizeof(IDEDRVRequest));
                                 if (_DWTranslateHandle(m.header.sender, req.shared_section,
-                                                       &req.shared_section) != STATUS_OK) {
+                                                       &shmem) != STATUS_OK) {
                                         reply_data.reply = IDEDRV_INVALID_HANDLE;
                                         goto sendmsg;
                                 }
 
-                                uintptr_t base;
-                                if (InvokeObject(req.shared_section, SECTION_MAP, &base) !=
-                                    STATUS_OK) {
-                                        DeleteObject(req.shared_section);
+                                void *base;
+                                if (MapMemorySection(shmem, &base) != STATUS_OK) {
+                                        DeleteObject(shmem);
                                         reply_data.reply = IDEDRV_OUT_OF_MEMORY;
                                         goto sendmsg;
                                 }
 
-                                reply_data.reply = ReadFromDisk(irq, whoami, req.master,
-                                                                (u32)req.lba, ((void *)base));
+                                reply_data.reply =
+                                        ReadFromDisk(irq, whoami, req.master, (u32)req.lba, base);
 
-                                DeleteObject(req.shared_section);
+                                DeleteObject(shmem);
                         sendmsg:
                                 memcpy(m.payload.raw, &reply_data, sizeof(IDEDRVReplyData));
                                 m.header.payload_length = sizeof(IDEDRVReplyData);
@@ -126,16 +117,16 @@ static void listener(void *data) {
                                 IDEDRVReplyData reply_data = {
                                         IDEDRV_SUCCESS,
                                 };
+                                Handle shmem;
                                 memcpy(&req, m.payload.raw, sizeof(IDEDRVRequest));
                                 if (_DWTranslateHandle(m.header.sender, req.shared_section,
-                                                       &req.shared_section) != STATUS_OK) {
+                                                       &shmem) != STATUS_OK) {
                                         reply_data.reply = IDEDRV_INVALID_HANDLE;
                                         goto sendmsg2;
                                 }
 
-                                uintptr_t base = 0;
-                                if (InvokeObject(req.shared_section, SECTION_MAP, &base) !=
-                                    STATUS_OK) {
+                                void *base = NullPointer;
+                                if (MapMemorySection(shmem, &base) != STATUS_OK) {
                                         reply_data.reply = IDEDRV_OUT_OF_MEMORY;
                                         goto sendmsg2;
                                 }
@@ -143,7 +134,7 @@ static void listener(void *data) {
                                 reply_data.reply = WriteToDisk(irq, whoami, req.master,
                                                                (u32)req.lba, ((void *)base));
 
-                                DeleteObject(req.shared_section);
+                                DeleteObject(shmem);
                         sendmsg2:
                                 memcpy(m.payload.raw, &reply_data, sizeof(IDEDRVReplyData));
                                 m.header.payload_length = sizeof(IDEDRVReplyData);
