@@ -39,6 +39,7 @@ bad:
 }
 
 Status IPCCall(Message *msgbuf, Handle send, Handle recv) {
+        msgbuf->header.reply_handle = recv;
         Status s1 = SendMessage(send, msgbuf, SIZE_OF_MESSAGE(*msgbuf));
         if (s1 != STATUS_OK) return s1;
 
