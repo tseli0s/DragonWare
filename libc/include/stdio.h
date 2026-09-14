@@ -22,18 +22,26 @@ extern FILE *stdin;
 extern FILE *stdout;
 extern FILE *stderr;
 
+[[gnu::format(printf, 1, 2)]]
 int printf(const char *fmt, ...);
 
 int putchar(int c);
 
 /* Note: DragonWare doesn't have file descriptors or a notion of stdout/stderr etc, fd will be
  * ignored. It's for compatibility reasons only. */
+[[gnu::format(printf, 2, 3)]]
 int fprintf(FILE *restrict stream, const char *fmt, ...);
 
+[[gnu::format(printf, 2, 3)]]
 int sprintf(char *restrict str, const char *restrict fmt, ...);
+
 int vprintf(const char *restrict fmt, va_list args);
+
+[[gnu::format(printf, 3, 4)]]
 int snprintf(char *restrict str, size_t maxsize, const char *restrict fmt, ...);
+
 int vsprintf(char *restrict str, const char *restrict fmt, va_list args);
+
 int vsnprintf(char *restrict str, size_t maxsize, const char *restrict fmt, va_list args);
 
 /* TODO as well */
