@@ -85,7 +85,7 @@ static int __send_console_write_string_request(const char *consolebuf) {
         return 0;
 }
 
-int printf(const char *fmt, ...) {
+int printf(const char *restrict fmt, ...) {
         if (__dlibc_console_handle < 0) {
                 errno = EIO;
                 return EOF;

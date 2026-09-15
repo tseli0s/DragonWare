@@ -22,8 +22,20 @@ extern FILE *stdin;
 extern FILE *stdout;
 extern FILE *stderr;
 
+/**
+ * @brief Produces output in the standard output (See @ref stdout), formatted according to @p fmt if
+ * there are formatting modifiers in it.
+ * @param[in] fmt The text to write to @ref stdout. If this C string contains formatting modifiers
+ * (eg. @b %d ) then the output is formatted accordingly. Arguments are passed after @p fmt as
+ * variadic arguments.
+ * @returns The total amount of characters written in @ref stdout on success. If an error occurs
+ * during write, @ref EOF is returned instead.
+ * @bug On DragonWare, resulting (formatted or not) strings that exceed the size of a single IPC
+ * message payload minus two bytes will lead to the output string being truncated, due to existing
+ * limitations with the console implementation.
+ */
 [[gnu::format(printf, 1, 2)]]
-int printf(const char *fmt, ...);
+int printf(const char *restrict fmt, ...);
 
 int putchar(int c);
 
