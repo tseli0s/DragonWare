@@ -24,7 +24,7 @@ extern int __libc_try_enable_sysenter(void);
 int __dlibc_console_handle = -1;
 
 static void __libc_register_handles(void) {
-        const char *console_port_name = "CONSOLE";
+        static const char *console_port_name = "CONSOLE";
 
         /* Keep retrying until the kernel creates the object */
         while (__dlibc_console_handle < 0)
