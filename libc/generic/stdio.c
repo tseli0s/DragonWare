@@ -123,7 +123,7 @@ int fprintf(FILE *restrict stream, const char *fmt, ...) {
         UNUSED(fmt);
 
         errno = ENOENT; /* Couldn't come up with something better this'll do */
-        return -1;
+        return EOF;
 }
 
 int sprintf(char *restrict str, const char *restrict fmt, ...) {
