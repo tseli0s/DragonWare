@@ -93,7 +93,7 @@ README.md       -> This file
 - ***Does it support (x)?***
 - DragonWare should be able to boot on any >2000s machine with a BIOS/CSM implementation, a VGA compatible graphics card and an x86 CPU. At least in text mode. Graphics drivers for even older GPUs are planned, but a bit harder to make them work as of now due to sparse availability. DragonWare should work with even older machines, by using a compiler that targets the i386 CPU.
 - ***What programs can it run?***
-- Pretty much whatever is shipped by default. Actually, at the moment, the bootloader must load all programs, because there's no disk driver or filesystem support implemented. A POSIX interface is planned to support some GNU software and everything else has to be ported by hand.
+- Pretty much whatever is shipped by default. Actually, at the moment, the bootloader must load all programs, because there's no filesystem support implemented. A POSIX interface is planned to support some GNU software and everything else has to be ported by hand.
 - ***Is it a true microkernel?***
 - It does violate some principles of a pure microkernel, by embedding memory management and (partial) device management into the kernel. You can call it a hybrid kernel if you want ([***even though that's pure marketing....***](https://www.realworldtech.com/forum/?threadid=65915&curpostid=65936)). But almost everything else is in userspace. That was my way of working around the fact that most device probing/interrupt handling is sent to the kernel, not user programs.
 - ***Does it run DOOM?***
