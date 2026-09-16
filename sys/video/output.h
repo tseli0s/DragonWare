@@ -22,7 +22,7 @@ typedef struct _OutputNode {
 #define ForEachConsoleDevice(__LAMBDA__)                                           \
         do {                                                                       \
                 for (OutputNode *curr = GetAllOutputsKnown(); curr != NullPointer; \
-                     curr             = curr->next) {                                          \
+                     curr             = curr->next) {                              \
                         if (SupportsClass(curr->node, DEVCLASS_CONSOLE)) {         \
                                 __LAMBDA__                                         \
                         }                                                          \

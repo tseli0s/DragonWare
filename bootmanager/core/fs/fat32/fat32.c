@@ -178,9 +178,12 @@ static Status ScanDirectoryFor(const Partition p, BIOSParameterBlock *bpb, u32 c
                                                 return STATUS_OUT_OF_MEMORY;
                                         }
 
-                                        private->first_cluster = first_cluster;
-                                        private->attributes    = de->attributes;
-                                        private->part          = p;
+                                       private
+                                        ->first_cluster = first_cluster;
+                                       private
+                                        ->attributes = de->attributes;
+                                       private
+                                        ->part = p;
 
                                         output->cursor   = 0;
                                         output->ended    = false;

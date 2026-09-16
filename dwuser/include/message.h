@@ -14,7 +14,8 @@
 #include "object.h"
 
 /**
- * @brief Calculates the size of a single IPC message by adding together the message header size and the payload size specified.
+ * @brief Calculates the size of a single IPC message by adding together the message header size and
+ * the payload size specified.
  * @param[in] m The message to calculate the size of.
  * @note @p m must not be a pointer to a message, but the message itself.
  * @since v0.0.2

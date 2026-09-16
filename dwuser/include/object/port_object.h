@@ -18,7 +18,7 @@
  * send messages to it.
  * @returns Handle to the newly created port, or -1 on failure.
  */
- [[nodiscard(
+[[nodiscard(
         "Returned handle is a handle that references the port object and must not be discarded.")]]
 Handle CreatePort(const char *name);
 
@@ -27,8 +27,8 @@ Handle CreatePort(const char *name);
  * @param[in] name Name of the port. Must not be @ref NullPointer.
  * @returns Handle to the port, or -1 on failure (eg. Port not found).
  */
-[[gnu::nonnull, nodiscard(
-        "Returned handle is a handle that references the port object and must not be discarded.")]]
+[[gnu::nonnull, nodiscard("Returned handle is a handle that references the port object and must "
+                          "not be discarded.")]]
 Handle OpenPort(const char *name);
 
 /**
@@ -48,7 +48,7 @@ Handle OpenPort(const char *name);
  * @returns STATUS_OK on success, otherwise the result of @ref SendMessage if sending failed or @ref
  * ReceiveMessage if (unlikely) receiving failed.
  */
- [[nodiscard(
+[[nodiscard(
         "Sending or receiving messages may fail (eg. Bad handle) and the caller must inspect the "
         "return value.")]]
 Status IPCCall(Message *msgbuf, Handle send, Handle recv);
@@ -68,7 +68,8 @@ static inline Status BindIRQ(Handle port, u32 irq) {
 /**
  * @brief Wrapper for invoking @p port with the @ref PORT_ACK_IRQ opcode.
  * @param port Port to acknowledge the IRQ for.
- * @param irq IRQ to acknowledge (Multiple IRQs may arrive at a port). As of @version v0.0.2, this must be 1-15.
+ * @param irq IRQ to acknowledge (Multiple IRQs may arrive at a port). As of @version v0.0.2, this
+ * must be 1-15.
  * @returns The result of @ref InvokeObject
  * @note A separate @ref IRQBindingDescriptor is allocated every time this function is called.
  */

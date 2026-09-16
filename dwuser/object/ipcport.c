@@ -31,13 +31,12 @@ Handle OpenPort(const char *name) {
         Handle port = CreateObject(NullPointer, OBJ_PORT, 0);
         if (port < 0) goto bad;
 
-        if (InvokeObject(port, PORT_OPEN, (void*)name) != STATUS_OK) goto bad;
+        if (InvokeObject(port, PORT_OPEN, (void *)name) != STATUS_OK) goto bad;
         return port;
 bad:
         if (port >= 0) DeleteObject(port);
         return -1;
 }
-
 
 Status IPCCall(Message *msgbuf, Handle send, Handle recv) {
         Status s1 = SendMessage(send, msgbuf, SIZE_OF_MESSAGE(*msgbuf));
