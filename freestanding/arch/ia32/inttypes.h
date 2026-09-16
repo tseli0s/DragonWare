@@ -47,4 +47,7 @@ typedef int32_t  intptr_t;
  */
 typedef int32_t off_t;
 
+typedef volatile u32 VirtualAddress;
+typedef volatile u32 PhysicalAddress;
+
 #endif /* INCLUDE_STDINT_H_COMPILER */
