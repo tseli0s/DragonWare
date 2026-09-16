@@ -25,7 +25,7 @@ bad:
         return -1;
 }
 
-Status MapMemorySection(Handle section, void **base) {
+Status MapMemorySection(Handle section, void** base) {
         uintptr_t baseaddr;
         Status    s = InvokeObject(section, SECTION_MAP, &baseaddr);
         if (s == STATUS_OK) *base = (void *)baseaddr;

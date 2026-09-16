@@ -37,7 +37,7 @@
 #define ForEachChildDevice(_root, __LAMBDA__)                                     \
         do {                                                                      \
                 for (DeviceManagerNode *curr = _root->child; curr != NullPointer; \
-                     curr                    = curr->next) {                                         \
+                     curr                    = curr->next) {                      \
                         __LAMBDA__                                                \
                 }                                                                 \
                                                                                   \
