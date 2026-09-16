@@ -85,6 +85,15 @@ typedef volatile u32 PageDirectory;
 typedef volatile u32 PageTableEntry;
 
 /**
+ * @brief A type that tracks a single virtual memory address and its physical memory mapping.
+ * @since v0.0.2
+ */
+typedef struct _VMAddress {
+        VirtualAddress virt;
+        PhysicalAddress phys;
+} VMAddress;
+
+/**
  * @brief Initialize the virtual memory manager.
  * @details Sets up paging structures and enables virtual memory.
  * @returns 0 on success, negative value on failure.
