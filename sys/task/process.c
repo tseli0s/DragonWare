@@ -56,8 +56,7 @@ static u32 tmpmap_bitmap[TMPMAP_BITMAP_WORDS] = {0};
 
 /* Contains a single virtual->physical translation, used for temporary virtual address mappings. */
 typedef struct _VirtualMap {
-        u32                 virt;
-        u32                 phys;
+        VMAddress           addr;
         Size                slot;
         struct _VirtualMap *next;
 } VirtualMap;
@@ -131,11 +130,11 @@ static VirtualMap *CreateTempVirtualMap(void) {
 
         MarkTmpMapUsed((Size)slot);
 
-        m->phys = phys;
-        m->virt = virt;
+        m->addr.phys = phys;
+        m->addr.virt = virt;
         m->slot = (Size)slot;
 
-        kzeromem((void *)m->virt, PAGE_SIZE);
+        kzeromem((void *)m->addr.virt, PAGE_SIZE);
         return m;
 }
 
@@ -149,7 +148,7 @@ static VirtualMap *CreateTempVirtualMap(void) {
 static void DeleteTempVirtualMap(VirtualMap *m) {
         if (!TmpMapUsed(m->slot)) FatalError("Double free in temporary mapping allocator");
 
-        UnmapSinglePage(m->virt);
+        UnmapSinglePage(m->addr.virt);
         MarkTmpMapFree(m->slot);
         kfree(m);
 }
@@ -210,25 +209,25 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
          * why it is not copied.
          */
         for (int i = KERNEL_PD_INDEX; i < MAX_PD_ENTRIES - 1; i++)
-                ((PageDirectory *)pdmap->virt)[i] = CURRENT_PAGE_DIRECTORY[i];
+                ((PageDirectory *)pdmap->addr.virt)[i] = CURRENT_PAGE_DIRECTORY[i];
 
         /* Now allocate the page table for the process and map it in the address space. */
         VirtualMap *ptmap = CreateTempVirtualMap();
-        kzeromem((void *)ptmap->virt, PAGE_SIZE);
+        kzeromem((void *)ptmap->addr.virt, PAGE_SIZE);
 
         /* Allocate a user stack while we're at it */
         VirtualMap *stackmap = CreateTempVirtualMap();
-        kzeromem((void *)stackmap->virt, PAGE_SIZE);
+        kzeromem((void *)stackmap->addr.virt, PAGE_SIZE);
         for (unsigned int i = 0; i < USER_STACK_SIZE_PAGES; i++) {
                 const Size  offset    = i * PAGE_SIZE;
                 const Size  ptindex   = PT_INDEX(DEFAULT_USER_STACK_ADDR - offset);
                 VirtualMap *currstack = CreateTempVirtualMap();
-                ((PageTableEntry *)stackmap->virt)[ptindex] =
-                        currstack->phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
+                ((PageTableEntry *)stackmap->addr.virt)[ptindex] =
+                        currstack->addr.phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
                 DeleteTempVirtualMap(currstack);
         }
-        ((PageDirectory *)pdmap->virt)[PD_INDEX(DEFAULT_USER_STACK_ADDR)] =
-                stackmap->phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
+        ((PageDirectory *)pdmap->addr.virt)[PD_INDEX(DEFAULT_USER_STACK_ADDR)] =
+                stackmap->addr.phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
         DeleteTempVirtualMap(stackmap);
 
         /* Now it's time to copy the executable. */
@@ -236,24 +235,24 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
                 VirtualMap *codemap = CreateTempVirtualMap();
 
                 ((PageTableEntry *)
-                         ptmap->virt)[((uintptr_t)FLAT_BINARY_DEFAULT_ENTRY + i) / PAGE_SIZE] =
-                        codemap->phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
-                kzeromem((void *)codemap->virt, PAGE_SIZE);
+                         ptmap->addr.virt)[((uintptr_t)FLAT_BINARY_DEFAULT_ENTRY + i) / PAGE_SIZE] =
+                        codemap->addr.phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
+                kzeromem((void *)codemap->addr.virt, PAGE_SIZE);
 
                 Size copy_size = (code_size - i < PAGE_SIZE) ? (code_size - i) : PAGE_SIZE;
-                memcpy((char *)codemap->virt, (char *)code + i, copy_size);
+                memcpy((char *)codemap->addr.virt, (char *)code + i, copy_size);
 
                 DeleteTempVirtualMap(codemap);
         }
 
         /* And ensure it is present on the new address space. */
-        ((PageDirectory *)pdmap->virt)[0] = ptmap->phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
+        ((PageDirectory *)pdmap->addr.virt)[0] = ptmap->addr.phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
 
         /* Also ensure the proper page table is set at the last PD index, as per the so commonly
          * typed in the source "recursive paging trick". */
-        ((PageDirectory *)pdmap->virt)[MAX_PD_ENTRIES - 1] = pdmap->phys | PAGE_PRESENT | PAGE_RW;
+        ((PageDirectory *)pdmap->addr.virt)[MAX_PD_ENTRIES - 1] = pdmap->addr.phys | PAGE_PRESENT | PAGE_RW;
 
-        p->cr3         = pdmap->phys;
+        p->cr3         = pdmap->addr.phys;
         p->main_thread = main_thread;
         p->pid         = process_id_counter++;
         p->next        = NullPointer;
