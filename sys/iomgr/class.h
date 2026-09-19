@@ -39,5 +39,4 @@ typedef struct _FramebufferDeviceOps {
 typedef struct _ConsoleDeviceOps {
         void (*WriteSingleChar)(void *privatedata, char c);
         void (*ResetConsole)(void *privatedata);
-        void (*DeleteSingleChar)(void *privatedata);
 } ConsoleDeviceOps;
