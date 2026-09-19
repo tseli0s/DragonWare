@@ -25,8 +25,7 @@ static OutputNode *current = NullPointer;
 OutputNode *GetAllOutputsKnown(void) { return list; }
 
 void AddNewOutputDevice(DeviceManagerNode *dev) {
-        if (!SupportsClass(dev, DEVCLASS_CONSOLE) && !SupportsClass(dev, DEVCLASS_FRAMEBUFFER) &&
-            !SupportsClass(dev, DEVCLASS_UART))
+        if (!SupportsClass(dev, DEVCLASS_CONSOLE) && !SupportsClass(dev, DEVCLASS_FRAMEBUFFER))
                 return;
         if (!list) {
                 list = kzalloc(sizeof(OutputNode));
