@@ -336,9 +336,6 @@ Status VBE86DriverInit(void) {
 }
 
 const DriverDescriptor vbe86_descriptor = {.name         = "VBE Generic Driver (x86)",
-                                           .author       = "DragonWare",
-                                           .license      = "GPLv3.0",
                                            .init_earlier = false,
-                                           .__init       = &VBE86DriverInit,
-                                           .__delete     = NullPointer};
+                                           .__init       = &VBE86DriverInit};
 ADD_DRIVER_DESCRIPTOR(vbe86_descriptor);

@@ -212,9 +212,6 @@ Status VGATextInit(void) {
 }
 
 const DriverDescriptor vgatext_descriptor = {.name         = "BIOS VGA Text Mode Driver",
-                                             .author       = "DragonWare",
-                                             .license      = "GPLv3.0",
                                              .init_earlier = true,
-                                             .__init       = &VGATextInit,
-                                             .__delete     = NullPointer};
+                                             .__init       = &VGATextInit};
 ADD_DRIVER_DESCRIPTOR(vgatext_descriptor);

@@ -88,9 +88,6 @@ Status Serial86Init(void) {
 }
 
 const DriverDescriptor ser86_descriptor = {.name         = "x86 Serial Port Driver (COM1)",
-                                           .author       = "DragonWare",
-                                           .license      = "GPLv3.0",
                                            .init_earlier = true,
-                                           .__init       = &Serial86Init,
-                                           .__delete     = NullPointer};
+                                           .__init       = &Serial86Init};
 ADD_DRIVER_DESCRIPTOR(ser86_descriptor);
