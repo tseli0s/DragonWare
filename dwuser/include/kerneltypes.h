@@ -90,9 +90,6 @@ typedef enum _Status {
         STATUS_MSGQUEUE_FULL = -11  /** << Message queue in port is full, try again later  */
 } Status;
 
-#define KSUCCESS(s) ((Status)(s) == STATUS_OK)
-#define KFAILED(s)  ((Status)(s) != STATUS_OK)
-
 DW_END_DECLS
 
 #endif /* _KERNEL_TYPES_H */
