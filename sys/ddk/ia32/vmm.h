@@ -89,7 +89,7 @@ typedef volatile u32 PageTableEntry;
  * @since v0.0.2
  */
 typedef struct _VMAddress {
-        VirtualAddress virt;
+        VirtualAddress  virt;
         PhysicalAddress phys;
 } VMAddress;
 

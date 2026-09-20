@@ -19,17 +19,17 @@ typedef u64 LBA;
 #define IDEDRV_PROTOCOL_V0 ((u16)0x1DEA)
 
 /* Status codes returned by a request to idedrv. */
-typedef enum __IDEDRVStatusReply
-        : u32 { IDEDRV_SUCCESS = 0,      /* Everything went well */
-                IDEDRV_ACCESS_DENIED,    /* Access to this process was denied */
-                IDEDRV_HARDWARE_FAILURE, /* Hard drive is failing or bad sector request */
-                IDEDRV_INVALID_HANDLE,   /* Invalid handle given */
-                IDEDRV_BAD_PARAMETER,    /* Bad parameter in IPC message */
-                IDEDRV_OUT_OF_MEMORY,    /* Out of memory (Kernel can't share the memory between the
-                                            two processes) */
-                IDEDRV_LOCKED,    /* Access to the drive is temporarily forbidden (eg contention )*/
-                IDEDRV_BUG_CHECK, /* Internal driver bug */
-        } IDEDRVStatusReply;
+typedef enum __IDEDRVStatusReply : u32 {
+        IDEDRV_SUCCESS = 0,      /* Everything went well */
+        IDEDRV_ACCESS_DENIED,    /* Access to this process was denied */
+        IDEDRV_HARDWARE_FAILURE, /* Hard drive is failing or bad sector request */
+        IDEDRV_INVALID_HANDLE,   /* Invalid handle given */
+        IDEDRV_BAD_PARAMETER,    /* Bad parameter in IPC message */
+        IDEDRV_OUT_OF_MEMORY,    /* Out of memory (Kernel can't share the memory between the
+                                    two processes) */
+        IDEDRV_LOCKED,           /* Access to the drive is temporarily forbidden (eg contention )*/
+        IDEDRV_BUG_CHECK,        /* Internal driver bug */
+} IDEDRVStatusReply;
 
 /* Simply memcpy() this struct into the message payload when sending it */
 typedef struct [[gnu::packed]] __IDEDRVRequest {

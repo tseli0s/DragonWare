@@ -27,8 +27,7 @@
  * @returns An appropriate @ref IDEDRVStatusReply code for the operation.
  */
 [[gnu::nonnull]]
-IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
-                               int master, u32 lba, void *buf);
+IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf);
 
 /**
  * @brief Write the provided 512 byte block into the LBA @p lba of the given drive @p master on bus
@@ -47,5 +46,4 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus,
  * @returns An appropriate @ref IDEDRVStatusReply code for the operation.
  */
 [[gnu::nonnull]]
-IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus,
-                              int master, u32 lba, void *buf);
+IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf);

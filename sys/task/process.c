@@ -132,7 +132,7 @@ static VirtualMap *CreateTempVirtualMap(void) {
 
         m->addr.phys = phys;
         m->addr.virt = virt;
-        m->slot = (Size)slot;
+        m->slot      = (Size)slot;
 
         kzeromem((void *)m->addr.virt, PAGE_SIZE);
         return m;
@@ -246,11 +246,13 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
         }
 
         /* And ensure it is present on the new address space. */
-        ((PageDirectory *)pdmap->addr.virt)[0] = ptmap->addr.phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
+        ((PageDirectory *)pdmap->addr.virt)[0] =
+                ptmap->addr.phys | PAGE_PRESENT | PAGE_RW | PAGE_USER;
 
         /* Also ensure the proper page table is set at the last PD index, as per the so commonly
          * typed in the source "recursive paging trick". */
-        ((PageDirectory *)pdmap->addr.virt)[MAX_PD_ENTRIES - 1] = pdmap->addr.phys | PAGE_PRESENT | PAGE_RW;
+        ((PageDirectory *)pdmap->addr.virt)[MAX_PD_ENTRIES - 1] =
+                pdmap->addr.phys | PAGE_PRESENT | PAGE_RW;
 
         p->cr3         = pdmap->addr.phys;
         p->main_thread = main_thread;

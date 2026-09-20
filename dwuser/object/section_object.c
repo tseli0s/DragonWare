@@ -28,6 +28,6 @@ bad:
 Status MapMemorySection(Handle section, void** base) {
         uintptr_t baseaddr;
         Status    s = InvokeObject(section, SECTION_MAP, &baseaddr);
-        if (s == STATUS_OK) *base = (void *)baseaddr;
+        if (s == STATUS_OK) *base = (void*)baseaddr;
         return s;
 }
