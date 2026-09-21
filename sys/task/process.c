@@ -158,14 +158,18 @@ static void DeleteTempVirtualMap(VirtualMap *m) {
 static uintptr_t GetNextKernelStackAddress(void) {
         uintptr_t current_addr = KERNEL_STACK_BASE;
 
-        /* The kernel stack is two pages wide for each process, which is why we need two contiguous
-         * pages available. */
-        while (current_addr + (2 * PAGE_SIZE) <= KERNEL_STACK_END) {
-                if (!IsVirtualPageMapped(current_addr) &&
-                    !IsVirtualPageMapped(current_addr + PAGE_SIZE)) {
-                        return current_addr;
+        /* the kernel stack pages must be continuous, hence why we are checking all pages that we
+         * are planning to map as the kernel stack */
+        while (current_addr + (KERNEL_STACK_SIZE_PAGES * PAGE_SIZE) <= KERNEL_STACK_END) {
+                Bool conflict = false;
+                for (int i = 0; i < KERNEL_STACK_SIZE_PAGES && !conflict; i++) {
+                        VirtualAddress this = current_addr + (i * PAGE_SIZE);
+                        if (IsVirtualPageMapped(this)) conflict = true;
                 }
-                current_addr += (2 * PAGE_SIZE);
+                if (!conflict)
+                        return current_addr;
+                else
+                        current_addr += KERNEL_STACK_SIZE_PAGES * PAGE_SIZE;
         }
 
         FatalError("Not enough virtual memory left for the kernel stacks.");
