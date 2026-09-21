@@ -36,7 +36,6 @@ typedef enum _DeviceManagerNodePermissions {
 typedef struct _DeviceOperations {
         FramebufferDeviceOps framebuffer;
         ConsoleDeviceOps     console;
-        UARTDeviceOps        uart;
 } DeviceOperations;
 
 /**

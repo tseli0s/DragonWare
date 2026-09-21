@@ -146,19 +146,13 @@ static void WriteSingleCharacter(void *privatedata, char c) {
 FramebufferInformation GetFramebufferInfo(void *privatedata) {
         FramebufferState      *state = privatedata;
         FramebufferInformation info  = {
-                 .width  = state->width,
-                 .height = state->height,
-                 .bpp    = state->bpp,
-                 .stride = state->pitch /* i believe stride and pitch are the same i dont remember
-                                 honestly */
+                .width  = state->width,
+                .height = state->height,
+                .bpp    = state->bpp,
+                .stride = state->pitch /* i believe stride and pitch are the same i dont remember
+                                honestly */
         };
         return info;
-}
-
-static void DeleteSingleCharacter(void *privatedata) {
-        FramebufferState *state = privatedata;
-        if (state->column != 0) state->column--;
-        WriteSingleCharacterAt(state, state->column, state->row, ' ');
 }
 
 static void ClearFramebuffer(void *privatedata) {
@@ -293,9 +287,8 @@ Status VBE86DriverInit(void) {
                 .GetFramebufferInformation = GetFramebufferInfo,
         };
 
-        ConsoleDeviceOps conddo       = {.WriteSingleChar  = WriteSingleCharacter,
-                                         .DeleteSingleChar = DeleteSingleCharacter,
-                                         .ResetConsole     = ResetFramebufferConsole};
+        ConsoleDeviceOps conddo       = {.WriteSingleChar = WriteSingleCharacter,
+                                         .ResetConsole    = ResetFramebufferConsole};
         fb->devtable.ddo->framebuffer = fbddo;
         fb->devtable.ddo->console     = conddo;
 
@@ -343,9 +336,6 @@ Status VBE86DriverInit(void) {
 }
 
 const DriverDescriptor vbe86_descriptor = {.name         = "VBE Generic Driver (x86)",
-                                           .author       = "DragonWare",
-                                           .license      = "GPLv3.0",
                                            .init_earlier = false,
-                                           .__init       = &VBE86DriverInit,
-                                           .__delete     = NullPointer};
+                                           .__init       = &VBE86DriverInit};
 ADD_DRIVER_DESCRIPTOR(vbe86_descriptor);

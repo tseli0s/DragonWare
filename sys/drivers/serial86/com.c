@@ -57,10 +57,6 @@ static void WriteSerialChar(void *private, char c) {
 
 static void ResetSerialConsole(void *private_state) { UnusedParameter(private_state); }
 
-typedef struct _DriverState {
-        Bool com1_enabled;
-} DriverState;
-
 Status Serial86Init(void) {
         LogMessage(LOG_INFO,
                    "Starting serial driver for DragonWare (Support for port COM1 built in)");
@@ -72,9 +68,8 @@ Status Serial86Init(void) {
 #else
         InitSerialConnection();
 #endif
-        DeviceManagerNode *node =
-                MakeDeviceNode("Serial Port Driver", P_MUTABLE | P_HAVE_CHILDREN | P_USER,
-                               DEVCLASS_UART | DEVCLASS_CONSOLE);
+        DeviceManagerNode *node = MakeDeviceNode(
+                "Serial Port Driver", P_MUTABLE | P_HAVE_CHILDREN | P_USER, DEVCLASS_CONSOLE);
         if (!node) return STATUS_OUT_OF_MEMORY;
 
         node->devtable.ddo = kzalloc(sizeof(DeviceOperations));
@@ -83,31 +78,16 @@ Status Serial86Init(void) {
                 return STATUS_OUT_OF_MEMORY;
         }
 
-        DriverState *state = kzalloc(sizeof(DriverState));
-        if (!state) {
-                kfree(node->devtable.ddo);
-                kfree(node);
-                return STATUS_OUT_OF_MEMORY;
-        }
+        ConsoleDeviceOps console_ops = {.WriteSingleChar = WriteSerialChar,
+                                        .ResetConsole    = ResetSerialConsole};
 
-        ConsoleDeviceOps console_ops = {.WriteSingleChar  = WriteSerialChar,
-                                        .ResetConsole     = ResetSerialConsole,
-                                        .DeleteSingleChar = NullPointer};
-        UARTDeviceOps    uart_ops    = {.WriteSingleChar = WriteSerialChar};
-
-        state->com1_enabled         = true;
-        node->devtable.ddo->uart    = uart_ops;
         node->devtable.ddo->console = console_ops;
 
-        node->private_state = state;
         AddDevice(NullPointer, node);
         return STATUS_OK;
 }
 
 const DriverDescriptor ser86_descriptor = {.name         = "x86 Serial Port Driver (COM1)",
-                                           .author       = "DragonWare",
-                                           .license      = "GPLv3.0",
                                            .init_earlier = true,
-                                           .__init       = &Serial86Init,
-                                           .__delete     = NullPointer};
+                                           .__init       = &Serial86Init};
 ADD_DRIVER_DESCRIPTOR(ser86_descriptor);

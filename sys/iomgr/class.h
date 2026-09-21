@@ -17,11 +17,11 @@
  */
 #define SupportsClass(_dev, _class) ((_dev)->devtable.class & (_class))
 
-typedef enum _DeviceClass
-        : u64 { DEVCLASS_UNKNOWN     = 0x0,
-                DEVCLASS_FRAMEBUFFER = 0x1,
-                DEVCLASS_CONSOLE     = 0x2,
-                DEVCLASS_UART        = 0x4 } DeviceClass;
+typedef enum _DeviceClass : u64 {
+        DEVCLASS_UNKNOWN     = 0x0,
+        DEVCLASS_FRAMEBUFFER = 0x1,
+        DEVCLASS_CONSOLE     = 0x2
+} DeviceClass;
 
 typedef struct _FramebufferInformation {
         u32 width;
@@ -39,9 +39,4 @@ typedef struct _FramebufferDeviceOps {
 typedef struct _ConsoleDeviceOps {
         void (*WriteSingleChar)(void *privatedata, char c);
         void (*ResetConsole)(void *privatedata);
-        void (*DeleteSingleChar)(void *privatedata);
 } ConsoleDeviceOps;
-
-typedef struct _UARTDeviceOps {
-        void (*WriteSingleChar)(void *privatedata, char c);
-} UARTDeviceOps;

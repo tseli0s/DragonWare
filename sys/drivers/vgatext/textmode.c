@@ -151,18 +151,6 @@ static void VGAClearAllText(void *private_state) {
         state->column = 0;
 }
 
-static void VGADeleteSingleCharacter(void *privatedata) {
-        VGATextModeState *state = privatedata;
-        VGAPrintCharacterAt(privatedata, state->column, state->row, ' ');
-
-        if (state->column != 0) state->column--;
-
-        /* Need to update the cursor again, otherwise it looks stuck (VGAPrintCharacterAt
-         * already does it once). Oh yeah, also FIXME: column and row are being confused all
-         * over the driver, I need to get some English lessons in the future  */
-        VGASetCursorPosition(state->row, state->column + 1);
-}
-
 static void VGAEnableCursor(u8 cursor_start, u8 cursor_end) {
         outb(0x3D4, 0x0A);
         outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
@@ -207,9 +195,8 @@ Status VGATextInit(void) {
         state->row        = 0;
         state->init       = true;
 
-        ConsoleDeviceOps console_operations = {.WriteSingleChar  = VGAPrintCharacter,
-                                               .ResetConsole     = VGAClearAllText,
-                                               .DeleteSingleChar = VGADeleteSingleCharacter};
+        ConsoleDeviceOps console_operations = {.WriteSingleChar = VGAPrintCharacter,
+                                               .ResetConsole    = VGAClearAllText};
         vganode->devtable.ddo->console      = console_operations;
         vganode->private_state              = state;
         vganode->attr.kernel_mapped_addr    = FRAMEBUFFER_ADDR;
@@ -225,9 +212,6 @@ Status VGATextInit(void) {
 }
 
 const DriverDescriptor vgatext_descriptor = {.name         = "BIOS VGA Text Mode Driver",
-                                             .author       = "DragonWare",
-                                             .license      = "GPLv3.0",
                                              .init_earlier = true,
-                                             .__init       = &VGATextInit,
-                                             .__delete     = NullPointer};
+                                             .__init       = &VGATextInit};
 ADD_DRIVER_DESCRIPTOR(vgatext_descriptor);

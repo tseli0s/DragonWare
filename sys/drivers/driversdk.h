@@ -16,19 +16,7 @@
  * @brief Maximum length for a driver name.
  * @details This limit includes the terminating null byte.
  */
-#define MAX_DRIVER_NAME    (32)
-
-/**
- * @brief Maximum length for an author name.
- * @details This limit includes the terminating null byte.
- */
-#define MAX_AUTHOR_NAME    (48)
-
-/**
- * @brief Maximum length for a module license string.
- * @details This must be a valid SPDX identifier and includes the terminating null Byte.
- */
-#define MAX_MODULE_LICENSE (10)
+#define MAX_DRIVER_NAME (32)
 
 /**
  * @brief SDK header for writing drivers for DragonWare.
@@ -47,23 +35,15 @@
 typedef Status (*InitCall)(void);
 
 /**
- * @brief Function pointer type for driver cleanup.
- */
-typedef void (*DeleteCall)(void);
-
-/**
  * @brief Driver descriptor structure.
  * @details Placed in the .drivers section via @ref ADD_DRIVER_DESCRIPTOR. Contains
  * basic metadata and entry points for driver initialization and teardown.
  */
 typedef struct [[gnu::packed]] _DriverDescriptor {
-        char name[MAX_DRIVER_NAME];       /**< Driver name. */
-        char author[MAX_AUTHOR_NAME];     /**< Driver author name. */
-        char license[MAX_MODULE_LICENSE]; /**< SPDX license identifier. */
+        char name[MAX_DRIVER_NAME]; /**< Driver name. */
         Bool init_earlier; /**< If true, the kernel will try to initialize this driver before others
                             */
-        InitCall   __init; /**< Initialization callback. */
-        DeleteCall __delete; /**< Cleanup callback. */
+        InitCall __init;   /**< Initialization callback. */
 } DriverDescriptor;
 
 /**
