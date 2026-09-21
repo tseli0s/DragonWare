@@ -24,6 +24,9 @@
  * 0xC0000000-0xFFFFFFFF. */
 #define DEFAULT_USER_STACK_ADDR  (0xBFFF0000)
 
+/* Size of the kernel stack in pages. */
+#define KERNEL_STACK_SIZE_PAGES  (2)
+
 /** @brief Maximum amount of device handles a device can have open at a given time. */
 #define MAX_DEVICE_HANDLES       (32)
 
