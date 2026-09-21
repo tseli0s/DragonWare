@@ -162,7 +162,7 @@ static uintptr_t GetNextKernelStackAddress(void) {
          * are planning to map as the kernel stack */
         while (current_addr + (KERNEL_STACK_SIZE_PAGES * PAGE_SIZE) <= KERNEL_STACK_END) {
                 Bool conflict = false;
-                for (int i = 0; i < KERNEL_STACK_SIZE_PAGES && !conflict; i++) {
+                for (unsigned int i = 0; i < KERNEL_STACK_SIZE_PAGES && !conflict; i++) {
                         VirtualAddress this = current_addr + (i * PAGE_SIZE);
                         if (IsVirtualPageMapped(this)) conflict = true;
                 }
@@ -188,17 +188,22 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
          * point.
          */
         uintptr_t kernel_stack_addr = GetNextKernelStackAddress();
-        uintptr_t phys_stack_1      = AllocateFrame();
-        uintptr_t phys_stack_2      = AllocateFrame();
+        VMAddress kstacks[KERNEL_STACK_SIZE_PAGES];
+        Process  *p = kzalloc(sizeof(Process));
+        if (!p) return NullPointer;
 
-        MapSinglePage(phys_stack_1, kernel_stack_addr, PAGE_PRESENT | PAGE_RW);
-        MapSinglePage(phys_stack_2, kernel_stack_addr + PAGE_SIZE, PAGE_PRESENT | PAGE_RW);
+        for (unsigned int i = 0; i < KERNEL_STACK_SIZE_PAGES; i++) {
+                kstacks[i] = (VMAddress){
+                        .phys = AllocateFrame(),
+                        .virt = kernel_stack_addr + (i * PAGE_SIZE),
+                };
+                MapSinglePage(kstacks[i].phys, kstacks[i].virt, PAGE_PRESENT | PAGE_RW);
+                p->kstacks[i] = kstacks[i];
+        }
+
         Thread *main_thread = AllocateUserThread(FLAT_BINARY_DEFAULT_ENTRY, DEFAULT_USER_STACK_ADDR,
                                                  kernel_stack_addr + (2 * FRAME_SIZE), NullPointer);
         if (!main_thread) return NullPointer;
-
-        Process *p = kzalloc(sizeof(Process));
-        if (!p) return NullPointer;
 
         /* First, allocate the process' page directory. */
         VirtualMap *pdmap = CreateTempVirtualMap();
@@ -340,7 +345,7 @@ Status DeleteProcess(Process *p) {
         MarkTmpMapFree((Size)pd_slot);
         MarkTmpMapFree((Size)pt_slot);
 
-        /* FIXME: Leaking allocated kernel stack here. */
+        for (int i = 0; i < KERNEL_STACK_SIZE_PAGES; i++) FreeFrame(p->kstacks[i].phys);
 
         FreeFrame(p->cr3);
         kfree(p);
