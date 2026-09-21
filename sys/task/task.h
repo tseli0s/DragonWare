@@ -17,12 +17,6 @@
 typedef u32  ThreadID;
 typedef void (*ThreadEntryPoint)(void *);
 
-typedef struct _MessageQueue {
-        Message               m;
-        struct _MessageQueue *prev;
-        struct _MessageQueue *next;
-} MessageQueue;
-
 /* Forward declaration, declared/defined in process.h */
 typedef struct _Process Process;
 
