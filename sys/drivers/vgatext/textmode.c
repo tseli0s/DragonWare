@@ -170,8 +170,7 @@ Status VGATextInit(void) {
         /* Extra checks, just to be sure */
         kassert(bootinfo->fbwidth == VGA_WIDTH && bootinfo->fbheight == VGA_HEIGHT);
 
-        DeviceManagerNode *vganode = MakeDeviceNode(
-                "VGA Console", P_DIRECT_ACCESS | P_MUTABLE | P_USER, DEVCLASS_CONSOLE);
+        DeviceManagerNode *vganode = MakeDeviceNode("VGA Console", DEVCLASS_CONSOLE);
         if (!vganode) return STATUS_OUT_OF_MEMORY;
         vganode->devtable.ddo = kzalloc(sizeof(DeviceOperations));
         if (!vganode->devtable.ddo) {
@@ -211,7 +210,6 @@ Status VGATextInit(void) {
         return STATUS_OK;
 }
 
-const DriverDescriptor vgatext_descriptor = {.name         = "BIOS VGA Text Mode Driver",
-                                             .init_earlier = true,
-                                             .__init       = &VGATextInit};
+const DriverDescriptor vgatext_descriptor = {
+        .name = "BIOS VGA Text Mode Driver", .init_earlier = true, .__init = &VGATextInit};
 ADD_DRIVER_DESCRIPTOR(vgatext_descriptor);

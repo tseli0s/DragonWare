@@ -68,8 +68,7 @@ Status Serial86Init(void) {
 #else
         InitSerialConnection();
 #endif
-        DeviceManagerNode *node = MakeDeviceNode(
-                "Serial Port Driver", P_MUTABLE | P_HAVE_CHILDREN | P_USER, DEVCLASS_CONSOLE);
+        DeviceManagerNode *node = MakeDeviceNode("Serial Port Driver", DEVCLASS_CONSOLE);
         if (!node) return STATUS_OUT_OF_MEMORY;
 
         node->devtable.ddo = kzalloc(sizeof(DeviceOperations));
@@ -87,7 +86,6 @@ Status Serial86Init(void) {
         return STATUS_OK;
 }
 
-const DriverDescriptor ser86_descriptor = {.name         = "x86 Serial Port Driver (COM1)",
-                                           .init_earlier = true,
-                                           .__init       = &Serial86Init};
+const DriverDescriptor ser86_descriptor = {
+        .name = "x86 Serial Port Driver (COM1)", .init_earlier = true, .__init = &Serial86Init};
 ADD_DRIVER_DESCRIPTOR(ser86_descriptor);

@@ -231,8 +231,8 @@ Status VBE86DriverInit(void) {
         /* Per multiboot spec, type = 2 means VGA text mode */
         if (bootinfo->fbtype == 2) return STATUS_UNSUPPORTED;
 
-        DeviceManagerNode *fb = MakeDeviceNode("Kernel Framebuffer", P_MUTABLE | P_DIRECT_ACCESS,
-                                               DEVCLASS_FRAMEBUFFER | DEVCLASS_CONSOLE);
+        DeviceManagerNode *fb =
+                MakeDeviceNode("Kernel Framebuffer", DEVCLASS_FRAMEBUFFER | DEVCLASS_CONSOLE);
         if (!fb) return STATUS_OUT_OF_MEMORY;
 
         fb->devtable.ddo   = kzalloc(sizeof(DeviceOperations));
@@ -335,7 +335,6 @@ Status VBE86DriverInit(void) {
         return STATUS_OK;
 }
 
-const DriverDescriptor vbe86_descriptor = {.name         = "VBE Generic Driver (x86)",
-                                           .init_earlier = false,
-                                           .__init       = &VBE86DriverInit};
+const DriverDescriptor vbe86_descriptor = {
+        .name = "VBE Generic Driver (x86)", .init_earlier = false, .__init = &VBE86DriverInit};
 ADD_DRIVER_DESCRIPTOR(vbe86_descriptor);

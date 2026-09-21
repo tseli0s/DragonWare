@@ -58,7 +58,6 @@ Status InitDeviceManager(void) {
         strncpy(root->attr.name, ROOT_DEVICE_NAME, MAX_DEVICE_NODE_NAME);
         root->attr.name[MAX_DEVICE_NODE_NAME - 1] = '\0';
         root->attr.claimed                        = false;
-        root->attr.permissions                    = P_MUTABLE | P_HAVE_CHILDREN;
         root->next                                = NullPointer;
         root->child                               = NullPointer;
 
@@ -119,11 +118,6 @@ void AddDevice(DeviceManagerNode *parent, DeviceManagerNode *new_node) {
         DeviceManagerNode *actual_parent = parent ? parent : GetRootDeviceManagerNode();
         if (!actual_parent) return;
 
-        if (!CheckNodeFlag(actual_parent, P_HAVE_CHILDREN) ||
-            !CheckNodeFlag(actual_parent, P_MUTABLE)) {
-                LogMessage(LOG_ERROR, "Node %p cannot have children or be mutated!", actual_parent);
-                return;
-        }
         new_node->next = NullPointer;
 
         LogMessage(LOG_DEBUG, "Adding device node %p (name: %s) to %p (%s)", new_node,

@@ -17,7 +17,7 @@
 #include "ktypes.h"
 #include "log.h"
 
-DeviceManagerNode *MakeDeviceNode(const char *name, u32 permissions, DeviceClass class) {
+DeviceManagerNode *MakeDeviceNode(const char *name, DeviceClass class) {
         if (!name || name[0] == '\0') return NullPointer;
         if (strlen(name) > MAX_DEVICE_NODE_NAME) return NullPointer;
         DeviceManagerNode *node = kzalloc(sizeof(DeviceManagerNode));
@@ -26,10 +26,9 @@ DeviceManagerNode *MakeDeviceNode(const char *name, u32 permissions, DeviceClass
         strncpy(node->attr.name, name, MAX_DEVICE_NODE_NAME);
         node->attr.name[MAX_DEVICE_NODE_NAME - 1] = '\0'; /* Just to be sure */
 
-        node->attr.claimed     = false;
-        node->attr.permissions = permissions;
-        node->next             = NullPointer;
-        node->child            = NullPointer;
+        node->attr.claimed = false;
+        node->next         = NullPointer;
+        node->child        = NullPointer;
 
         /* devtable->ddo will be set by the driver manually */
         node->devtable = (DeviceInterfaceTable){
