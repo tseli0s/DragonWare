@@ -13,6 +13,10 @@
 #include "iomgr/object.h"
 #include "task.h"
 
+#ifdef __i386__
+#include "ddk/ia32/vmm.h"
+#endif /* __i386__ */
+
 /** @brief Beginning of all kernel stacks in virtual memory. */
 #define KERNEL_STACK_BASE        (0xE0000000)
 
@@ -52,7 +56,8 @@ typedef enum _ProcessCapability {
 
 typedef struct _Process {
         Thread           *main_thread;
-        u32               cr3; /* WARNING: Physical address */
+        PhysicalAddress   cr3;
+        VMAddress         kstacks[KERNEL_STACK_SIZE_PAGES];
         ProcessID         pid;
         HandleTable       handles;
         u16               ioports[MAX_IO_PORTS_PER_PROCESS];
