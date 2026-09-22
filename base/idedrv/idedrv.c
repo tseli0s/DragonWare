@@ -195,7 +195,7 @@ int main(void) {
                 if (s != STATUS_OK) {
                         printf("idedrv: Failed to spawn listener thread for bus %d: Error reported "
                                "from SpawnThread() is \"%s\"\n",
-                               StringifyStatus(s));
+                               i, StringifyStatus(s));
                 }
         }
 
