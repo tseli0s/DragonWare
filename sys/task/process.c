@@ -197,7 +197,7 @@ Process *CreateProcess(ProcessID pid, void *code, Size code_size) {
                         .phys = AllocateFrame(),
                         .virt = kernel_stack_addr + (i * PAGE_SIZE),
                 };
-                MapSinglePage(kstacks[i].phys, kstacks[i].virt, PAGE_PRESENT | PAGE_RW);
+                MapSinglePage(kstacks[i].phys, kstacks[i].virt, PAGE_PRESENT | PAGE_RW | PAGE_GLOBAL);
                 p->kstacks[i] = kstacks[i];
         }
 
