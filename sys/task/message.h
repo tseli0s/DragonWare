@@ -59,8 +59,6 @@ typedef struct [[gnu::packed]] _Message {
         union {
                 Byte raw[MESSAGE_BUFFER_SIZE]; /** << Raw data left up for interpetation by the
                                                   processes. */
-                /* TODO: Add more fields here depending on how much the kernel wants to involve
-                 * itself */
         } payload;
 } Message;
 
