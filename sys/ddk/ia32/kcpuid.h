@@ -59,11 +59,3 @@ typedef struct _CPUData {
         char vendor[CPUID_MAX_VENDOR];
         u32  features;
 } CPUData;
-
-/* unused, let it die lmao */
-static inline void kcpuid(unsigned int leaf, unsigned int *eax, unsigned int *ebx,
-                          unsigned int *ecx, unsigned int *edx) {
-        __asm__ volatile("cpuid"
-                         : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
-                         : "a"(leaf), "c"(0));
-}
