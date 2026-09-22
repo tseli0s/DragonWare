@@ -35,11 +35,11 @@ _start:
         times   8-($-$$) db 0x00
 ; The data below is filled by firmware, and we rely on this convention for the entire bootloader to work.
 ; Hopefully it does work across all machines. PS: This entire bootloader RELIES on LBA extensions being present.
-PrimaryVolumeDescriptor:        resd 1  ; LBA
-BootFileLocation:               resd 1  ; LBA too
-BootFileLength:                 resd 1  ; In bytes
-BootChecksum:                   resd 1  ; Not sure, we'll ignore it
-_ReservedData:                  resb 40 ; Reserved "for future expansion"
+PrimaryVolumeDescriptor:        dd      0       ; LBA
+BootFileLocation:               dd      0       ; LBA too
+BootFileLength:                 dd      0       ; In bytes
+BootChecksum:                   dd      0       ; Not sure, we'll ignore it
+_ReservedData:                  times 40 db 0   ; Reserved "for future expansion"
 
 ; "True" entry point, actual execution begins here (Notice the jmp instruction at the beginning of the file).
 ; This is almost identical to the equivalent in bootmanager/bootsect/hdd/boot.asm
