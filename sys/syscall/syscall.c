@@ -39,8 +39,8 @@ static void SystemIdentifySyscall(SystemIdentify *save) {
         SystemIdentify data;
         kzeromem(&data, sizeof(SystemIdentify));
 
-        const char name[SI_MAX_NAME] = "DragonWare";
-        const char tag[SI_MAX_TAG]   = DRAGONWARE_VERSION_SUFFIX;
+        static const char name[SI_MAX_NAME] = "DragonWare";
+        static const char tag[SI_MAX_TAG]   = DRAGONWARE_VERSION_SUFFIX;
 
         /* We already zero out the struct, so we don't have to fill out the
          * empty parts of the fields. */
