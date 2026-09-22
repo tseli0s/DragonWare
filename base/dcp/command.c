@@ -31,7 +31,8 @@ static void IdentifySystem(void) {
         _DWSystemIdentify(&sysdata);
 
         printf("* %s version %u.%u.%u-%s. This build has build ID number %u.\n\n", sysdata.name,
-               sysdata.major, sysdata.minor, sysdata.patch, sysdata.tag, sysdata.build_id);
+               sysdata.major, sysdata.minor, sysdata.patch, sysdata.tag,
+               (unsigned int)sysdata.build_id);
         puts("* DragonWare is free software, distributed and provided to you under the\n"
              "terms of the GNU General Public License, version 3. This operating system comes "
              "with ABSOLUTELY NO WARRANTY.\nSee the GNU General Public License for more "
