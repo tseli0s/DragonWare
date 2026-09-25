@@ -80,7 +80,7 @@ static void isr_install(void) {
 }
 
 void isr_handler(IDTRegisters *r) {
-        FatalError("CPU Exception %d: eip 0x%d, error_code 0x%x, eflags: 0x%x, stack: 0x%x",
+        FatalError("CPU Exception %d: eip 0x%x, error_code 0x%x, eflags: 0x%x, stack: 0x%x",
                    r->int_no, r->eip, r->err_code, r->eflags, r->esp);
         StallMachine();
 }
