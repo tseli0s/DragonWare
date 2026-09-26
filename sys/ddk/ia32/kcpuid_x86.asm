@@ -7,8 +7,7 @@
 ; LICENSE: GPL-v3.0-or-later, see COPYING in the toplevel directory
 ; ----------------------------------------------------------------------------------------
 
-global  __check_cpuid_exists
-global  __do_cpuid
+global __check_cpuid_exists
 
 ; int __check_cpuid_exists(void)
 ; Taken from https://wiki.osdev.org/CPUID
@@ -25,23 +24,4 @@ __check_cpuid_exists:
         xor eax,[esp]                        ;eax = whichever bits were changed
         popfd                                ;Restore original EFLAGS
         and eax,0x00200000                   ;eax = zero if ID bit can't be changed, else non-zero
-        ret
-
-__do_cpuid:
-        push    ebp
-        mov     ebp,    esp
-
-        push    ebx
-
-        mov     eax,    [ebp+8]
-        cpuid
-
-        mov     eax,            [ebp+12]
-        mov     [eax+4],        ebx
-        mov     [eax+8],        ecx
-        mov     [eax+12],       edx
-        mov     [eax],          eax
-
-        pop     ebx
-        pop     ebp
         ret

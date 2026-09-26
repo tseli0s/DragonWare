@@ -15,6 +15,7 @@
 
 #define MAX_CPU_FEATURES (32)
 
+#include <cpuid.h>
 #include <mmutils.h>
 
 #include "gdt.h"
@@ -26,7 +27,6 @@
 static char feature_str[MAX_FEATURE_STRING_SIZE];
 
 extern u32  __check_cpuid_exists(void);
-extern void __do_cpuid(int leaf, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx);
 extern void EnableSysenter(void);
 
 static Status GetCPUIDx86(CPUData *data) {
@@ -41,8 +41,7 @@ static Status GetCPUIDx86(CPUData *data) {
         data->supported = true;
 
         unsigned int eax, ebx, ecx, edx;
-        __do_cpuid(CPUID_LEAF_GETVNDR, &eax, &ebx, &ecx, &edx);
-
+        __cpuid(CPUID_LEAF_GETVNDR, eax, ebx, ecx, edx);
         /* TODO: is there a faster way to write this WITHOUT crashing the kernel?? (Yes assignment
          * directly from the register values "works" but used to break the kernel in release builds
          * and now I'm scared to go back) */
@@ -60,7 +59,7 @@ static Status GetCPUIDx86(CPUData *data) {
         data->vendor[11] = (char)((ecx >> 24) & 0xFF);
         data->vendor[12] = '\0';
 
-        __do_cpuid(CPUID_LEAF_GETFEAT, &eax, &ebx, &ecx, &edx);
+        __cpuid(CPUID_LEAF_GETFEAT, eax, ebx, ecx, edx);
         data->features = edx;
 
         return STATUS_OK;
@@ -147,7 +146,7 @@ static void LogCPUInfo(void) {
 
 Bool x86FeatureSupported(x86Features feat) {
         u32 eax, ebx, ecx, edx;
-        __do_cpuid(CPUID_LEAF_GETFEAT, &eax, &ebx, &ecx, &edx);
+        __cpuid(CPUID_LEAF_GETFEAT, eax, ebx, ecx, edx);
         u32 features = edx;
         return (features & (1 << feat));
 }
