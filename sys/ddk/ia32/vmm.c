@@ -15,6 +15,7 @@
 
 #include "ddk/ia32/cpu.h"
 #include "ddk/ia32/kcpuid.h"
+#include "lib/assert.h"
 #include "log.h"
 #include "macros.h"
 #include "mem/frame.h"
@@ -193,6 +194,7 @@ void UnmapSinglePage(uintptr_t virt) {
 }
 
 Bool IsVirtualPageMapped(uintptr_t addr) {
+        kassert(isaligned(addr, PAGE_SIZE));
         Size pdindex = PD_INDEX(addr);
         Size ptindex = PT_INDEX(addr);
 
