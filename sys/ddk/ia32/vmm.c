@@ -94,6 +94,10 @@ Status InitVirtualMemoryManager(void) {
         for (Size i = KERNEL_PD_INDEX; i < MAX_PD_ENTRIES - 1; i++) {
                 if (unlikely(!(pd[i] & PAGE_PRESENT))) {
                         PageTableEntry *ptnext = (PageTableEntry *)AllocateFrame();
+                        if (!ptnext) {
+                                LogMessage(LOG_ERROR, "Not enough memory to allocate kernel page tables!");
+                                return STATUS_OUT_OF_MEMORY;
+                        }
                         kzeromem((void *)ptnext, FRAME_SIZE);
                         pd[i] = (PageDirectory)ptnext | KERNEL_PDE_FLAGS;
                 }
