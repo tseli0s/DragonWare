@@ -21,6 +21,7 @@
 #include "log.h"
 #include "mem/frame.h"
 #include "panic.h"
+#include "task/process.h"
 
 /******************************************************************************************
  * XXX this code is very similar to sys/task/process.c we can probably unify everything
@@ -171,6 +172,58 @@ static Slab *CreateSlab(Size objsize) {
         return slab;
 }
 
+typedef struct [[gnu::packed]] _HugeAllocationMetadata {
+        int             valid : 4;
+        int             cacheable : 4;
+        PhysicalAddress physframes[512]; /* First zero means end of list */
+} HugeAllocationMetadata;
+static_assert(sizeof(HugeAllocationMetadata) <= PAGE_SIZE);
+
+static void *HugeAllocation(Size n_pages) {
+        if (n_pages > arraysize(((HugeAllocationMetadata *)0)->physframes)) return NullPointer;
+
+        /* The first page allocated stores metadata about this huge allocation. */
+        void *base = (void *)FindFreePageRange(KERNEL_VM_BASE, KERNEL_STACK_BASE, n_pages + 1);
+        if (!base) return NullPointer;
+
+        uintptr_t frame = AllocateFrame();
+        int allocated = 0;
+        if (!frame) goto bad;
+        if (MapSinglePage(frame, (uintptr_t)base, PAGE_PRESENT | PAGE_RW | PAGE_GLOBAL) !=
+            STATUS_OK)
+                goto bad;
+        HugeAllocationMetadata *mtdt = base;
+        ZeroMemory(mtdt);
+
+        for (Size i = 0; i < n_pages; i++) {
+                mtdt->physframes[i] = AllocateFrame();
+                if (mtdt->physframes[i] < 0x2000)
+                        goto bad;
+                else {
+                        /* Again, skipping a frame because the first frame holds the metadata */
+                        uintptr_t thisaddr = ((uintptr_t)base) + (i * PAGE_SIZE) + PAGE_SIZE;
+                        if (MapSinglePage(mtdt->physframes[i], thisaddr, PAGE_PRESENT | PAGE_RW) !=
+                            STATUS_OK)
+                                goto bad;
+
+                        allocated++;
+                }
+        }
+
+        return base;
+bad:
+        if (frame >= 0x2000) FreeFrame(frame);
+        if (base && ADDRESS_IS_MAPPED(base)) UnmapSinglePage((uintptr_t)base);
+        if (allocated) {
+                for (int i = 0; i < allocated; i++) {
+                        /* Is it dangerous not to check if the frame is valid here? I say no but
+                         * osdev has made me paranoid. */
+                        FreeFrame(mtdt->physframes[i]);
+                }
+        }
+        return NullPointer;
+}
+
 void *kmalloc(Size size) {
         if (size == 0) return NullPointer;
         /* inrange() is inclusive, so we must add 1 to the lower boundary or it may take a normal
@@ -178,7 +231,7 @@ void *kmalloc(Size size) {
         else if (inrange(size, slab_sizes[SLAB_TYPES_MAX - 1] + 1, PAGE_SIZE))
                 return AllocateVirtualPage();
         else if (size > PAGE_SIZE)
-                return NullPointer; /* Huge allocation, not supported yet */
+                return HugeAllocation(pagealign(size) / PAGE_SIZE);
 
         if (unlikely(!allocator_initialized)) {
                 InitSlabCaches();
