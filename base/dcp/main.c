@@ -7,6 +7,7 @@
  * LICENSE: GPL-3.0-or-later (https://spdx.org/licenses/GPL-3.0-or-later.html)
  ***********************************************************************/
 
+#include <ctype.h>
 #include <ipc86.h>
 #include <kernelapi.h>
 #include <kerneltypes.h>
@@ -20,9 +21,6 @@
 #include "vgacons/protocol.h"
 
 #define MAXCOMMAND (1024)
-
-/* Close enough for me */
-static inline Bool CharacterIsPrintable(char c) { return (c >= 0x20); }
 
 static void PrintWelcomeMessage(void) {
         puts("Welcome to DragonWare!\n");
@@ -77,7 +75,7 @@ int main(void) {
                         /* This is forwarded by the console, not sent directly from the keyboard */
                         case KBD_PROTOCOL_V0:
                                 char c = (char)m.payload.raw[0];
-                                if (CharacterIsPrintable(c)) {
+                                if (isprint(c)) {
                                         command[cmdend]     = c;
                                         command[cmdend + 1] = '\0';
                                         cmdend++;
