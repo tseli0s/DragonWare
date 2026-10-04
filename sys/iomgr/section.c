@@ -22,25 +22,6 @@
 #include "mem/frame.h"
 #include "sched/schedule.h"
 
-/* Scans the address space to find a region of at least n_pages that are NOT mapped. Used to find
- * where to map a section. */
-static uintptr_t FindFreePageRange(Size n_pages) {
-        uintptr_t start = 0;
-        Size      count = 0;
-
-        /* First 16KBs of memory will be left alone, to catch bad pointers and other stuff. */
-        for (uintptr_t addr = 4 * PAGE_SIZE; addr < KERNEL_VM_BASE; addr += PAGE_SIZE) {
-                if (!IsVirtualPageMapped(addr)) {
-                        if (count == 0) start = addr;
-                        count++;
-
-                        if (count == n_pages) return start;
-                } else
-                        count = 0;
-        }
-        return 0;
-}
-
 Section *AllocateSection(Size needed_pages, SectionPermissions permissions) {
         if (!needed_pages) return NullPointer;
         if (needed_pages >= MAX_SECTION_FRAMES) return NullPointer;
@@ -62,7 +43,8 @@ uintptr_t MapSection(Section *section, Bool copy_on_write) {
         UnusedParameter(copy_on_write);
         if (!section) return 0;
 
-        uintptr_t start = FindFreePageRange(section->n_pages);
+        /* Old policy is that the first 16kbs cannot be allocated to a section */
+        uintptr_t start = FindFreePageRange(4 * PAGE_SIZE, KERNEL_VM_BASE, section->n_pages);
         if (!start) return 0; /* Section cannot be mapped */
 
         u32 flags = PAGE_PRESENT | PAGE_USER;

@@ -171,6 +171,19 @@ void UnmapSinglePage(uintptr_t virt);
 Bool IsVirtualPageMapped(uintptr_t addr);
 
 /**
+ * @brief Scans the current address space for an available region of virtual memory of at least
+ * @p n_pages. Available in this case means not mapped and continuous.
+ * @param start_scan Address to start scanning from. 0 is considered invalid.
+ * @param stop_scan Address to stop scanning. Any free ranges after that address are ignored by this
+ * function.
+ * @param n_pages Amount of pages that must be free in this range. If 0, this function returns 0.
+ * @returns The starting @b virtual address of which the next @p n_pages are free in the address
+ * space (unmapped), or 0 if the function failed to find a region of free virtual memory.
+ * @note The addresses aren't mapped and physical memory is not allocated for them.
+ */
+VirtualAddress FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan, Size n_pages);
+
+/**
  * @brief Map a contiguous range of physical pages to virtual memory.
  * @details Maps @p n_pages pages starting from physical address @p phys to the
  * virtual address @p virt. Both physical and virtual addresses are incremented by

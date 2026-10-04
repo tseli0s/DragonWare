@@ -95,7 +95,8 @@ Status InitVirtualMemoryManager(void) {
                 if (unlikely(!(pd[i] & PAGE_PRESENT))) {
                         PageTableEntry *ptnext = (PageTableEntry *)AllocateFrame();
                         if (!ptnext) {
-                                LogMessage(LOG_ERROR, "Not enough memory to allocate kernel page tables!");
+                                LogMessage(LOG_ERROR,
+                                           "Not enough memory to allocate kernel page tables!");
                                 return STATUS_OUT_OF_MEMORY;
                         }
                         kzeromem((void *)ptnext, FRAME_SIZE);
@@ -206,6 +207,26 @@ Bool IsVirtualPageMapped(uintptr_t addr) {
 
         PageTableEntry *pt = GetPageTableAt(pdindex);
         return (pt[ptindex] & PAGE_PRESENT);
+}
+
+VirtualAddress FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan,
+                                 Size n_pages) {
+        if (!start_scan) return 0;
+        if (!n_pages) return 0;
+
+        uintptr_t start = 0;
+        Size      count = 0;
+
+        for (uintptr_t addr = start_scan; addr < stop_scan; addr += PAGE_SIZE) {
+                if (!IsVirtualPageMapped(addr)) {
+                        if (count == 0) start = addr;
+                        count++;
+
+                        if (count == n_pages) return start;
+                } else
+                        count = 0;
+        }
+        return 0;
 }
 
 Size MapMemoryRange(uintptr_t phys, uintptr_t virt, u32 flags, Size n_pages) {
