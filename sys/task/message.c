@@ -20,11 +20,15 @@
 #include "process.h"
 #include "task.h"
 
-void EnqueueMessage(Port *port, Message *new) {
+Status EnqueueMessage(Port *port, Message *new) {
+        if (port->count >= MAX_MESSAGES_IN_PORT) return STATUS_MSGQUEUE_FULL;
         Size index = port->tail;
         memcpy(&port->msgbuf[index], new, sizeof(MessageHeader) + new->header.payload_length);
         port->tail = (port->tail + 1) % MAX_MESSAGES_IN_PORT;
         port->count++;
+
+        WakeThread(port->owner);
+        return STATUS_OK;
 }
 
 [[gnu::nonnull, gnu::hot]]
@@ -46,11 +50,10 @@ Status SendMessage(Process *process, int handle, Message *msg) {
         msg->header.reserved     = 0;
 
         /* Standard queue insertion. TODO: This is almost identical to the code in
-         * sys/syscall/ipc.c, create a helper function to do this for us. */
+         * sys/syscall/ipc.c, create a helper function to do this for us.
+         * Update (05/10/2026): EnqueueMessage works here, just port it to _DWIPCSend
+         * if you want.
+         */
         Port *port = target->data;
-
-        EnqueueMessage(port, msg);
-        WakeThread(port->owner);
-
-        return STATUS_OK;
+        return EnqueueMessage(port, msg);
 }
