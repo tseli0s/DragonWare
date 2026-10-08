@@ -102,8 +102,8 @@ README.md       -> This file
 - Why not? Best license there is. GPLv2 was also an idea, but at the end of the day, they're almost the same for me.
 - ***Why C23? C99 is more portable***
 - Well, most modern compilers support C23 already, and it had some neat features like `_BitInt` and `[[attributes(likethis)]]`. Even though you can get equivalents in older compiler versions, I think the whole prospect of using the latest standard made it even more fun to write all this.
-- ***Why not use GRUB?***
-- It's too heavy, complicated and crashes on old hardware. We won't use 99% of its features anyways, easier to start from scratch with only the things we WILL use. Though [the boot manager](./bootmanager) is multiboot-compliant, as is the kernel, so you can still use another bootloader if you wish.
+- ***Why not use GRUB by default?***
+- It's too heavy, complicated and crashes on old hardware. We won't use 99% of its features anyways, easier to start from scratch with only the things we WILL use. Though [the boot manager](./bootmanager) is multiboot-compliant, as is the kernel, so you can still use another bootloader if you wish. In version 0.0.2, the ability [to use GRUB as the bootloader with a single compile option](https://github.com/tseli0s/DragonWare/pull/21) was added. Specify `-DUSE_GRUB=ON` on the CMake configure command to enable it.
 
 # License
 DragonWare is distributed under the terms of the GNU General Public License, version 3. Please see [COPYING](./COPYING) for more details, or, in a CD/disk installation of DragonWare, see sys::/LICENSE.txt. The entire operating system aims to be 100% free and open source (as per the [FSF definition](https://www.gnu.org/philosophy/free-sw.en.html)).

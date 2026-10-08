@@ -7,6 +7,7 @@ set(CMAKE_C_STANDARD 23)
 option(LEGACY_SUPPORT "Include support for legacy processors (older than Pentium, 486 mostly). Will produce slower code." OFF)
 option(NXFPU_SUPPORT "Enable support for FPUs that are located outside the chip. Currently noop" OFF)
 option(USE_CLANG_COMPILER "Use the clang compiler/LLVM toolchain to build DragonWare. Experimental." OFF)
+option(USE_GRUB "Use the GRUB bootloader instead of DragonWare Boot Manager" OFF)
 
 if (USE_CLANG_COMPILER OR LEGACY_SUPPORT)
 	include(cmake/ClangToolchain.cmake)
@@ -64,7 +65,10 @@ add_subdirectory(sys)
 add_subdirectory(libc)
 add_subdirectory(dwuser)
 add_subdirectory(base) # That day has come. 14/03/2026.
-add_subdirectory(bootmanager)
+
+if (NOT USE_GRUB)
+	add_subdirectory(bootmanager)
+endif()
 
 include(cmake/sysroot.cmake)
 
@@ -74,6 +78,10 @@ set(LICENSE_FILE ${CMAKE_SOURCE_DIR}/COPYING)
 # These are generated in base/CMakeLists.txt
 get_property(USER_BINARIES_LIST GLOBAL PROPERTY DRAGONWARE_USER_BINARIES)
 get_property(USER_TARGET_LIST GLOBAL PROPERTY DRAGONWARE_USER_TARGETS)
+
+if (USE_GRUB)
+	include(cmake/MakeGRUBSysroot.cmake)
+endif()
 
 add_custom_target(sysroot DEPENDS kernel.sys
 		  COMMAND ${CMAKE_COMMAND} -E make_directory ${SYSROOT_PATH}
@@ -89,13 +97,15 @@ add_custom_target(sysroot DEPENDS kernel.sys
 		  COMMENT "Build sysroot file hierarchy for the disk image"
 		  VERBATIM)
 
-add_custom_target(bootcd DEPENDS sysroot BootImages
-		  # Temporary thing, until the bootloader can read subdirectories. Which I'm too lazy to implement for now.
-		  COMMAND ${CMAKE_COMMAND} -E copy ${KERNEL_BINARY} ${SYSROOT_PATH}/KRNLIA32.SYS
-		  COMMAND ${CMAKE_COMMAND} -E cat ${BOOTIMG_CD} $<TARGET_FILE:core.img> > ${SYSROOT_PATH}/BOOTMGR.SYS
-		  COMMAND xorriso -as mkisofs -R -r -J -b /BOOTMGR.SYS -no-emul-boot -boot-load-size 4 -boot-info-table -o ${BOOTCD} ${SYSROOT_PATH}
-		  COMMENT "Create Boot CD for DragonWare using DragonWare Boot Manager as the bootloader"
-		  VERBATIM)
+if (NOT USE_GRUB)
+	add_custom_target(bootcd DEPENDS sysroot BootImages
+			# Temporary thing, until the bootloader can read subdirectories. Which I'm too lazy to implement for now.
+			COMMAND ${CMAKE_COMMAND} -E copy ${KERNEL_BINARY} ${SYSROOT_PATH}/KRNLIA32.SYS
+		  	COMMAND ${CMAKE_COMMAND} -E cat ${BOOTIMG_CD} $<TARGET_FILE:core.img> > ${SYSROOT_PATH}/BOOTMGR.SYS
+			COMMAND xorriso -as mkisofs -R -r -J -b /BOOTMGR.SYS -no-emul-boot -boot-load-size 4 -boot-info-table -o ${BOOTCD} ${SYSROOT_PATH}
+			COMMENT "Create Boot CD for DragonWare using DragonWare Boot Manager as the bootloader"
+			VERBATIM)
+endif()
 
 add_custom_target(everything DEPENDS dlibc sysroot bootcd
 		  COMMENT "Build everything (Disk image under ${CMAKE_SOURCE_DIR}/bootcd.iso)"

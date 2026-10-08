@@ -24,4 +24,11 @@ FlushGDT:
 	mov es, ax
 	mov ss, ax
 	
+	; %fs and %gs are not defined in a specific state upon booting the kernel.
+    ; This causes a kernel panic when booting with GRUB (By complete coincidence,
+    ; not when booting with DragonWare Boot Manager) since commit 2d4121d. Zero
+    ; them out to be sure that the CPU doesn't crash.
+    xor     ax,     ax
+    mov     fs,     ax
+    mov     gs,     ax
 	ret
