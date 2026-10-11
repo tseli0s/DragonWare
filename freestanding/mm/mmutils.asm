@@ -72,6 +72,7 @@ kzeromem:
 
 ; void *memset(void *obj, int value, Size size)
 memset:
+        xor     eax,    eax
         push    edi
         mov     edi,    [esp+8]
         mov     al,     [esp+12]
