@@ -12,6 +12,8 @@
 #include <kerneltypes.h>
 #include <message.h>
 #include <object.h>
+#include <object/device.h>
+#include <object/port_object.h>
 #include <string.h>
 
 #include "driver.h"
@@ -37,18 +39,16 @@ int main(void) {
 
         /* Device object, to claim the VGA text mode driver from the kernel */
         Handle consoledev = CreateObject(NullPointer, OBJ_DEVICE, 0);
-        Handle kbdport    = CreateObject(NullPointer, OBJ_PORT, 0);
+        Handle kbdport    = OpenPort("KEYBOARD");
         Handle replyport  = CreateObject("CONSOLE", OBJ_PORT, 0);
 
         DeviceMapDescriptor dev;
 
         if (consoledev < 0 || kbdport < 0 || replyport < 0) goto cleanup;
-        if (InvokeObject(consoledev, DEVICE_GET, "/Devices/VGA Console") != STATUS_OK) goto cleanup;
-        if (InvokeObject(consoledev, DEVICE_CLAIM, &dev) != STATUS_OK) goto cleanup;
-        if (InvokeObject(consoledev, DEVICE_MAP, VGA_CONSOLE_VIRTUAL_ADDR) != STATUS_OK)
-                goto cleanup;
 
-        if (InvokeObject(kbdport, PORT_OPEN, "KEYBOARD") != STATUS_OK) goto cleanup;
+        if (GetDevice(consoledev, "/Devices/VGA Console") != STATUS_OK) goto cleanup;
+        if (ClaimDevice(consoledev, &dev) != STATUS_OK) goto cleanup;
+        if (MapDeviceMMIO(consoledev, VGA_CONSOLE_VIRTUAL_ADDR) != STATUS_OK) goto cleanup;
 
         Handle kbdreply = CreateObject(NullPointer, OBJ_PORT, 0);
         if (!kbdreply) goto cleanup;
