@@ -14,8 +14,8 @@ extern _SystemBootstrapRoutine
 
 %define MULTIBOOT_DEFAULT_WIDTH         0
 %define MULTIBOOT_DEFAULT_HEIGHT        0
-%define MULTIBOOT_FRAMEBUFFER_MODE      0
-%define DEFAULT_BITS_PER_PIXEL          32
+%define MULTIBOOT_FRAMEBUFFER_MODE      1
+%define DEFAULT_BITS_PER_PIXEL          0
 
 MB_ALIGN                equ        1<<0
 MB_MEMINFO              equ        1<<1
