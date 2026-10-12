@@ -65,7 +65,7 @@ int main(void) {
         /* spin until the console server is freed, as we need to have access to it */
         while (accept_status != STATUS_OK) {
                 Message reply;
-                if (SendMessage(consport, &msg, sizeof(msg.header)) != STATUS_OK) goto cleanup;
+                if (SendMessage(consport, &msg, SIZE_OF_MESSAGE(msg)) != STATUS_OK) goto cleanup;
 
                 /* Kernel didn't authorize the message to come through */
                 if (ReceiveMessage(commport, &reply) != STATUS_OK) continue;
