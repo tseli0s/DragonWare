@@ -13,6 +13,7 @@
 #include <kerneltypes.h>
 #include <message.h>
 #include <object.h>
+#include <object/port_object.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -36,15 +37,21 @@ static void PrintWelcomeMessage(void) {
 }
 
 int main(void) {
-        Handle consport            = CreateObject(NullPointer, OBJ_PORT, 0);
-        Handle commport            = CreateObject(NullPointer, OBJ_PORT, 0);
+        Handle consport = OpenPort("CONSOLE");
+        if (consport < 0) {
+                /* Probably we are ahead of time here and the port isn't available.
+                 * The volume manager also faces the same problem (I haven't merged it
+                 * to master as of writing this) so if you have a better idea, let me know. */
+                while (consport < 0) {
+                        consport = OpenPort("CONSOLE");
+                        if (consport >= 0) break;
+                }
+        }
+        Handle commport            = CreatePort(NullPointer);
         char   command[MAXCOMMAND] = {0};
         Size   cmdend              = 0;
 
-        if (consport < 0 || commport < 0) return -1;
-
-        if (InvokeObject(commport, PORT_CREATE, NullPointer) != STATUS_OK) goto cleanup;
-        if (InvokeObject(consport, PORT_OPEN, "CONSOLE") != STATUS_OK) goto cleanup;
+        if (commport < 0) return -1;
 
         Message msg;
         memset(&msg, 0, sizeof(Message));
