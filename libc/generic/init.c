@@ -39,7 +39,10 @@ static void __libc_register_handles(void) {
         /* Usually this means it is during very early boot and the console port isn't available (Or
          * even that it's the console port itself being loaded). Normally we'd spin here, but then
          * the whole system deadlocks if the console can't be started, so move on without output. */
-        if (invoke_status != STATUS_OK) __dlibc_console_handle = -1;
+        if (invoke_status != STATUS_OK) {
+                __make_syscall_ia32_1param(SYSCALL_DELETE_OBJECT, (uint32_t)__dlibc_console_handle);
+                __dlibc_console_handle = -1;
+        }
 }
 
 void __libc_init_internal(void) {
