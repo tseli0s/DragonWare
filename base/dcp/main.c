@@ -44,7 +44,23 @@ int main(void) {
                  * to master as of writing this) so if you have a better idea, let me know. */
                 while (consport < 0) {
                         consport = OpenPort("CONSOLE");
-                        if (consport >= 0) break;
+                        if (consport >= 0) {
+                                /*
+                                 * We are the ones that open the console, not dlibc.
+                                 * Because dlibc tried opening the CONSOLE port before main(),
+                                 * it didn't find the console port, and printf()/puts()/whatever
+                                 * would become no ops.
+                                 *
+                                 * Fix this by manually setting the handle that now points
+                                 * to the console. Otherwise, on real hardware, DragonWare
+                                 * does not print anything (But curiously works fine in every
+                                 * emulator).
+                                 */
+                                extern int __dlibc_console_handle;
+                                __dlibc_console_handle = consport;
+
+                                break;
+                        }
                 }
         }
         Handle commport            = CreatePort(NullPointer);
