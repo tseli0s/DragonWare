@@ -99,6 +99,8 @@ int main(void) {
                         case KBD_PROTOCOL_V0:
                                 char c = (char)m.payload.raw[0];
                                 if (isprint(c)) {
+                                        if (isspace(c) && cmdend == 0) break;
+
                                         command[cmdend]     = c;
                                         command[cmdend + 1] = '\0';
                                         cmdend++;
