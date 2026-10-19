@@ -22,9 +22,6 @@ DLC_BEGIN_DECLS
 /* function pointer to be ran when exit() is called */
 typedef void (*exit_func_t)(void);
 
-int isdigit(int c);
-int isspace(int c);
-
 double    atof(const char *str);
 int       atoi(const char *str);
 long      atol(const char *str);
