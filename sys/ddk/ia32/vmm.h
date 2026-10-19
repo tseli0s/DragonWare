@@ -181,7 +181,7 @@ Bool IsVirtualPageMapped(uintptr_t addr);
  * space (unmapped), or 0 if the function failed to find a region of free virtual memory.
  * @note The addresses aren't mapped and physical memory is not allocated for them.
  */
-VirtualAddress FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan, Size n_pages);
+uintptr_t FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan, Size n_pages);
 
 /**
  * @brief Map a contiguous range of physical pages to virtual memory.

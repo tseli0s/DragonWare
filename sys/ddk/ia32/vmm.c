@@ -209,7 +209,7 @@ Bool IsVirtualPageMapped(uintptr_t addr) {
         return (pt[ptindex] & PAGE_PRESENT);
 }
 
-VirtualAddress FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan,
+uintptr_t FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan,
                                  Size n_pages) {
         if (!start_scan) return 0;
         if (!n_pages) return 0;
