@@ -54,7 +54,9 @@ static inline PageTableEntry *GetPageTableAt(u32 index) {
 Status InitVirtualMemoryManager(void) {
         /* Page size alignment is extremely useful, otherwise we might miss any
          * data after the last page-aligned address.*/
-        const Size kernel_size = pagealign((&_end - &_begin));
+        uintptr_t kernel_start_addr = (uintptr_t)&_begin;
+        uintptr_t kernel_end_addr = (uintptr_t)&_end;
+        const Size kernel_size = pagealign((kernel_end_addr - kernel_start_addr));
 
         PageDirectory  *pd = (PageDirectory *)AllocateLowMemory();
         PageTableEntry *pt = (PageTableEntry *)AllocateLowMemory();
