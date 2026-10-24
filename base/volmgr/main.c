@@ -14,6 +14,7 @@
 #include <object.h>
 #include <object/port_object.h>
 #include <object/section_object.h>
+#include <object/thread_object.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -27,8 +28,36 @@ typedef struct _DiskDevice {
         Handle port;
 } DiskDevice;
 
-static DiskDevice devs[128] = {0};
-static int        ndevs     = 0;
+typedef struct _ListenerData {
+        int ndisk;
+        int npart;
+} ListenerData;
+
+static DiskDevice devs[32] = {0};
+static int        ndevs    = 0;
+
+static ListenerData partdata[128];
+static int          nparts = 0;
+
+static void ListenToPort(void *port) {
+        ListenerData *port_data = port;
+        char portname[32];
+        snprintf(portname, sizeof(portname), "VOL:HD%dP%d", port_data->ndisk, port_data->npart);
+
+        Handle recv = CreatePort(portname);
+        if (recv < 0) {
+                puts("volmgr: can't create global listener endpoint");
+                return;
+        }
+
+        while (true) {
+                Message m;
+                ReceiveMessage(recv, &m);
+                if (m.header.reply_handle >= 0) {
+                        SendMessage(m.header.reply_handle, &m, SIZE_OF_MESSAGE(m));
+                }
+        }
+}
 
 int main(void) {
         int per_process_objects = _DWSystemQuery(SQ_N_OBJECTS_PER_PROCESS, NullPointer);
@@ -123,10 +152,21 @@ int main(void) {
                                        "active: %d, type: 0x%x\n",
                                        i, j, start, end, (this.status == 0x80) ? 1 : 0,
                                        this.partition_type);
-                                /* And this is where I'd create the volume listener ports, let me
-                                 * think of how to name them... */
+                                
+                                partdata[nparts].ndisk = i;
+                                partdata[nparts].npart = j;
+                                Status spawn = SpawnThread(ListenToPort, &partdata[nparts]);
+                                if (spawn != STATUS_OK) {
+                                        printf("volmgr: can't spawn listener thread: %s\n", StringifyStatus(spawn));
+                                        continue;
+                                }
+                                nparts++;
                         }
                 }
         }
-        return 0;
+
+        /* i should implement a wait for thread operation or something */
+        while (true) {
+                _DWYield();
+        }
 }
