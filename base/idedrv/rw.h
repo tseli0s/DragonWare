@@ -3,9 +3,8 @@
  * PURPOSE: Read/Write I/O operations for ATA/IDE drives
  * PROJECT: DragonWare Base System
  * DATE: 08-2026
- * AUTHORS: Aggelos Tselios <aggelostselios777@gmail.com> (adapted from xv6:
- *https://github.com/mit-pdos/xv6-public) LICENSE: GPL-3.0-or-later
- *(https://spdx.org/licenses/GPL-3.0-or-later.html)
+ * AUTHORS: Aggelos Tselios <aggelostselios777@gmail.com>
+ * LICENSE: GPL-3.0-or-later
  ***********************************************************************/
 
 #pragma once
