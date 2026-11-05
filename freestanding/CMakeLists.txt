@@ -12,6 +12,7 @@ set(FREESTANDING_SOURCES_C    ${CMAKE_CURRENT_SOURCE_DIR}/mm/mmutils.c
                               ${CMAKE_CURRENT_SOURCE_DIR}/string/string.c
                               ${CMAKE_CURRENT_SOURCE_DIR}/compat/arith64.c
                               ${CMAKE_CURRENT_SOURCE_DIR}/compat/atomic.c
+                              ${CMAKE_CURRENT_SOURCE_DIR}/common/abs.c
 )
 set(FREESTANDING_SOURCES_ASM  ${CMAKE_CURRENT_SOURCE_DIR}/mm/mmutils.asm
                               ${CMAKE_CURRENT_SOURCE_DIR}/string/string.asm
