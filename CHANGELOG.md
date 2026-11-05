@@ -1,0 +1,57 @@
+## Changelog: v0.0.2
+- Fix boot manager UI not updating properly when selecting another boot option.
+- Mark kernel stack and heap pages as global (Not flushed during `%cr3` switch).
+- Implement section object support: A section is a continuous range of virtual memory of at least a specific size.
+- Implement `printf()`, `putchar()` and other standard `libc` functions.
+- Implement `ctype.h` standard `libc` header and drop exports of `isdigit()` and `isspace()` from `stdlib.h`.
+- Define various standard macros expected by the `C23` standard in `libc`.
+- Add new `STATUS_BAD_SYSCALL` status code and use it whenever an unknown system call is invoked, as well as `STATUS_MSGQUEUE_FULL` if the receiving end of the port is already full.
+- Drop `errno.h` from the freestanding library, replaced fully by `Status` everywhere.
+- Use a block-shaped cursor when using the `vgacons` console driver.
+- Use proper `i8042` command in the freestanding library to reset the CPU instead of intentionally triple faulting. This fixes some hangs on real hardware.
+- Probe for the `i8042` controller when loading the `ps2kbd` userspace driver.
+- Export the message header as a separate, `MessageHeader` type.
+- Use bitmap in the kernel's `kmalloc()` implementation to track virtual page allocations.
+- Move the message queue inside `Port` objects and optimize it for cache coherency.
+- Enable the `WP` x86 control bit as well as the `NE` bit. The former protects against the kernel writing in read only pages, the latter handles floating point errors not as an IRQ but as an exception.
+- Clean up and simplify the builtin drivers in the kernel (See pull requests #-1 and #-1).
+- Implement calling into the BIOS services in the `bootmanager`. Additionally, add support for booting DragonWare in video (framebuffer) mode instead of VGA text mode.
+- Add logging support in the bootloader.
+- Drop `_BitInt()` for standard precise-width integers (such as `u(int)32(_t)`) and use the standard ABI guaranteed ones.
+- Split various headers and includes to architecture-specific directories for future ports.
+- Add `UNUSED()` macro in `libc`. (NOTE: Nonstandard).
+- Implement a framebuffer-based console.
+- Rewrite some string/memory related functions such as `memcpy()` in pure x86 assembly in `libc` for performance.
+- Switch the system call ABI: System call number now goes in `%eax`, arguments go in order to `%ebx`, `%esi`, `%edi`, `%ebp`.
+- Implement `sysenter` support in DragonWare for faster traps into the kernel.
+- Move userspace flat binaries' base address to `0x100000` by default.
+- Drop the `_DWRaiseIOPL()` system call (Replaced by `_DWRequestPorts()`) instead.
+- Change arguments of `_DWGetTicksSinceBoot()` system call and export it to userland.
+- Implement multithreading support (kernel-based): A thread is just like any other object that shares the address space with the creating process.
+- Allow the system clock's tick rate to be configurable in a CMake variable, by defining it during build time `cmake <...> -DCLOCK_TICK_HZ=1000`.
+- Fix a scheduler bug where threads may never be rescheduled on high preemption rates.
+- Add new `_DWTranslateHandle()` system call: Given a process ID and a foreign handle, translate that handle into the current process accordingly.
+- Drop POSIX system call stub from the kernel. It is a remnant of a very, very old kernel design which goes against the current philosophy of DragonWare, and it would never be implemented anyways.
+- Add new `_DWSystemQuery()` system call: It accepts a specific ID that refers to a specific system setting such as the page size and returns the kernel-configured value.
+- Fix random crashes when trying to access the `.bss` section of some userland programs: The linker discards it entirely, expecting the program to fill it, but there exists no mechanism to fill it correctly when loading the servers, so force the linker to keep the zeroes in the binary.
+- Drop the `_DWklog()` system call: It was only intended for early development and applications can cause the kernel to crash by overflowing the kernel log buffer, so it is better to be removed.
+- Clean up some legacy object opcodes that aren't valid anymore.
+- Add wrappers in `dwuser` around common kernel objects for readability and code cleanliness, as well as reduce the repeating pattern across different applications.
+- Check if a global port already exists by the same name (Previously only the first created port by a name would be reachable, others would be ignored but would be unreachable).
+- Fix a crash when booting with Ventoy on some hardware that would set bits in `%cr4` and never clear them before jumping to the kernel.
+- Drop the system time implementation from the kernel. It was only for informational purposes and inaccessible to userland. It will be implemented in the future entirely in userspace.
+- Drop the `Sleep()` function inside the kernel, it was unused and inaccurate.
+- **Implement an ATA/IDE disk driver**. It is currently limited to only one sector per request, however it has been verified to work.
+- Add the `[[gnu::format]]` attribute in various `libc` functions for better diagnostics.
+- Add two new types in the `freestanding` library: `PhysicalAddress` and `VirtualAddress`. Both are integers intended to be set to the fixed size equivalent to the memory bus width and the permitted paging configuration of the machine, currently hardcoded at 32 bits each.
+- Fix kernel stack leak on memory process: The kernel would never free the underlying physical memory of the thread's stack, so 8-16KBs of memory would be permanently leaked on each thread's exit.
+- Fix an assembler warning when assembling the `eltorito` boot sector image about zeroes in the `.text` section.
+- Replace non standard code in different parts of userland with `libc` equivalents which are standard and can be optimized by the compiler.
+- Fix a bug in `memset()` that caused garbage values to be written due to an optimization trick implemented incorrectly.
+- Fix race conditions when trying to connect to different various ports by looping until the connection is established.
+- Fix a blank screen on real hardware when trying to start `dcp`: `libc` attempted to print but the connection to the console wasn't done before and never established thereafter.
+- Fix a bug in `strncmp()` where a matching substring would assume both strings matched.
+- Add the `abs()` function and friends in the `freestanding` library.
+
+## Changelog: v0.0.1
+(nothing to show here)
