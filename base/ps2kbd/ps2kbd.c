@@ -77,8 +77,8 @@ static const char ascii_table[128] = {
 };
 
 /* If zero, there's no listener. Kernel processes start from PID 1. */
-static u32    listener        = 0;
-static Handle listener_handle = -1;
+static ProcessID listener        = 0;
+static Handle    listener_handle = -1;
 
 /** @brief Disables the 8042 controller from sending any events while any
  * critical operations are taking place.
