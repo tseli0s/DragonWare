@@ -1,6 +1,6 @@
 ; ----------------------------------------------------------------------------------------
 ; FILE: syscall86.asm
-; PURPOSE: System call routines using software interrupts (TODO: Fast syscall track)
+; PURPOSE: System call routines using software interrupts
 ; PROJECT: DragonWare C Library
 ; DATE: 01-2026
 ; AUTHOR: Aggelos Tselios <aggelostselios777@gmail.com>
