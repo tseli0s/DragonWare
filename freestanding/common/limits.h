@@ -29,5 +29,10 @@
 #define INT_MIN               ((int)I32_MIN)
 #define INT_MAX               ((int)I32_MAX)
 
+#define LONG_MIN              ((long)INT_MIN)
+#define LONG_MAX              ((long)INT_MAX)
+#define LLONG_MIN             ((long long)I64_MIN)
+#define LLONG_MAX             ((long long)I64_MAX)
+
 #define PTR32_MAX_ADDRESSABLE ((uintptr_t)U32_MAX)
 #define PTR64_MAX_ADDRESSABLE ((uintptr_t)U64_MAX)
