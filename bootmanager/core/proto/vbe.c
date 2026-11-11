@@ -9,6 +9,7 @@
 
 #include "vbe.h"
 
+#include <abs.h>
 #include <kstring.h>
 #include <ktypes.h>
 #include <mmutils.h>
@@ -77,31 +78,45 @@ Status FindBestVESAMode(VBEInfo *info, VBEModeInfo *modeinfo, int w, int h, int 
         u16        *list          = (u16 *)SegmentedToLinearAddress(info->modelist);
         u16         mode_selected = 0;
         VBEModeInfo mi;
-        int         i           = 0;
-        int         last_result = 0;
+        int         last_difference = 0;
+        int         i               = 0;
 
         while (list[i] != 0xFFFF) {
                 if (GetVESAModeInformation(list[i], &mi) != STATUS_OK) return STATUS_BAD;
-                int target_score = (w * h) + d;
-                int this_score   = (mi.width * mi.height) + mi.bpp;
-                int result       = target_score - this_score;
 
-                if (result == 0) {
-                        *mode = list[i];
-                        memcpy(modeinfo, &mi, sizeof(VBEModeInfo));
-                        return STATUS_OK;
-                }
+                /* we don't care much about the resolution (though TODO, try to have a bias for the
+                 * same aspect ratio), but I do care about the bits per pixel matching. w(something)
+                 * means weight of that something in the final score */
+                constexpr u32 wbpp = 1000;
+                constexpr u32 ww   = 1;
+                constexpr u32 wh   = 1;
 
-                else if (last_result < result) {
+                int this_score   = ww * mi.width + wh * mi.height + wbpp * mi.bpp;
+                int target_score = ww * w + wh * h + wbpp * d;
+                int difference = abs(target_score - this_score);
+                
+                if (!difference) {
                         mode_selected = list[i];
-                        last_result   = result;
+                        goto best;
+                } else {
+                        if (difference <= last_difference || unlikely(!last_difference)) {
+                                last_difference = difference;
+                                mode_selected   = list[i];
+                        }
                 }
+
                 i++;
         }
 
         *mode = mode_selected;
-        memcpy(modeinfo, &mi, sizeof(VBEModeInfo));
+        /* need to copy the data of this mode as the while loop might've wiped it off */
+        GetVESAModeInformation(mode_selected, modeinfo);
         return STATUS_NOT_FOUND;
+
+best:
+        *mode = mode_selected;
+        memcpy(modeinfo, &mi, sizeof(VBEModeInfo));
+        return STATUS_OK;
 }
 
 Status VESAModeset(u16 mode) {
