@@ -163,12 +163,12 @@ static void PrepareDriveForRW(int bus, int master, u32 lba) {
         SubmitLBA(bus, lba);
 }
 
-IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf) {
+BlockDriverStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf) {
         int pos;
         CheckCacheForSector(bus, master, lba, &pos);
         if (pos >= 0) {
                 ReadFromCache(pos, buf);
-                return IDEDRV_SUCCESS;
+                return BLOCKDRV_SUCCESS;
         }
 
         PrepareDriveForRW(bus, master, lba);
@@ -191,7 +191,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, 
 
                 if (CheckForError(bus)) {
                         printf("idedrv: drive error after READ command\n");
-                        return IDEDRV_BUG_CHECK;
+                        return BLOCKDRV_BUG_CHECK;
                 }
                 u16  port = (bus == 0) ? ATA_DATA_PRIMARY : ATA_DATA_SECONDARY;
                 u16 *out  = buf;
@@ -201,7 +201,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, 
         LoadCache(bus, master, lba, buf);
         Wait400ns(bus); /* let the drive flush down any stale data and prepare it for the next
                            command */
-        return IDEDRV_SUCCESS;
+        return BLOCKDRV_SUCCESS;
 }
 
 /*
@@ -209,7 +209,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, 
  * above, but it blocked and no interrupts came. So for now, polling and wasting CPU cycles it is,
  * until I grab a copy of the specification and read what happens.
  */
-IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf) {
+BlockDriverStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf) {
         UNUSED(irq_handle);
 
         DisableINTRQ(bus);
@@ -241,11 +241,11 @@ IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, v
         EnableINTRQ(bus);
 
         InvalidateCache(bus, master, lba);
-        return IDEDRV_SUCCESS;
+        return BLOCKDRV_SUCCESS;
 bugcheck:
         EnableINTRQ(bus);
-        return IDEDRV_BUG_CHECK;
+        return BLOCKDRV_BUG_CHECK;
 hwerr:
         EnableINTRQ(bus);
-        return IDEDRV_HARDWARE_FAILURE;
+        return BLOCKDRV_HARDWARE_FAILURE;
 }

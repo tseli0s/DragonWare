@@ -23,10 +23,10 @@
  * @param master 0 for master drive, 1 for slave drive.
  * @param lba LBA to read from. Must be a 28-bit integer. High four bits are ignored.
  * @param[out] buf Where to write the data. Must not be a @ref NullPointer.
- * @returns An appropriate @ref IDEDRVStatusReply code for the operation.
+ * @returns An appropriate @ref BlockDriverStatusReply code for the operation.
  */
 [[gnu::nonnull]]
-IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf);
+BlockDriverStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf);
 
 /**
  * @brief Write the provided 512 byte block into the LBA @p lba of the given drive @p master on bus
@@ -42,7 +42,7 @@ IDEDRVStatusReply ReadFromDisk(Handle irq_handle, int bus, int master, u32 lba, 
  * bytes of changes in a single file), currently you must read the LBA @p lba into memory first,
  * replace those 10 bytes and then write back the @p lba. This will be replaced in the future with a
  * better API.
- * @returns An appropriate @ref IDEDRVStatusReply code for the operation.
+ * @returns An appropriate @ref BlockDriverStatusReply code for the operation.
  */
 [[gnu::nonnull]]
-IDEDRVStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf);
+BlockDriverStatusReply WriteToDisk(Handle irq_handle, int bus, int master, u32 lba, void *buf);
