@@ -120,15 +120,15 @@ int main(void) {
                 if (tmprecv < 0) return -1;
 
                 Message m               = {0};
-                m.header.protocol       = IDEDRV_PROTOCOL_V0;
-                m.header.payload_length = sizeof(IDEDRVRequest);
-                m.header.type           = IDEDRV_READ_SECTOR;
-                IDEDRVRequest req       = {.lba            = 0,
+                m.header.protocol       = BLOCKDRV_PROTOCOL_V0;
+                m.header.payload_length = sizeof(BlockDriverRequest);
+                m.header.type           = BLOCKDRV_READ_SECTOR;
+                BlockDriverRequest req  = {.lba            = 0,
                                            .shared_section = shmem,
                                            /* FIXME: Handle slave devices on a bus in idedrv */
                                            .master         = 0,
                                            .__reserved     = 0};
-                memcpy(m.payload.raw, &req, sizeof(IDEDRVRequest));
+                memcpy(m.payload.raw, &req, sizeof(BlockDriverRequest));
 
                 if (IPCCall(&m, current.port, tmprecv) != STATUS_OK) return -1;
                 DeleteObject(tmprecv);
@@ -152,12 +152,13 @@ int main(void) {
                                        "active: %d, type: 0x%x\n",
                                        i, j, start, end, (this.status == 0x80) ? 1 : 0,
                                        this.partition_type);
-                                
+
                                 partdata[nparts].ndisk = i;
                                 partdata[nparts].npart = j;
                                 Status spawn = SpawnThread(ListenToPort, &partdata[nparts]);
                                 if (spawn != STATUS_OK) {
-                                        printf("volmgr: can't spawn listener thread: %s\n", StringifyStatus(spawn));
+                                        printf("volmgr: can't spawn listener thread: %s\n",
+                                               StringifyStatus(spawn));
                                         continue;
                                 }
                                 nparts++;
