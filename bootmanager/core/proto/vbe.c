@@ -93,8 +93,8 @@ Status FindBestVESAMode(VBEInfo *info, VBEModeInfo *modeinfo, int w, int h, int 
 
                 int this_score   = ww * mi.width + wh * mi.height + wbpp * mi.bpp;
                 int target_score = ww * w + wh * h + wbpp * d;
-                int difference = abs(target_score - this_score);
-                
+                int difference   = abs(target_score - this_score);
+
                 if (!difference) {
                         mode_selected = list[i];
                         goto best;

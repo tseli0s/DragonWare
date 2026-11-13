@@ -89,7 +89,7 @@ char *strchr(const char *str, int c) {
 /*
  * This function is originally from the Sortix operating system with
  * some tiny adjustments for DragonWare.
- * 
+ *
  * Copyright (c) 2011, 2012, 2014 Jonas 'Sortie' Termansen.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -103,7 +103,7 @@ char *strchr(const char *str, int c) {
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+ */
 int strncmp(const char *str1, const char *str2, Size maxlen) {
         for (Size i = 0; i < maxlen; i++) {
                 unsigned char ac = (unsigned char)str1[i];

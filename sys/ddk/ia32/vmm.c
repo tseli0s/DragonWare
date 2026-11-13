@@ -54,9 +54,9 @@ static inline PageTableEntry *GetPageTableAt(u32 index) {
 Status InitVirtualMemoryManager(void) {
         /* Page size alignment is extremely useful, otherwise we might miss any
          * data after the last page-aligned address.*/
-        uintptr_t kernel_start_addr = (uintptr_t)&_begin;
-        uintptr_t kernel_end_addr = (uintptr_t)&_end;
-        const Size kernel_size = pagealign((kernel_end_addr - kernel_start_addr));
+        uintptr_t  kernel_start_addr = (uintptr_t)&_begin;
+        uintptr_t  kernel_end_addr   = (uintptr_t)&_end;
+        const Size kernel_size       = pagealign((kernel_end_addr - kernel_start_addr));
 
         PageDirectory  *pd = (PageDirectory *)AllocateLowMemory();
         PageTableEntry *pt = (PageTableEntry *)AllocateLowMemory();
@@ -211,8 +211,7 @@ Bool IsVirtualPageMapped(uintptr_t addr) {
         return (pt[ptindex] & PAGE_PRESENT);
 }
 
-uintptr_t FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan,
-                                 Size n_pages) {
+uintptr_t FindFreePageRange(VirtualAddress start_scan, VirtualAddress stop_scan, Size n_pages) {
         if (!start_scan) return 0;
         if (!n_pages) return 0;
 

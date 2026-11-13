@@ -103,8 +103,9 @@ static void listener(void *data) {
                                 memcpy(m.payload.raw, &reply_data, sizeof(BlockDriverReplyData));
                                 m.header.payload_length = sizeof(BlockDriverReplyData);
 
-                                if (SendMessage(m.header.reply_handle, &m,
-                                                sizeof(MessageHeader) + sizeof(BlockDriverReplyData)) !=
+                                if (SendMessage(
+                                            m.header.reply_handle, &m,
+                                            sizeof(MessageHeader) + sizeof(BlockDriverReplyData)) !=
                                     STATUS_OK) {
                                         puts("idedrv: unable to send message reply");
                                         continue;
@@ -139,8 +140,9 @@ static void listener(void *data) {
                                 memcpy(m.payload.raw, &reply_data, sizeof(BlockDriverReplyData));
                                 m.header.payload_length = sizeof(BlockDriverReplyData);
 
-                                if (SendMessage(m.header.reply_handle, &m,
-                                                sizeof(MessageHeader) + sizeof(BlockDriverReplyData)) !=
+                                if (SendMessage(
+                                            m.header.reply_handle, &m,
+                                            sizeof(MessageHeader) + sizeof(BlockDriverReplyData)) !=
                                     STATUS_OK) {
                                         puts("idedrv: unable to send message reply");
                                         continue;

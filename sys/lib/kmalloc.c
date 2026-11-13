@@ -186,8 +186,8 @@ static void *HugeAllocation(Size n_pages) {
         void *base = (void *)FindFreePageRange(KERNEL_VM_BASE, KERNEL_STACK_BASE, n_pages + 1);
         if (!base) return NullPointer;
 
-        uintptr_t frame = AllocateFrame();
-        int allocated = 0;
+        uintptr_t frame     = AllocateFrame();
+        int       allocated = 0;
         if (!frame) goto bad;
         if (MapSinglePage(frame, (uintptr_t)base, PAGE_PRESENT | PAGE_RW | PAGE_GLOBAL) !=
             STATUS_OK)
