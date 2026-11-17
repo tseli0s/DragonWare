@@ -35,5 +35,6 @@ typedef struct [[gnu::packed]] _VolumeManagerVolumeInfo {
  */
 typedef enum _VolumeManagerRequest : unsigned long {
         VOLMGR_GET_VOLUME_INFO = 1, /** << Get information about a single volume */
-        VOLMGR_CLAIM_VOLUME    = 2, /** << Claim this volume and accept future requests for it */
+        VOLMGR_CLAIM_VOLUME = 2, /** << Claim this volume and accept future requests for it (Returns
+                 a Status code in the message payload) */
 } VolumeManagerRequest;
