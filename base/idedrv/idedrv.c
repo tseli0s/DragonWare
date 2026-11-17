@@ -10,6 +10,7 @@
 #include <ipc86.h>
 #include <kernelapi.h>
 #include <kerneltypes.h>
+#include <macros.h>
 #include <message.h>
 #include <object.h>
 #include <object/port_object.h>
@@ -30,9 +31,39 @@ static struct __data {
         int whoami;
 } thread_data[2];
 
+/* typedef feels confusing here also yes i gotta implement malloc immediately */
+static struct VolumeListenerData {
+        LBA    base, len;
+        Handle volmgr;
+        Handle atabus;
+        int    master;
+} volume_listener_data[64];
+static Size vld_index = 0;
+
 static inline void die(const char *msg) {
         printf("idedrv: fatal error: %s\n", msg);
         exit(EXIT_FAILURE);
+}
+
+static void VolumeListener(void *data) {
+        struct VolumeListenerData this = *(struct VolumeListenerData *)data;
+        Handle recv                    = CreatePort(NullPointer);
+        if (recv < 0) {
+                Message error             = {0};
+                error.header.protocol     = BLOCKDRV_PROTOCOL_V0;
+                error.header.reply_handle = -1;
+                SendMessage(this.volmgr, &error, SIZE_OF_MESSAGE(error));
+                return;
+        }
+        Message response             = {0};
+        response.header.protocol     = BLOCKDRV_PROTOCOL_V0;
+        response.header.reply_handle = recv;
+
+        SendMessage(this.volmgr, &response, SIZE_OF_MESSAGE(response));
+        while (true) {
+                /* TODO */
+                _DWYield();
+        }
 }
 
 static void listener(void *data) {
@@ -110,7 +141,6 @@ static void listener(void *data) {
                                         puts("idedrv: unable to send message reply");
                                         continue;
                                 }
-                                _DWYield();
                                 break;
                         }
                         case BLOCKDRV_WRITE_SECTOR: {
@@ -147,13 +177,36 @@ static void listener(void *data) {
                                         puts("idedrv: unable to send message reply");
                                         continue;
                                 }
-                                _DWYield();
+                                break;
+                        }
+                        case BLOCKDRV_REQUEST_VOLUME: {
+                                Handle send = m.header.reply_handle;
+
+                                if (vld_index < arraysize(volume_listener_data)) {
+                                        BlockDriverVolumeRequest req;
+                                        memcpy(&req, m.payload.raw,
+                                               sizeof(BlockDriverVolumeRequest));
+
+                                        /* FIXME: bounds check here */
+                                        volume_listener_data[vld_index] =
+                                                (struct VolumeListenerData){.base   = req.base,
+                                                                            .len    = req.len,
+                                                                            .atabus = irq,
+                                                                            .master = 0,
+                                                                            .volmgr = send};
+                                        SpawnThread(VolumeListener,
+                                                    &volume_listener_data[vld_index]);
+                                        vld_index++;
+                                } else
+                                        m.header.reply_handle = -1;
+
+                                SendMessage(send, &m, SIZE_OF_MESSAGE(m));
                                 break;
                         }
                         default:
-                                _DWYield();
                                 break;
                 }
+                _DWYield();
         }
 fail:
         if (h >= 0) DeleteObject(h);
