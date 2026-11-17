@@ -41,7 +41,10 @@ typedef enum BlockDriverStatusReply : u32 {
 typedef enum _BlockDriverRequestOpcode : unsigned long {
         BLOCKDRV_BAD_REQUEST = 0, /* again, just tryna catch bad applications */
         BLOCKDRV_READ_SECTOR,     /** << Read a single sector into shared memory */
-        BLOCKDRV_WRITE_SECTOR, /** << Write a single sector, copied from a shared memory buffer */
+        BLOCKDRV_WRITE_SECTOR,   /** << Write a single sector, copied from a shared memory buffer */
+        BLOCKDRV_REQUEST_VOLUME, /** << Request a communication port to perform operations within a
+                                    range of sectors (handle returned in the message header reply
+                                    field) */
         BLOCKDRV_GET_DRIVE_PARAMS = 0xff /** @warning @b RESERVED (Do not use this opcode) */
 } BlockDriverRequestOpcode;
 
@@ -53,6 +56,17 @@ typedef struct [[gnu::packed]] BlockDriverRequest {
         int    master;         /* 0 for the master drive on the bus, 1 for the slave drive */
         int    __reserved;     /* Never used for now */
 } BlockDriverRequest;
+
+/**
+ * @brief A request packet for volume access.
+ * @details A volume in block-based drivers such as @b idedrv is a range of sectors within the
+ * physical media.
+ * @since v0.0.2
+ */
+typedef struct [[gnu::packed]] _BlockDriverVolumeRequest {
+        LBA base;
+        LBA len;
+} BlockDriverVolumeRequest;
 
 typedef struct [[gnu::packed]] BlockDriverReplyData {
         BlockDriverStatusReply reply; /* Reply to the request given */
