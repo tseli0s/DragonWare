@@ -34,7 +34,6 @@ typedef struct [[gnu::packed]] _VolumeManagerVolumeInfo {
  * @since v0.0.2
  */
 typedef enum _VolumeManagerRequest : unsigned long {
-        VOLMGR_NO_MESSAGE      = 0, /* catch bullshit requests easily, doxygen dont keep this  */
         VOLMGR_GET_VOLUME_INFO = 1, /** << Get information about a single volume */
         VOLMGR_CLAIM_VOLUME    = 2, /** << Claim this volume and accept future requests for it */
 } VolumeManagerRequest;
