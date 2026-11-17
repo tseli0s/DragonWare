@@ -29,8 +29,11 @@ typedef struct _DiskDevice {
 } DiskDevice;
 
 typedef struct _ListenerData {
-        int ndisk;
-        int npart;
+        int  ndisk;
+        int  npart;
+        Bool active;
+        LBA  start, end;
+        Byte type;
 } ListenerData;
 
 static DiskDevice devs[32] = {0};
@@ -41,7 +44,7 @@ static int          nparts = 0;
 
 static void ListenToPort(void *port) {
         ListenerData *port_data = port;
-        char portname[32];
+        char          portname[32];
         snprintf(portname, sizeof(portname), "VOL:HD%dP%d", port_data->ndisk, port_data->npart);
 
         Handle recv = CreatePort(portname);
@@ -153,8 +156,14 @@ int main(void) {
                                        i, j, start, end, (this.status == 0x80) ? 1 : 0,
                                        this.partition_type);
 
-                                partdata[nparts].ndisk = i;
-                                partdata[nparts].npart = j;
+                                partdata[nparts].ndisk  = i;
+                                partdata[nparts].npart  = j;
+                                partdata[nparts].active = this.status == 0x80;
+                                partdata[nparts].start  = this.lba_first_absolute_sector;
+                                partdata[nparts].end =
+                                        this.lba_first_absolute_sector + this.n_sectors_partition;
+                                partdata[nparts].type = this.partition_type;
+
                                 Status spawn = SpawnThread(ListenToPort, &partdata[nparts]);
                                 if (spawn != STATUS_OK) {
                                         printf("volmgr: can't spawn listener thread: %s\n",
