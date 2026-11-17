@@ -20,6 +20,7 @@
 
 #include "idedrv/protocol.h"
 #include "mbr.h"
+#include "protocol.h"
 
 #define MAX_PROBE_RETRIES (5)
 
@@ -56,9 +57,35 @@ static void ListenToPort(void *port) {
         while (true) {
                 Message m;
                 ReceiveMessage(recv, &m);
-                if (m.header.reply_handle >= 0) {
-                        SendMessage(m.header.reply_handle, &m, SIZE_OF_MESSAGE(m));
+                if (m.header.reply_handle < 0) continue;
+                if (m.header.protocol != VOLMGR_PROTOCOL_V0) continue;
+                switch (m.header.type) {
+                        case VOLMGR_GET_VOLUME_INFO: {
+                                VolumeManagerVolumeInfo info = {
+                                        .active         = port_data->active,
+                                        .volume_len     = port_data->end - port_data->start,
+                                        .result         = STATUS_OK,
+                                        .partition_type = port_data->type};
+                                memset(m.payload.raw, 0, DEFAULT_MESSAGE_SIZE);
+                                memcpy(m.payload.raw, &info, sizeof(VolumeManagerVolumeInfo));
+
+                                m.header.payload_length = sizeof(VolumeManagerVolumeInfo);
+                                SendMessage(m.header.reply_handle, &m, SIZE_OF_MESSAGE(m));
+                                break;
+                        }
+                        case VOLMGR_CLAIM_VOLUME: {
+                                /* unimplemented for now, need to test that the rest of the servers
+                                 * work fine first */
+                                Status unimplemented = STATUS_UNSUPPORTED;
+                                Size   size          = sizeof(unimplemented);
+                                memset(m.payload.raw, 0, DEFAULT_MESSAGE_SIZE);
+                                memcpy(m.payload.raw, &unimplemented, size);
+                                m.header.payload_length = size;
+                                SendMessage(m.header.reply_handle, &m, SIZE_OF_MESSAGE(m));
+                                break;
+                        }
                 }
+                _DWYield();
         }
 }
 
