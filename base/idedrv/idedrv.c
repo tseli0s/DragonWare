@@ -110,7 +110,6 @@ static void listener(void *data) {
                                         puts("idedrv: unable to send message reply");
                                         continue;
                                 }
-                                _DWYield();
                                 break;
                         }
                         case BLOCKDRV_WRITE_SECTOR: {
@@ -151,9 +150,9 @@ static void listener(void *data) {
                                 break;
                         }
                         default:
-                                _DWYield();
                                 break;
                 }
+                _DWYield();
         }
 fail:
         if (h >= 0) DeleteObject(h);
