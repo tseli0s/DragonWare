@@ -148,7 +148,7 @@ int main(void) {
                                         this.lba_first_absolute_sector + this.n_sectors_partition;
                                 if (!this.partition_type || !start) continue;
 
-                                printf("idedrv: Device %d:%d: LBAs 0x%x-0x%x, "
+                                printf("volmgr: Device %d:%d: LBAs 0x%x-0x%x, "
                                        "active: %d, type: 0x%x\n",
                                        i, j, start, end, (this.status == 0x80) ? 1 : 0,
                                        this.partition_type);
