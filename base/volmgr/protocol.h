@@ -10,6 +10,7 @@
 #pragma once
 
 #include <kerneltypes.h>
+#include <object.h>
 
 /** @brief Volume manager protocol version 0 magic number constant */
 #define VOLMGR_PROTOCOL_V0 ((u16)0xD4DA)
