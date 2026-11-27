@@ -54,6 +54,8 @@ static void ListenToPort(void *port) {
                 return;
         }
 
+        Bool claimed = false;
+        Handle claimer = -1;
         while (true) {
                 Message m;
                 ReceiveMessage(recv, &m);
@@ -74,14 +76,66 @@ static void ListenToPort(void *port) {
                                 break;
                         }
                         case VOLMGR_CLAIM_VOLUME: {
-                                /* unimplemented for now, need to test that the rest of the servers
-                                 * work fine first */
-                                Status unimplemented = STATUS_UNSUPPORTED;
-                                Size   size          = sizeof(unimplemented);
+                                Handle reply = -1;
+                                if (claimed)
+                                        goto too_late;
+                                else {
+                                        claimed = true;
+                                        claimer = m.header.reply_handle;
+                                }
+
+                                char fmtbuf[16];
+                                snprintf(fmtbuf, sizeof(fmtbuf), "HD%d", port_data->ndisk);
+                                Handle p = OpenPort(fmtbuf);
+                                if (p < 0) {
+                                        /* normally this would need a separate label, but because
+                                         * we'd return the same status codes either way, we can just
+                                         * jump straight to too_late label for any misfortunes :P
+                                         * (yes leaving this comment here otherwise it looks
+                                         * confusing)*/
+                                        claimed = false;
+                                        goto too_late;
+                                }
+                                Message                  slicemsg = {0};
+                                BlockDriverVolumeRequest req      = {
+                                        .base = port_data->start,
+                                        .len  = port_data->end - port_data->start};
+
+                                slicemsg.header = (MessageHeader){
+                                        .payload_length = sizeof(BlockDriverVolumeRequest),
+                                        .protocol       = BLOCKDRV_PROTOCOL_V0,
+                                        .type           = BLOCKDRV_REQUEST_VOLUME};
+                                memcpy(slicemsg.payload.raw, &req,
+                                       sizeof(BlockDriverVolumeRequest));
+                                IPCCall(&slicemsg, p, recv);
+                                DeleteObject(p);
+                                reply = slicemsg.header.reply_handle;
+                                if (reply < 0) {
+                                        claimed = false;
+                                        goto too_late;
+                                }
+
                                 memset(m.payload.raw, 0, DEFAULT_MESSAGE_SIZE);
-                                memcpy(m.payload.raw, &unimplemented, size);
+                                Status ok     = STATUS_OK;
+                                Size   oksize = sizeof(ok);
+
+                                m.header.payload_length = oksize;
+                                memcpy(m.payload.raw, &ok, oksize);
+                                goto send_reply;
+
+                        too_late:
+                                Status already_claimed = STATUS_BAD;
+                                Size   size            = sizeof(already_claimed);
+                                memcpy(m.payload.raw, &already_claimed, size);
                                 m.header.payload_length = size;
-                                SendMessage(m.header.reply_handle, &m, SIZE_OF_MESSAGE(m));
+                        send_reply:
+                                Handle send = m.header.reply_handle;
+                                if (reply >= 0) m.header.reply_handle = reply;
+                                SendMessage(send, &m, SIZE_OF_MESSAGE(m));
+
+                                /* the volume maanger doesnt need to track the slice at all, its
+                                 * just for the driver */
+                                if (reply >= 0) DeleteObject(reply);
                                 break;
                         }
                 }
