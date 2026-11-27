@@ -16,6 +16,7 @@
 
 #include "iomgr/port.h"
 #include "iomgr/section.h"
+#include "lib/assert.h"
 
 Object *AllocateObject(const char *name, ObjectType type, u32 permissions) {
         UnusedParameter(permissions); /* TODO */
@@ -33,6 +34,7 @@ Object *AllocateObject(const char *name, ObjectType type, u32 permissions) {
 }
 
 void DeleteObject(Object *obj) {
+        kassert(obj != NullPointer);
         /* trying to avoid integer underflows by accident */
         if (obj->refcnt > 1) {
                 obj->refcnt--;
