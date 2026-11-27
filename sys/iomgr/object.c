@@ -28,7 +28,8 @@ Object *AllocateObject(const char *name, ObjectType type, u32 permissions) {
         obj->type        = type;
         obj->data        = NullPointer;
         obj->permissions = 0;
-        obj->refcnt      = 1;
+        obj->refcnt      = 0; /* Only referred after being added to a handle table, see
+                                 AppendToHandleTable() */
 
         return obj;
 }
@@ -71,6 +72,7 @@ int AppendToHandleTable(HandleTable *table, Object *obj) {
         SET_BIT(table->valid_bitmap, index);
         table->objlist[index] = obj;
 
+        REFER(obj);
         return index;
 }
 

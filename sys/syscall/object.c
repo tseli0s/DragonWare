@@ -349,10 +349,6 @@ Status _DWTranslateHandle(ProcessID of, int handle_of, int *save) {
                 if (new_hdl == -1) {
                         new_hdl = AppendToHandleTable(target_table, original);
                         if (new_hdl < 0) return STATUS_OUT_OF_MEMORY;
-                        /* avoid a use after free if the original process tries to delete this
-                         * object*/
-                        else
-                                original->refcnt++;
                 }
                 copy_status = CopyToUser(save, &new_hdl, sizeof(int));
                 if (copy_status != STATUS_OK) {
